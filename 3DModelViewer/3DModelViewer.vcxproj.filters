@@ -45,25 +45,13 @@
     <ClInclude Include="tlCCamera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="miniz\miniz.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="miniz\miniz_zip.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="D3DObjMesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ObjLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="miniz\miniz_common.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="miniz\miniz_tdef.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="miniz\miniz_tinfl.h">
+    <ClInclude Include="miniz.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -89,22 +77,10 @@
     <ClCompile Include="tlC3DGfx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="miniz\miniz.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="miniz\miniz_zip.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="D3DObjMesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ObjLoader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="miniz\miniz_tdef.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="miniz\miniz_tinfl.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

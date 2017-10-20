@@ -923,7 +923,8 @@ mz_bool mz_zip_reader_init_mem(mz_zip_archive *pZip, const void *pMem, size_t si
 
     pZip->m_pState->m_mem_size = size;
 
-    if (!mz_zip_reader_read_central_dir(pZip, flags))
+    if ( 0 ) 
+	if (!mz_zip_reader_read_central_dir(pZip, flags))
     {
         mz_zip_reader_end_internal(pZip, MZ_FALSE);
         return MZ_FALSE;

@@ -11,7 +11,6 @@
 
 #include "3DModelViewerDoc.h"
 #include "3DModelViewerView.h"
-#include "miniz/miniz_zip.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

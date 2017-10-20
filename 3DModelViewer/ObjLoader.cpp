@@ -450,3 +450,4 @@ INT LoadObj( LPCTSTR sFileName, TObjMesh* pOutObjMesh )
 	}
 	return 1; // Success
 }
+
