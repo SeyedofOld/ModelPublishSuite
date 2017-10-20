@@ -149,6 +149,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	virtual void OnInitialUpdate();
+	bool LoadModelFromMemory ( void * pData, DWORD dwDataSize );
 };
 
 #ifndef _DEBUG  // debug version in 3DModelViewerView.cpp
