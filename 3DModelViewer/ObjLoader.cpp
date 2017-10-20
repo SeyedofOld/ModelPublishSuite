@@ -184,12 +184,6 @@ INT LoadMtlLib( LPCTSTR sFileName, std::vector<TObjMaterial*>& materials )
 }
 
 
-
-
-
-
-
-
 // Returns the index designating the end of the portion of the specified file name
 // that defines the file path. Returns -1 if it fails.
 INT PathFromFileName( LPCTSTR sFileName )
@@ -206,11 +200,6 @@ INT PathFromFileName( LPCTSTR sFileName )
 	}
 	return ret + 1;
 }
-
-
-
-
-
 
 // Loads an Obj file. Returns 1 on success, 0 on failure. Returns 2 if the obj
 // file was loaded but the associated mtl file was not found.
