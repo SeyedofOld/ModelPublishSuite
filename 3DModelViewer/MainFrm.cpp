@@ -6,6 +6,7 @@
 #include "3DModelViewer.h"
 
 #include "MainFrm.h"
+#include "tlC3DGfx.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -103,6 +104,9 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	// enable quick (Alt+drag) toolbar customization
 	CMFCToolBar::EnableQuickCustomization();
+
+	C3DGfx::CreateInstance() ;
+	C3DGfx::GetInstance ()->Initialize ( GetSafeHwnd (), 100, 100, D3DFMT_A8R8G8B8, FALSE, 0, FALSE );
 
 	return 0;
 }

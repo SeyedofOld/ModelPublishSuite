@@ -207,6 +207,7 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="tlC3DGfx.h" />
     <ClInclude Include="tlCCamera.h" />
+    <ClInclude Include="tlCSingleton.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="3DModelViewer.cpp" />

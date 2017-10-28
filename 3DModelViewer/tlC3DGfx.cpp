@@ -44,7 +44,7 @@ BOOL C3DGfx::Initialize( HWND hWnd , DWORD dwWidth , DWORD dwHeight , D3DFORMAT 
 	m_PresentParams.BackBufferCount  = 1 ;
 	m_PresentParams.MultiSampleType  = D3DMULTISAMPLE_NONE ;
 	if ( bAntiAlias )
-		m_PresentParams.MultiSampleType = D3DMULTISAMPLE_4_SAMPLES ;
+		m_PresentParams.MultiSampleType = D3DMULTISAMPLE_2_SAMPLES ;
 	m_PresentParams.SwapEffect = D3DSWAPEFFECT_DISCARD ;
 	m_PresentParams.hDeviceWindow = hWnd ;
 	m_PresentParams.Windowed = !bFullScreen ;
@@ -107,7 +107,7 @@ BOOL C3DGfx::Initialize( HWND hWnd , DWORD dwWidth , DWORD dwHeight , D3DFORMAT 
  	m_pd3dxFont->PreloadCharacters ( 0 , 65535 ) ;
  	m_pd3dxFont->PreloadGlyphs ( 0 , 65535 ) ;
 
-	//InitializeCriticalSection ( &m_csDevice ) ;
+	InitializeCriticalSection ( &m_csDevice ) ;
 
     m_bInit = TRUE ;
 
@@ -166,7 +166,7 @@ BOOL C3DGfx::CleanUp ( )
 
 	ZeroMemory ( &m_PresentParams , sizeof(D3DPRESENT_PARAMETERS) ) ;
 
-	//DeleteCriticalSection ( &m_csDevice ) ;
+	DeleteCriticalSection ( &m_csDevice ) ;
 
 	m_bInit = FALSE ;
 
@@ -326,10 +326,20 @@ BOOL C3DGfx::SetProjectionMatrix ( const D3DXMATRIX &matProj )
 
 void C3DGfx::EnterGfxCS()
 {
-	//EnterCriticalSection ( &m_csDevice ) ;
+	EnterCriticalSection ( &m_csDevice ) ;
 }
 
 void C3DGfx::LeaveGfxCS()
 {
-	//LeaveCriticalSection ( &m_csDevice ) ;
+	LeaveCriticalSection ( &m_csDevice ) ;
+}
+
+BOOL C3DGfx::Resize ( int iWidth, int iHeight )
+{
+	m_PresentParams.BackBufferWidth = iWidth ;
+	m_PresentParams.BackBufferHeight = iHeight ;
+
+	HRESULT hr = m_pd3dDevice->Reset ( &m_PresentParams ) ;
+
+	return TRUE ;
 }

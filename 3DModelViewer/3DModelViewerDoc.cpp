@@ -14,6 +14,7 @@
 #include <propkey.h>
 #include "miniz.h"
 #include "ObjLoader.h"
+#include "tlC3DGfx.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -256,11 +257,17 @@ bool CMy3DModelViewerDoc::LoadModelFromMemory ( void* pData, DWORD dwDataSize )
 
 		TObjMesh mesh ;
 		int iRes = LoadObj ( wszMeshFilename, &mesh ) ;
+
+		SetCurrentDirectoryA ( szPath ) ;
+
+		m_Mesh.Create ( C3DGfx::GetInstance ()->GetDevice (), mesh, FALSE, FALSE ) ;
+
 		//bool bRes = CXFileUtil::LoadXFile ( C3DGfx::Instance ()->GetDevice (),
 		//szMeshFilename,
 		//szPath,
 		//"Data/Shader/",
 		//&pObjectSlot->pMesh );
+
 
 		{ // Clean temp files
 			char szFind [ MAX_PATH ];

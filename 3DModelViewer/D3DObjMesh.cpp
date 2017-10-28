@@ -195,5 +195,7 @@ HRESULT CD3DMesh::InitVB( LPDIRECT3DDEVICE9 pD3DDevice, const TObjMesh& objMesh,
 	
 	pVB->Unlock();
 
+	hr = D3DXCreateTextureFromFileA ( pD3DDevice, objMesh.materials [ 1 ]->map_Kd, &pTex ) ; 
+
 	return S_OK;
 }

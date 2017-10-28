@@ -56,6 +56,7 @@ public:
 	DWORD FVF;
 	LPDIRECT3DVERTEXBUFFER9 pVB;
 	D3DXVECTOR3 bbmin, bbmax; // bounding box.
+	IDirect3DTexture9* pTex ;
 
 protected:
 	// This method is probably the most important in the sample after the obj loader.

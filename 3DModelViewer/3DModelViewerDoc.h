@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "D3DObjMesh.h"
 
 class CMy3DModelViewerDoc : public CDocument
 {
@@ -48,4 +49,5 @@ protected:
 public:
 	virtual BOOL OnOpenDocument ( LPCTSTR lpszPathName );
 	bool LoadModelFromMemory ( void * pData, DWORD dwDataSize );
+	CD3DMesh m_Mesh ;
 };

@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "tlC3DGfx.h"
 #include "tlCCamera.h"
 
 #define WUM_INTERACTION_MSG			WM_USER + 1356
@@ -120,7 +119,6 @@ protected:
 	RANGE		m_VertRange;
 	HWND		m_hwndCallback;
 	CBitmap*	m_pBitmap;
-	C3DGfx		m_Gfx ;
 	CCamera		m_Camera;
 	ID3DXMesh*  m_pMesh;
 
@@ -150,6 +148,7 @@ protected:
 public:
 	virtual void OnInitialUpdate();
 	bool LoadModelFromMemory ( void * pData, DWORD dwDataSize );
+	afx_msg void OnSize ( UINT nType, int cx, int cy );
 };
 
 #ifndef _DEBUG  // debug version in 3DModelViewerView.cpp

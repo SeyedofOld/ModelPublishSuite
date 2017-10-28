@@ -11,6 +11,7 @@
 
 #include "3DModelViewerDoc.h"
 #include "3DModelViewerView.h"
+#include "tlC3DGfx.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -38,6 +39,7 @@ BEGIN_MESSAGE_MAP(CMy3DModelViewerView, CView)
 	ON_WM_MOUSEWHEEL()
 	ON_WM_PAINT()
 	ON_WM_ERASEBKGND()
+	ON_WM_SIZE ()
 END_MESSAGE_MAP()
 
 // CMy3DModelViewerView construction/destruction
@@ -47,6 +49,8 @@ CMy3DModelViewerView::CMy3DModelViewerView()
 	m_bDragging = FALSE;
 	m_pBitmap = NULL;
 	m_hwndCallback = NULL;
+
+	m_pMesh = NULL ;
 }
 
 CMy3DModelViewerView::~CMy3DModelViewerView()
@@ -57,6 +61,11 @@ BOOL CMy3DModelViewerView::PreCreateWindow(CREATESTRUCT& cs)
 {
 	// TODO: Modify the Window class or styles here by modifying
 	//  the CREATESTRUCT cs
+
+	m_Camera.Initialize ( D3DXToRadian ( 45.0f ), 4.0f / 3.0f, 0.01f, 100.0f );
+	m_Camera.SetMode ( CCamera::MODE_TARGET );
+	m_Camera.SetPosition ( 0.0f, 0.0f, -10.0f );
+	m_Camera.SetTarget ( 0.0f, 0.0f, 0.0f );
 
 	return CView::PreCreateWindow(cs);
 }
@@ -70,18 +79,29 @@ void CMy3DModelViewerView::OnDraw(CDC* pDC)
 	if (!pDoc)
 		return;
 
-	// TODO: add draw code for native data here
+	if ( C3DGfx::GetInstance () ) {
+		C3DGfx::GetInstance ()->BeginFrame ();
+		C3DGfx::GetInstance ()->Clear ( 0xff200040 ) ;
 
-	m_Gfx.BeginFrame();
-	m_Gfx.Clear ( 0xff200040 ) ;
+		m_Camera.SetD3DCamera ( C3DGfx::GetInstance ()->GetDevice () ) ;
 
-	m_Camera.SetD3DCamera ( m_Gfx.GetDevice() ) ;
+		//C3DGfx::GetInstance ()->GetDevice ()->SetRenderState ( D3DRS_FILLMODE, D3DFILL_WIREFRAME );
 
-	m_Gfx.GetDevice()->SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME);
-	m_pMesh->DrawSubset(0);
+		if ( GetDocument ()->m_Mesh.pVB ) {
+			IDirect3DDevice9* pDevice = C3DGfx::GetInstance ()->GetDevice () ;
 
-	m_Gfx.EndFrame();
-	m_Gfx.ShowFrame();
+			pDevice->SetFVF ( GetDocument ()->m_Mesh.FVF ) ;
+			pDevice->SetStreamSource ( 0, GetDocument ()->m_Mesh.pVB, 0, GetDocument ()->m_Mesh.vertexSize ) ;
+			pDevice->SetTexture ( 0, GetDocument ()->m_Mesh.pTex ) ;
+			pDevice->DrawPrimitive ( D3DPT_TRIANGLELIST, 0, GetDocument ()->m_Mesh.triCount ) ;
+		}
+		else
+			if ( m_pMesh )
+				m_pMesh->DrawSubset ( 0 );
+
+		C3DGfx::GetInstance ()->EndFrame ();
+		C3DGfx::GetInstance ()->ShowFrame ( NULL, NULL, GetSafeHwnd() );
+	}
 
 // 	CRect rc ;
 // 	GetClientRect ( rc ) ;
@@ -566,21 +586,6 @@ void CMy3DModelViewerView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 void CMy3DModelViewerView::OnInitialUpdate()
 {
 	CView::OnInitialUpdate();
-
-	CRect rc;
-	GetClientRect(rc);
-
-	m_Gfx.Initialize(GetSafeHwnd(), rc.Width(), rc.Height(), D3DFMT_A8R8G8B8, FALSE, 0, TRUE);
-	
-	m_Camera.Initialize(D3DXToRadian(45.0f), 4.0f/3.0f, 0.01f, 100.0f);
-	m_Camera.SetMode(CCamera::MODE_TARGET);
-	m_Camera.SetPosition(0.0f, 0.0f, -10.0f);
-	m_Camera.SetTarget(0.0f, 0.0f, 0.0f);
-
-	//SetRange(-1.0f, 1.0f, 1.0f, -1.0f);
-	SetRange(0,0,(float)rc.Width(),(float)rc.Height());
-
-	D3DXCreateTeapot ( m_Gfx.GetDevice(), &m_pMesh, NULL ) ;
 }
 
 bool CMy3DModelViewerView::LoadModelFromMemory ( void* pData, DWORD dwDataSize )
@@ -691,3 +696,23 @@ bool CMy3DModelViewerView::LoadModelFromMemory ( void* pData, DWORD dwDataSize )
 
 	return true;
 }
+
+
+void CMy3DModelViewerView::OnSize ( UINT nType, int cx, int cy )
+{
+	CView::OnSize ( nType, cx, cy );
+
+	//SetRange(-1.0f, 1.0f, 1.0f, -1.0f);
+	CRect rc;
+	GetClientRect ( rc );
+	SetRange ( 0, 0, (float)rc.Width (), (float)rc.Height () );
+
+	if ( C3DGfx::GetInstance () && C3DGfx::GetInstance ()->IsInitialized () ) {
+		if ( cx && cy )
+			C3DGfx::GetInstance ()->Resize ( cx, cy ) ;
+		if ( ! m_pMesh  )
+			D3DXCreateTeapot ( C3DGfx::GetInstance ()->GetDevice (), &m_pMesh, NULL ) ;
+	}
+
+}
+

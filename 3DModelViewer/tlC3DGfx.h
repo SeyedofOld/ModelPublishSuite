@@ -1,9 +1,9 @@
 #pragma once
 
 #include <d3dx9.h>
-//#include "tlCSingleton.h"
+#include "tlCSingleton.h"
 
-class C3DGfx /*: public CSingleton<C3DGfx>*/ {
+class C3DGfx : public CSingleton<C3DGfx> {
 
     public :
 
@@ -50,6 +50,8 @@ class C3DGfx /*: public CSingleton<C3DGfx>*/ {
 		void EnterGfxCS () ;
 		void LeaveGfxCS () ;
 
+		BOOL Resize ( int iWidth, int iHeight );
+
 	private :
 		BOOL				m_bInit ;
 
@@ -59,6 +61,6 @@ class C3DGfx /*: public CSingleton<C3DGfx>*/ {
 		LPD3DXLINE			m_pd3dxLine ;
 		
 		D3DPRESENT_PARAMETERS m_PresentParams ;
-		//CRITICAL_SECTION	m_csDevice ;
+		CRITICAL_SECTION	m_csDevice ;
 } ;
 
