@@ -260,7 +260,7 @@ bool CMy3DModelViewerDoc::LoadModelFromMemory ( void* pData, DWORD dwDataSize )
 
 		SetCurrentDirectoryA ( szPath ) ;
 
-		m_Mesh.Create ( C3DGfx::GetInstance ()->GetDevice (), mesh, FALSE, FALSE ) ;
+		m_Mesh.Create ( C3DGfx::GetInstance ()->GetDevice (), mesh, FALSE, TRUE ) ;
 
 		//bool bRes = CXFileUtil::LoadXFile ( C3DGfx::Instance ()->GetDevice (),
 		//szMeshFilename,
