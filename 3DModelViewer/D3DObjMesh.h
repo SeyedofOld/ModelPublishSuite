@@ -44,6 +44,7 @@ public:
 		vertexSize = 0;
 		FVF = 0;
 		pVB = NULL;
+		pTex = NULL;
 	}
 
 	~CD3DMesh() { SAFE_RELEASE( pVB ); }
