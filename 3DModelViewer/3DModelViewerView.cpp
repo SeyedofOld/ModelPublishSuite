@@ -708,8 +708,10 @@ void CMy3DModelViewerView::OnSize ( UINT nType, int cx, int cy )
 	SetRange ( 0, 0, (float)rc.Width (), (float)rc.Height () );
 
 	if ( C3DGfx::GetInstance () && C3DGfx::GetInstance ()->IsInitialized () ) {
-		if ( cx && cy )
+		if ( cx && cy ) {
 			C3DGfx::GetInstance ()->Resize ( cx, cy ) ;
+			m_Camera.SetAspect ( (float)cx/cy ) ;
+		}
 		if ( ! m_pMesh  )
 			D3DXCreateTeapot ( C3DGfx::GetInstance ()->GetDevice (), &m_pMesh, NULL ) ;
 	}

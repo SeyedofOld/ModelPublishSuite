@@ -138,7 +138,7 @@ HRESULT CD3DMesh::InitVB( LPDIRECT3DDEVICE9 pD3DDevice, const TObjMesh& objMesh,
 	};
 
 	UINT bufferSize = triCount * vertexSize * 3;
-	hr = pD3DDevice->CreateVertexBuffer( bufferSize, D3DUSAGE_WRITEONLY, FVF, D3DPOOL_DEFAULT, &pVB, NULL );
+	hr = pD3DDevice->CreateVertexBuffer( bufferSize, D3DUSAGE_WRITEONLY, FVF, D3DPOOL_MANAGED, &pVB, NULL );
 	if( FAILED( hr ) ) return hr;
 
 	BYTE* pVBData = NULL;
