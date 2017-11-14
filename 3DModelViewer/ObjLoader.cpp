@@ -237,9 +237,12 @@ INT LoadObj( LPCTSTR sFileName, TObjMesh* pOutObjMesh )
 		buffer[0] = 0;
 		fgets( buffer, LINE_BUFF_SIZE, pFile );
 
-		if( 0 == strncmp( "v ", buffer, 2 ) )			numVertices++;
-		else if( 0 == strncmp( "vn ", buffer, 3 ) )		numNormals++;
-		else if( 0 == strncmp( "vt ", buffer, 3 ) )		numTexCoords++;
+		if( 0 == strncmp( "v ", buffer, 2 ) )			
+			numVertices++;
+		else if( 0 == strncmp( "vn ", buffer, 3 ) )		
+			numNormals++;
+		else if( 0 == strncmp( "vt ", buffer, 3 ) )		
+			numTexCoords++;
 		else if( 0 == strncmp( "f ", buffer, 2 ) )
 		{
 			// TODO: 'fo' (face outline) is seemingly an old flag equivalent to f (face).
@@ -254,8 +257,10 @@ INT LoadObj( LPCTSTR sFileName, TObjMesh* pOutObjMesh )
 
 			obj.numTriangles += vCount - 2;
 		}
-		else if( 0 == strncmp( "o ", buffer, 2 ) )			numObjects++;
-		else if( 0 == _strnicmp( "usemtl ", buffer, 7 ) )	numMatGroups++;
+		else if( 0 == strncmp( "o ", buffer, 2 ) )			
+			numObjects++;
+		else if( 0 == _strnicmp( "usemtl ", buffer, 7 ) )	
+			numMatGroups++;
 		else if( 0 == strncmp( "g ", buffer, 2 ) )
 		{
 			// The 'g' statement can include more than one group.
