@@ -67,8 +67,7 @@ bool InspectVertexDefinition( const char* sVertexDef, bool& hasNormals, bool& ha
 
 	// Now move on to check for tex coords info.
 	len = CountNumbers( s );
-	if( len > 0 )
-	{
+	if( len > 0 ) {
 		hasTexCoords = true;
 		s += len;
 	}
@@ -149,35 +148,50 @@ INT LoadMtlLib( LPCTSTR sFileName, std::vector<TObjMaterial*>& materials )
 
 	TObjMaterial* pMat = NULL;
 
-	while( !feof( pFile ) )
-	{
+	while( !feof( pFile ) )	{
 		buffer[0] = 0;
 		fgets( buffer, LINE_BUFF_SIZE, pFile );
-		if( 0 == strncmp( "newmtl ", buffer, 7 ) )
-		{
+		if( 0 == strncmp( "newmtl ", buffer, 7 ) ) {
 			pMat = new TObjMaterial;
 			materials.push_back( pMat );
 			sscanf( buffer + 7, "%s", pMat->name );
 		} else if( pMat == NULL )
 			continue; // Skip anything until we find a newmtl statement.
-		else if( 0 == _strnicmp( "ka ", buffer, 3 ) )		LoadMtl_ReadKx( buffer, pMat->Ka );
-		else if( 0 == _strnicmp( "ks ", buffer, 3 ) )		LoadMtl_ReadKx( buffer, pMat->Ks );
-		else if( 0 == _strnicmp( "kd ", buffer, 3 ) )		LoadMtl_ReadKx( buffer, pMat->Kd );
-		else if( 0 == _strnicmp( "tf ", buffer, 3 ) )		LoadMtl_ReadKx( buffer, pMat->Tf );
-		else if( 0 == _strnicmp( "tr ", buffer, 3 ) )		pMat->Tr = (float)atof( buffer + 3 );
-		else if( 0 == _strnicmp( "d ", buffer, 2 ) )		pMat->Tr = (float)atof( buffer + 2 );
-		else if( 0 == _strnicmp( "ns ", buffer, 3 ) )		pMat->Ns = (float)atof( buffer + 3 );
-		else if( 0 == _strnicmp( "Ni ", buffer, 3 ) )		pMat->Ni = (float)atof( buffer + 3 );
-		else if( 0 == _strnicmp( "illum ", buffer, 6 ) )	pMat->illum = atoi( buffer + 6 );
 
-		else if( 0 == _strnicmp( "map_Ka ", buffer, 7 ) )	sscanf( buffer + 7, "%s", pMat->map_Ka );
-		else if( 0 == _strnicmp( "map_Kd ", buffer, 7 ) )	sscanf( buffer + 7, "%s", pMat->map_Kd );
-		else if( 0 == _strnicmp( "map_Ks ", buffer, 7 ) )	sscanf( buffer + 7, "%s", pMat->map_Ks );
-		else if( 0 == _strnicmp( "map_Ns ", buffer, 7 ) )	sscanf( buffer + 7, "%s", pMat->map_Ns );
-		else if( 0 == _strnicmp( "map_Tr ", buffer, 7 ) )	sscanf( buffer + 7, "%s", pMat->map_Tr );
-		else if( 0 == _strnicmp( "map_Disp ", buffer, 7 ) )	sscanf( buffer + 9, "%s", pMat->map_Disp );
-		else if( 0 == _strnicmp( "map_Bump ", buffer, 7 ) )	sscanf( buffer + 9, "%s", pMat->map_Bump );
-		else if( 0 == _strnicmp( "map_Refl ", buffer, 7 ) )	sscanf( buffer + 9, "%s", pMat->map_Refl );
+		else if( 0 == _strnicmp( "ka ", buffer, 3 ) )		
+			LoadMtl_ReadKx( buffer, pMat->Ka );
+		else if( 0 == _strnicmp( "ks ", buffer, 3 ) )		
+			LoadMtl_ReadKx( buffer, pMat->Ks );
+		else if( 0 == _strnicmp( "kd ", buffer, 3 ) )		
+			LoadMtl_ReadKx( buffer, pMat->Kd );
+		else if( 0 == _strnicmp( "tf ", buffer, 3 ) )		
+			LoadMtl_ReadKx( buffer, pMat->Tf );
+		else if( 0 == _strnicmp( "tr ", buffer, 3 ) )		
+			pMat->Tr = (float)atof( buffer + 3 );
+		else if( 0 == _strnicmp( "d ", buffer, 2 ) )		
+			pMat->Tr = (float)atof( buffer + 2 );
+		else if( 0 == _strnicmp( "ns ", buffer, 3 ) )		
+			pMat->Ns = (float)atof( buffer + 3 );
+		else if( 0 == _strnicmp( "Ni ", buffer, 3 ) )		
+			pMat->Ni = (float)atof( buffer + 3 );
+		else if( 0 == _strnicmp( "illum ", buffer, 6 ) )	
+			pMat->illum = atoi( buffer + 6 );
+		else if( 0 == _strnicmp( "map_Ka ", buffer, 7 ) )	
+			sscanf( buffer + 7, "%s", pMat->map_Ka );
+		else if( 0 == _strnicmp( "map_Kd ", buffer, 7 ) )	
+			sscanf( buffer + 7, "%s", pMat->map_Kd );
+		else if( 0 == _strnicmp( "map_Ks ", buffer, 7 ) )	
+			sscanf( buffer + 7, "%s", pMat->map_Ks );
+		else if( 0 == _strnicmp( "map_Ns ", buffer, 7 ) )	
+			sscanf( buffer + 7, "%s", pMat->map_Ns );
+		else if( 0 == _strnicmp( "map_Tr ", buffer, 7 ) )	
+			sscanf( buffer + 7, "%s", pMat->map_Tr );
+		else if( 0 == _strnicmp( "map_Disp ", buffer, 7 ) )	
+			sscanf( buffer + 9, "%s", pMat->map_Disp );
+		else if( 0 == _strnicmp( "map_Bump ", buffer, 7 ) )	
+			sscanf( buffer + 9, "%s", pMat->map_Bump );
+		else if( 0 == _strnicmp( "map_Refl ", buffer, 7 ) )	
+			sscanf( buffer + 9, "%s", pMat->map_Refl );
 	}
 	fclose( pFile );
 	return 1;
@@ -272,8 +286,10 @@ INT LoadObj( LPCTSTR sFileName, CObjMesh* pOutObjMesh )
 			sscanf( buffer + 7, "%s", pOutObjMesh->sMtlFileName );
 	}
 
-	if( numVertices == 0 || numFaces == 0 )
-	{ fclose( pFile ); return 0; } // Failure.
+	if( numVertices == 0 || numFaces == 0 )	{ 
+		fclose( pFile ); 
+		return 0; 
+	} // Failure.
 
 
 	obj.vertices.resize( numVertices );
@@ -296,41 +312,34 @@ INT LoadObj( LPCTSTR sFileName, CObjMesh* pOutObjMesh )
 	UINT gc = 0; // Group counter.
 	UINT ag = 0; // Number of groups on last encountered 'g ' line.
 
-	while( !feof( pFile ) )
-	{
+	while( !feof( pFile ) )	{
+
 		buffer[0] = '\0';
 		fgets( buffer, LINE_BUFF_SIZE, pFile );
 
-		if( 0 == strncmp( "v ", buffer, 2 ) )
-		{
+		if( 0 == strncmp( "v ", buffer, 2 ) ) {
 			// Vertex
 			CObjMesh::TFloat3& v = obj.vertices[vc++];
 			sscanf( buffer+1, "%f %f %f", &v.x, &v.y, &v.z );
 			if( vc == 1 )
 				obj.bbmin = obj.bbmax = v;
-			else
-			{
+			else {
 				if( v.x < obj.bbmin.x ) obj.bbmin.x = v.x; else if( v.x > obj.bbmax.x ) obj.bbmax.x = v.x;
 				if( v.y < obj.bbmin.y ) obj.bbmin.y = v.y; else if( v.y > obj.bbmax.y ) obj.bbmax.y = v.y;
 				if( v.z < obj.bbmin.z ) obj.bbmin.z = v.z; else if( v.z > obj.bbmax.z ) obj.bbmax.z = v.z;
 			}
 		}
-		else if( 0 == strncmp( "vn ", buffer, 3 ) )
-		{
+		else if( 0 == strncmp( "vn ", buffer, 3 ) )	{
 			// Normal
 			sscanf( buffer+2, "%f %f %f",
 				&obj.normals[nc].x, &obj.normals[nc].y, &obj.normals[nc].z );
 			nc++;
-		}
-		else if( 0 == strncmp( "vt ", buffer, 3 ) )
-		{
+		} else if( 0 == strncmp( "vt ", buffer, 3 ) )	{
 			// Texture coordinate
 			sscanf( buffer+2, "%f %f",
 				&obj.texCoords[tc].x, &obj.texCoords[tc].y );
 			tc++;
-		}
-		else if( 0 == strncmp( "f ", buffer, 2 ) )
-		{
+		} else if( 0 == strncmp( "f ", buffer, 2 ) ) {
 			// Face. See remark at the bottom of the file to see why the somewhat
 			// cryptic interpretation of an 'f ' line in the source file.
 
@@ -344,8 +353,7 @@ INT LoadObj( LPCTSTR sFileName, CObjMesh* pOutObjMesh )
 
 
 			const char* s = buffer;
-			for( int i=0; i<face.vCount; i++ )
-			{
+			for( int i=0; i<face.vCount; i++ ) {
 				int v = -1, t = -1, n = -1;
 				while( *s != ' ' )
 					s++;
@@ -358,21 +366,18 @@ INT LoadObj( LPCTSTR sFileName, CObjMesh* pOutObjMesh )
 				obj.faceVertices[ fvc ] = v - 1; // NOTE: This is to make the indices 0-based.
 				fvc++;
 
-				if( hasTexCoords || hasNormals )
-				{
+				if( hasTexCoords || hasNormals ) {
 					while( *s != '/' )
 						s++;
 					s++;
-					if( hasTexCoords )
-					{
+					if( hasTexCoords ) {
 						t = atoi(s);
 						if( t < 0 ) t = tc + t + 2;
 						obj.faceTexCoords[ ftc ] = t - 1;
 						ftc++;
 					}
 				}
-				if( hasNormals )
-				{
+				if( hasNormals ) {
 					while( *s != '/' )
 						s++;
 					s++;
@@ -383,9 +388,7 @@ INT LoadObj( LPCTSTR sFileName, CObjMesh* pOutObjMesh )
 				}
 			}
 			fc++;
-		}
-		else if( 0 == _strnicmp( "usemtl ", buffer, 7 ) )
-		{
+		} else if( 0 == _strnicmp( "usemtl ", buffer, 7 ) )	{
 			obj.matGroups[ mc ].firstFace = fc;
 			obj.matGroups[ mc ].name[0] = 0;
 			//strncpy( obj.matGroups[ mc ].name, buffer + 7, sizeof(obj.matGroups[0].name) );
@@ -394,19 +397,15 @@ INT LoadObj( LPCTSTR sFileName, CObjMesh* pOutObjMesh )
 			if( mc > 0 )
 				obj.matGroups[ mc-1 ].numFaces = fc - obj.matGroups[ mc-1 ].firstFace;
 			mc++;
-		}
-		else if( 0 == strncmp( "g ", buffer, 2 ) )
-		{
+		} else if( 0 == strncmp( "g ", buffer, 2 ) ) {
 			// The 'g' statement can include more than one group, in which case all that
 			// follows belong to all groups on that line.
 			if( gc > 0 )
 				for( UINT j=ag; j>0; j-- )
 					obj.groups[ gc - j ].numFaces = fc - obj.groups[ gc - j ].firstFace;
 			ag = 0;
-			for( const char* s = buffer; *s; s++ )
-			{
-				if( *s == ' ' )
-				{
+			for( const char* s = buffer; *s; s++ ) {
+				if( *s == ' ' )	{
 					// TODO: sscanf() might not be the best solution to read strings.
 					sscanf( s+1, "%s", obj.groups[ gc + ag ].name );
 					obj.groups[ gc + ag ].firstFace = fc;
@@ -441,8 +440,7 @@ INT LoadObj( LPCTSTR sFileName, CObjMesh* pOutObjMesh )
 	TCHAR sMtlFileName[ MAX_PATH ];
 	MultiByteToWideChar( CP_ACP, 0, obj.sMtlFileName, -1, sMtlFileName, MAX_PATH );
 # endif
-	if( 0 >= LoadMtlLib( sMtlFileName, obj.materials ) )
-	{
+	if( 0 >= LoadMtlLib( sMtlFileName, obj.materials ) ) {
 		//g_Log( "Failed to load mtl file %s", sMtlFileName );
 		TCHAR libFile[ MAX_PATH ];
 		INT n = PathFromFileName( sFileName );
