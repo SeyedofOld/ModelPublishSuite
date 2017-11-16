@@ -203,11 +203,11 @@ INT PathFromFileName( LPCTSTR sFileName )
 
 // Loads an Obj file. Returns 1 on success, 0 on failure. Returns 2 if the obj
 // file was loaded but the associated mtl file was not found.
-INT LoadObj( LPCTSTR sFileName, TObjMesh* pOutObjMesh )
+INT LoadObj( LPCTSTR sFileName, CObjMesh* pOutObjMesh )
 {
 	CHAR buffer[ LINE_BUFF_SIZE ];
 
-	TObjMesh& obj = *pOutObjMesh;
+	CObjMesh& obj = *pOutObjMesh;
 
 	obj.Free();
 
@@ -304,7 +304,7 @@ INT LoadObj( LPCTSTR sFileName, TObjMesh* pOutObjMesh )
 		if( 0 == strncmp( "v ", buffer, 2 ) )
 		{
 			// Vertex
-			TObjMesh::TFloat3& v = obj.vertices[vc++];
+			CObjMesh::TFloat3& v = obj.vertices[vc++];
 			sscanf( buffer+1, "%f %f %f", &v.x, &v.y, &v.z );
 			if( vc == 1 )
 				obj.bbmin = obj.bbmax = v;
@@ -332,9 +332,9 @@ INT LoadObj( LPCTSTR sFileName, TObjMesh* pOutObjMesh )
 		else if( 0 == strncmp( "f ", buffer, 2 ) )
 		{
 			// Face. See remark at the bottom of the file to see why the somewhat
-			// crpytic interpretation of an 'f ' line in the source file.
+			// cryptic interpretation of an 'f ' line in the source file.
 
-			TObjMesh::TFace& face = obj.faces[fc];
+			CObjMesh::CFace& face = obj.faces[fc];
 
 			InspectFaceLine( buffer, face.vCount, false, hasTexCoords, hasNormals );
 

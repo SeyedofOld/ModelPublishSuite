@@ -255,7 +255,7 @@ bool CMy3DModelViewerDoc::LoadModelFromMemory ( void* pData, DWORD dwDataSize )
 		int iLen = MultiByteToWideChar ( CP_ACP, 0, szMeshFilename, strlen ( szMeshFilename ), wszMeshFilename, MAX_PATH ) ;
 		wszMeshFilename [ iLen ] = 0 ;
 
-		TObjMesh mesh ;
+		CObjMesh mesh ;
 		int iRes = LoadObj ( wszMeshFilename, &mesh ) ;
 
 		SetCurrentDirectoryA ( szPath ) ;

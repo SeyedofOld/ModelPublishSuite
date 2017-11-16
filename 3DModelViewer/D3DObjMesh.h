@@ -49,7 +49,7 @@ public:
 
 	~CD3DMesh() { SAFE_RELEASE( pVB ); }
 
-	HRESULT Create( LPDIRECT3DDEVICE9 pD3DDevice, const TObjMesh& objMesh, BOOL flipTriangles, BOOL flipUVs );
+	HRESULT Create( LPDIRECT3DDEVICE9 pD3DDevice, const CObjMesh& objMesh, BOOL flipTriangles, BOOL flipUVs );
 
 
 	UINT triCount;
@@ -68,7 +68,7 @@ protected:
 	// vertices are identical (in ALL their components), only one corresponding vertex needs to be copied
 	// to the vertex buffer.
 	// This optimization requires sorting and/or searching which can be quite slow for heavy meshes.
-	HRESULT InitVB( LPDIRECT3DDEVICE9 pD3DDevice, const TObjMesh& objMesh, BOOL flipTriangles, BOOL flipUVs );
+	HRESULT InitVB( LPDIRECT3DDEVICE9 pD3DDevice, const CObjMesh& objMesh, BOOL flipTriangles, BOOL flipUVs );
 };
 
 

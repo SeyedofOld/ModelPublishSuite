@@ -66,7 +66,7 @@ struct TObjMaterial
 
 
 
-struct TObjMesh
+struct CObjMesh
 {
 # ifdef __D3DX9_H__
 	typedef D3DXVECTOR3 TFloat3;
@@ -76,7 +76,7 @@ struct TObjMesh
 	struct TFloat2 { float x, y; };
 # endif
 
-	struct TFace
+	struct CFace
 	{
 		INT firstVertex;	// Index into the mesh's vertex array - defines the first vertex of this face.
 		INT firstTexCoord;	// Like above, but can be -1 to specify face has no tex coords.
@@ -95,7 +95,7 @@ struct TObjMesh
 	std::vector< TFloat3 >		vertices;
 	std::vector< TFloat3 >		normals;
 	std::vector< TFloat2 >		texCoords;
-	std::vector< TFace >		faces;
+	std::vector< CFace >		faces;
 
 	std::vector< INT >			faceVertices;
 	std::vector< INT >			faceNormals;
@@ -113,7 +113,7 @@ struct TObjMesh
 	char sMtlFileName[ MAX_PATH ];	// .mtl file name. We store it in a char array (rather than TCHAR) because
 									// it's read from the obj file, and obj files are ascii.
 
-	TObjMesh() { numTriangles = 0; }
+	CObjMesh() { numTriangles = 0; }
 
 	void Free()
 	{
@@ -150,7 +150,7 @@ INT LoadMtlLib( LPCTSTR sFileName, std::vector<TObjMaterial*>& materials );
 
 // Loads an Obj file. Returns 1 on success, 0 on failure. Returns 2 if the obj
 // file was loaded but the associated mtl file was not found.
-INT LoadObj( LPCTSTR sFileName, TObjMesh* pOutObjMesh );
+INT LoadObj( LPCTSTR sFileName, CObjMesh* pOutObjMesh );
 
 
 

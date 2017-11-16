@@ -39,10 +39,10 @@ typedef std::vector< ObjTriangle > ObjTriangleList;
 // consists of the first vertex, the nth vertex, and the (n-1)th vertex. This triangulation
 // method is fast but may yield weird overlapping triangles.
 //
-VOID AddObjFace( ObjTriangleList& objTriangleList, const TObjMesh& objMesh,
+VOID AddObjFace( ObjTriangleList& objTriangleList, const CObjMesh& objMesh,
 				UINT objFaceIndex, BOOL bFlipTriangles, BOOL bFlipUVs )
 {
-	const TObjMesh::TFace& objFace = objMesh.faces[ objFaceIndex ];
+	const CObjMesh::CFace& objFace = objMesh.faces[ objFaceIndex ];
 	UINT triCount = objFace.vCount - 2;
 
 	for( INT fv=2; fv < objFace.vCount; fv++ )
@@ -87,7 +87,7 @@ VOID AddObjFace( ObjTriangleList& objTriangleList, const TObjMesh& objMesh,
 
 
 
-HRESULT CD3DMesh::Create( LPDIRECT3DDEVICE9 pD3DDevice, const TObjMesh& objMesh,
+HRESULT CD3DMesh::Create( LPDIRECT3DDEVICE9 pD3DDevice, const CObjMesh& objMesh,
 						BOOL bFlipTriangles, BOOL bFlipUVs )
 {
 	if( objMesh.vertices.empty() || objMesh.numTriangles == 0 )
@@ -107,7 +107,7 @@ HRESULT CD3DMesh::Create( LPDIRECT3DDEVICE9 pD3DDevice, const TObjMesh& objMesh,
 
 
 // IMPORTANT: See the comment above the method's declaration in the header file.
-HRESULT CD3DMesh::InitVB( LPDIRECT3DDEVICE9 pD3DDevice, const TObjMesh& objMesh, BOOL bFlipTriangles, BOOL bFlipUVs )
+HRESULT CD3DMesh::InitVB( LPDIRECT3DDEVICE9 pD3DDevice, const CObjMesh& objMesh, BOOL bFlipTriangles, BOOL bFlipUVs )
 {
 	HRESULT hr;
 	SAFE_RELEASE( pVB );
