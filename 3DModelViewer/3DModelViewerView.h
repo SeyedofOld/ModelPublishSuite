@@ -149,6 +149,14 @@ public:
 	virtual void OnInitialUpdate();
 	bool LoadModelFromMemory ( void * pData, DWORD dwDataSize );
 	afx_msg void OnSize ( UINT nType, int cx, int cy );
+
+	matrix m_matWorld ;
+	float m_fYaw ;
+	float m_fPitch ;
+	vector3 m_ptPos ;
+
+private:
+	void UpdateObjectMatrix ();
 };
 
 #ifndef _DEBUG  // debug version in 3DModelViewerView.cpp

@@ -49,8 +49,10 @@ protected:
 #endif // SHARED_HANDLERS
 public:
 	virtual BOOL OnOpenDocument ( LPCTSTR lpszPathName );
-	bool LoadModelFromMemory ( void * pData, DWORD dwDataSize, CD3DMesh& mesh );
+	bool LoadModelFromMemory ( void * pData, DWORD dwDataSize, CD3DMesh& mesh, D3D_MODEL& d3dModel );
 	CD3DMesh m_Mesh ;
 	CD3DMesh m_Mesh2 ;
+	D3D_MODEL m_d3dMesh1 ;
+	D3D_MODEL m_d3dMesh2 ;
 	afx_msg void OnOpenSecond ();
 };

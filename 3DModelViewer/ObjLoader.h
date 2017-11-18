@@ -243,6 +243,10 @@ struct MY_MTL {
 		fNi = 1.0f ;
 		fIllum = 1.0f ;
 	}
+// 	MY_MTL ( const MY_MTL& a ) {
+// 		sName = a.sName ;
+// 	}
+
 };
 
 struct MY_FACE {
@@ -306,6 +310,8 @@ struct MY_OBJ {
 	vector<UV> UVs ;
 	string sMtrlFilename ;
 	vector<MY_MTL> Materials ;
+	TFloat3 ptMin ;
+	TFloat3 ptMax ;
 };
 
 INT LoadObj2 ( LPCTSTR sFileName, MY_OBJ* pOutObjMesh );

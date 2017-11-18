@@ -160,13 +160,13 @@ BOOL CMy3DModelViewerDoc::OnOpenDocument ( LPCTSTR lpszPathName )
 	fread ( pBuf, iSize, 1, pFile ) ;
 	fclose ( pFile ) ;
 
-	LoadModelFromMemory ( pBuf, iSize, m_Mesh ) ;
+	LoadModelFromMemory ( pBuf, iSize, m_Mesh, m_d3dMesh1 ) ;
 	delete pBuf ;
 
 	return TRUE;
 }
 
-bool CMy3DModelViewerDoc::LoadModelFromMemory ( void* pData, DWORD dwDataSize, CD3DMesh& mesh )
+bool CMy3DModelViewerDoc::LoadModelFromMemory ( void* pData, DWORD dwDataSize, CD3DMesh& mesh, D3D_MODEL& d3dModel )
 {
 	if ( ! pData )
 		return false;
@@ -259,23 +259,22 @@ bool CMy3DModelViewerDoc::LoadModelFromMemory ( void* pData, DWORD dwDataSize, C
 		int iLen = MultiByteToWideChar ( CP_ACP, 0, szMeshFilename, strlen ( szMeshFilename ), wszMeshFilename, MAX_PATH ) ;
 		wszMeshFilename [ iLen ] = 0 ;
 
-		CObjMesh obj ;
-		int iRes = LoadObj ( wszMeshFilename, &obj ) ;
+// 		CObjMesh obj ;
+// 		int iRes = LoadObj ( wszMeshFilename, &obj ) ;
 		
 		MY_OBJ my_obj ;
 		int iRes2 = LoadObj2 ( wszMeshFilename, &my_obj ) ;
 
 		SetCurrentDirectoryA ( szPath ) ;
 
-		mesh.Create ( C3DGfx::GetInstance ()->GetDevice(), obj, FALSE, TRUE ) ;
+		//mesh.Create ( C3DGfx::GetInstance ()->GetDevice(), obj, FALSE, TRUE ) ;
 
-		SetCurrentDirectory ( szOrigPath ) ;
+		//SetCurrentDirectory ( szOrigPath ) ;
 
-		D3D_MODEL model ;
 		CD3DMesh2::CreateFromObj ( C3DGfx::GetInstance ()->GetDevice (),
 			C3DGfx::GetInstance ()->GetEffectPool (),
 			my_obj,
-			model ) ;
+			d3dModel ) ;
 
 		SetCurrentDirectoryA ( szPath ) ;
 
@@ -324,6 +323,6 @@ void CMy3DModelViewerDoc::OnOpenSecond ()
 	fread ( pBuf, iSize, 1, pFile ) ;
 	fclose ( pFile ) ;
 
-	LoadModelFromMemory ( pBuf, iSize, m_Mesh2 ) ;
+	LoadModelFromMemory ( pBuf, iSize, m_Mesh2, m_d3dMesh2 ) ;
 	delete pBuf ;
 }

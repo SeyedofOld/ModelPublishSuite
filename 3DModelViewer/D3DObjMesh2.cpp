@@ -154,10 +154,24 @@ bool CD3DMesh2::CreateFromObj ( IDirect3DDevice9* pDevice, ID3DXEffectPool* pEff
 			d3dSubset.clrSpecular = D3DXCOLOR ( mtrl.Ks [ 0 ], mtrl.Ks [ 1 ], mtrl.Ks [ 2 ], 1.0f ) ;
 			d3dSubset.fTransparency = mtrl.fTr ;
 			d3dSubset.fGlossiness = mtrl.fNs ;
-			
+
 			//hr = D3DXCreateEffect ( pd3dDevice, pBuf, dwSize, pDefines, m_pEffectInclude, 0, m_pEffectPool, &pd3dEffect, &pErrBuf ) ;
-			hr = D3DXCreateTextureFromFileA ( pDevice, mtrl.sMapKd.c_str (), &d3dSubset.pTexDiffuse ) ;
+			hr = D3DXCreateTextureFromFileA ( pDevice, mtrl.sMapKd.c_str(), &d3dSubset.pTexDiffuse ) ;
 			
+			char szTempPath [ MAX_PATH ] ;
+			GetCurrentDirectoryA ( MAX_PATH, szTempPath ) ;
+
+			CString str ;
+			AfxGetModuleFileName ( AfxGetInstanceHandle (), str ) ;
+
+			str.ReverseFind ( '\\' ) ;
+			str = str.Left ( str.ReverseFind ( '\\' ) ) ;
+			str = str + L"\\" ;
+
+			SetCurrentDirectory ( str.GetBuffer() ) ;
+
+			//str = str + L"\\DiffuseMapSpec_trans.fx" ;
+
 			hr = D3DXCreateEffectFromFileA ( pDevice,
 				"DiffuseMapSpec_trans.fx",
 				NULL,
@@ -167,12 +181,17 @@ bool CD3DMesh2::CreateFromObj ( IDirect3DDevice9* pDevice, ID3DXEffectPool* pEff
 				&d3dSubset.pShader,
 				NULL ) ;
 
+				SetCurrentDirectoryA ( szTempPath ) ;
+
 			d3dPart.Batches.push_back ( d3dSubset ) ;
 		}
 
 		if ( d3dPart.Batches.size() )
 			d3dModel.Parts.push_back ( d3dPart ) ;
 	}
+
+	d3dModel.ptMin = D3DXVECTOR3 ( Obj.ptMin.x, Obj.ptMin.y, Obj.ptMin.z ) ;
+	d3dModel.ptMax = D3DXVECTOR3 ( Obj.ptMax.x, Obj.ptMax.y, Obj.ptMax.z ) ;
 
 	return true ;
 }
@@ -181,6 +200,8 @@ bool CD3DMesh2::CreateFromObj ( IDirect3DDevice9* pDevice, ID3DXEffectPool* pEff
 bool CD3DMesh2::RenderD3DMesh ( IDirect3DDevice9* pDevice, D3D_MODEL& d3dModel )
 {
 	for ( unsigned int iPart = 0 ; iPart < d3dModel.Parts.size () ; iPart++ ) {
+// 		if ( iPart != 1 )
+// 			continue; 
 		for ( unsigned int iSubset = 0 ; iSubset < d3dModel.Parts [ iPart ].Batches.size () ; iSubset++ ) {
 			
 			D3D_DRAW_BATCH& subset = d3dModel.Parts [ iPart ].Batches [ iSubset ] ;
@@ -213,4 +234,3 @@ bool CD3DMesh2::RenderD3DMesh ( IDirect3DDevice9* pDevice, D3D_MODEL& d3dModel )
 
 	return true ;
 }
-

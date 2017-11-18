@@ -8,10 +8,11 @@
 #ifndef SHARED_HANDLERS
 #include "3DModelViewer.h"
 #endif
-
+#include "MainFrm.h"
 #include "3DModelViewerDoc.h"
 #include "3DModelViewerView.h"
 #include "tlC3DGfx.h"
+#include "tlCHud.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -51,6 +52,11 @@ CMy3DModelViewerView::CMy3DModelViewerView()
 	m_hwndCallback = NULL;
 
 	m_pMesh = NULL ;
+
+	m_ptPos = vector3 ( 0, 0, 0 ) ;
+	m_fPitch = 0.0f ;
+	m_fYaw = 0.0f ;
+	D3DXMatrixIdentity ( &m_matWorld ) ;
 }
 
 CMy3DModelViewerView::~CMy3DModelViewerView()
@@ -62,7 +68,7 @@ BOOL CMy3DModelViewerView::PreCreateWindow(CREATESTRUCT& cs)
 	// TODO: Modify the Window class or styles here by modifying
 	//  the CREATESTRUCT cs
 
-	m_Camera.Initialize ( D3DXToRadian ( 45.0f ), 4.0f / 3.0f, 0.01f, 100.0f );
+	m_Camera.Initialize ( D3DXToRadian ( 45.0f ), 4.0f / 3.0f, 0.01f, 1000.0f );
 	m_Camera.SetMode ( CCamera::MODE_TARGET );
 	m_Camera.SetPosition ( 0.0f, 0.0f, -10.0f );
 	m_Camera.SetTarget ( 0.0f, 0.0f, 0.0f );
@@ -89,23 +95,105 @@ void CMy3DModelViewerView::OnDraw(CDC* pDC)
 
 		IDirect3DDevice9* pDevice = C3DGfx::GetInstance ()->GetDevice () ;
 
+
+
+// 		shared float4x4 g_matSunLight : SUNLIGHT ;		// Sun Light characteristics
+// 														// Row1 : Direction
+// 														// Row2 : Diffuse
+// 														// Row3 : Ambient
+// 														// Row4 : Reserved
+		( (CMainFrame*)AfxGetMainWnd () )->m_pShader->SetMatrix ( "g_matView", &m_Camera.GetViewMatrix () ) ;
+		( (CMainFrame*)AfxGetMainWnd () )->m_pShader->SetMatrix ( "g_matProj", &m_Camera.GetProjectionMatrix () ) ;
+		( (CMainFrame*)AfxGetMainWnd () )->m_pShader->SetMatrix ( "g_matWorld", &m_matWorld ) ;
+
+		matrix matLight ;
+
+		vector4 vLightDir ( 0.0f, -1.0f, 0.5f, 0.0f ) ;
+		D3DXVec4Normalize ( &vLightDir, &vLightDir ) ;
+		CopyMemory ( &matLight[0], &vLightDir, 4*sizeof(float) ) ;
+		vector4 vLightColor ( 1.0f, 1.0f, 1.0f, 0.0f ) ;
+		CopyMemory ( &matLight[4], &vLightColor, 4*sizeof(float) ) ;
+		vector4 vAmbLight ( 0.5f, 0.5f, 0.5f, 0.0f ) ;
+		CopyMemory ( &matLight[8], &vAmbLight, 4*sizeof(float) ) ;
+
+		((CMainFrame*)AfxGetMainWnd())->m_pShader->SetMatrix ( "g_matSunLight", &matLight ) ;
+
+		if ( GetDocument ()->m_d3dMesh1.Parts.size() ) {
+
+			CD3DMesh2::RenderD3DMesh ( pDevice, GetDocument ()->m_d3dMesh1 ) ;
+
+			if ( GetDocument ()->m_d3dMesh2.Parts.size() ) {
+				CD3DMesh2::RenderD3DMesh ( pDevice, GetDocument ()->m_d3dMesh2 ) ;
+			}
+
+		} else {
+			if ( m_pMesh )
+				m_pMesh->DrawSubset ( 0 );
+		}
+
+		if ( 0 )
 		if ( GetDocument ()->m_Mesh.pVB ) {
 
-			pDevice->SetFVF ( GetDocument ()->m_Mesh.FVF ) ;
-			pDevice->SetStreamSource ( 0, GetDocument ()->m_Mesh.pVB, 0, GetDocument ()->m_Mesh.vertexSize ) ;
-			pDevice->SetTexture ( 0, GetDocument ()->m_Mesh.pTex ) ;
-			pDevice->DrawPrimitive ( D3DPT_TRIANGLELIST, 0, GetDocument ()->m_Mesh.triCount ) ;
+			//pDevice->SetFVF ( GetDocument ()->m_Mesh.FVF ) ;
+			//pDevice->SetStreamSource ( 0, GetDocument ()->m_Mesh.pVB, 0, GetDocument ()->m_Mesh.vertexSize ) ;
+			//pDevice->SetTexture ( 0, GetDocument ()->m_Mesh.pTex ) ;
+			//pDevice->DrawPrimitive ( D3DPT_TRIANGLELIST, 0, GetDocument ()->m_Mesh.triCount ) ;
+
+			CD3DMesh2::RenderD3DMesh ( pDevice, GetDocument()->m_d3dMesh1 ) ;
 
 			if ( GetDocument ()->m_Mesh2.pVB ) {
-				pDevice->SetFVF ( GetDocument ()->m_Mesh2.FVF ) ;
-				pDevice->SetStreamSource ( 0, GetDocument ()->m_Mesh2.pVB, 0, GetDocument ()->m_Mesh2.vertexSize ) ;
-				pDevice->SetTexture ( 0, GetDocument ()->m_Mesh2.pTex ) ;
-				pDevice->DrawPrimitive ( D3DPT_TRIANGLELIST, 0, GetDocument ()->m_Mesh2.triCount ) ;
+				//pDevice->SetFVF ( GetDocument ()->m_Mesh2.FVF ) ;
+				//pDevice->SetStreamSource ( 0, GetDocument ()->m_Mesh2.pVB, 0, GetDocument ()->m_Mesh2.vertexSize ) ;
+				//pDevice->SetTexture ( 0, GetDocument ()->m_Mesh2.pTex ) ;
+				//pDevice->DrawPrimitive ( D3DPT_TRIANGLELIST, 0, GetDocument ()->m_Mesh2.triCount ) ;
+				CD3DMesh2::RenderD3DMesh ( pDevice, GetDocument()->m_d3dMesh2 ) ;
 			}
 		}
 		else {
 			if ( m_pMesh )
 				m_pMesh->DrawSubset ( 0 );
+		}
+
+		{ // Update HUD
+			static float s_fTime = (float)GetTickCount () / 1000.0f ;
+			static float s_fPrevTime = s_fTime ;
+			static bool s_bUpdated = false ;
+
+			//tlGuiHud::update ( 0.01f ) ;
+
+			// 		s_fTime = (float) GetTickCount () / 1000.0f ;
+			// 		float dt = s_fTime - s_fPrevTime ;
+			// 		if ( dt > 0.0f ) {
+			// 			tlGuiHud::update ( dt ) ;
+			// 			s_bUpdated = true ;
+			// 		}
+			// 		else {
+			// 			tlGuiHud::update ( 0.001f ) ;
+			// 			s_bUpdated = true ;
+			// 		}
+			// 		s_fPrevTime = s_fTime ;
+
+			// Show the ImGui test window. Most of the sample code is in ImGui::ShowTestWindow()
+			static bool show_test_window = false;
+			if ( show_test_window ) {
+				//ImGui::SetNewWindowDefaultPos ( ImVec2 ( 5, 5 ) );
+				//ImGui::ShowTestWindow ( &show_test_window );
+			}
+
+			CPoint ptCursor ;
+			::GetCursorPos ( &ptCursor ) ;
+			::ScreenToClient ( m_hWnd, &ptCursor ) ;
+			//ptCursor.x -= 800 ;
+
+			bool bL = ( GetAsyncKeyState ( VK_LBUTTON ) & 0x8000 ) != 0 ;
+
+			//ImGui::GetIO ().MousePos = ImVec2 ( (float)ptCursor.x, (float)ptCursor.y );
+			//ImGui::GetIO ().MouseDown [ 0 ] = bL ;
+			//ImGui::GetIO ().MouseDown [ 1 ] = ( GetAsyncKeyState ( VK_RBUTTON ) & 0x8000 ) != 0 ;
+
+			//ImGui::Render () ;
+
+			//ProcessHudInput() ;
 		}
 
 		C3DGfx::GetInstance ()->EndFrame ();
@@ -547,14 +635,24 @@ void CMy3DModelViewerView::ProcessMouseInput(INTERACTION_MSG_DATA& imd)
 		float fDeltaY = imd.ptCursor.y - s_ptStart.y;
 
 		if (imd.ButtonStatus.bLButton) { // Dragging Left Button
-			float fYaw = m_Camera.GetYaw();
+// 			float fYaw = m_Camera.GetYaw();
+// 			fYaw += fDeltaX / 100.0f;
+// 
+// 			float fPitch = m_Camera.GetPitch();
+// 			fPitch += fDeltaY / 100.0f;
+// 
+// 			m_Camera.SetYaw(fYaw);
+// 			m_Camera.SetPitch(fPitch);
+
+			float fYaw = m_fYaw ;
 			fYaw += fDeltaX / 100.0f;
+			m_fYaw = fYaw ;
 
-			float fPitch = m_Camera.GetPitch();
-			fPitch += fDeltaY / 100.0f;
+			float fPitch = m_fPitch;
+			fPitch -= fDeltaY / 100.0f;
+			m_fPitch = fPitch ;
 
-			m_Camera.SetYaw(fYaw);
-			m_Camera.SetPitch(fPitch);
+			UpdateObjectMatrix() ;
 
 			RedrawWindow();
 		}
@@ -565,6 +663,9 @@ void CMy3DModelViewerView::ProcessMouseInput(INTERACTION_MSG_DATA& imd)
 			fDist += fDeltaY/10.0f;
 
 			m_Camera.SetDistance(fDist);
+
+			((CMainFrame*)AfxGetMainWnd())->m_pShader->SetMatrix ( "g_matView", &m_Camera.GetViewMatrix() ) ;
+			((CMainFrame*)AfxGetMainWnd())->m_pShader->SetMatrix ( "g_matProj", &m_Camera.GetProjectionMatrix() ) ;
 
 			RedrawWindow();
 		}
@@ -594,114 +695,28 @@ void CMy3DModelViewerView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 
 void CMy3DModelViewerView::OnInitialUpdate()
 {
+	if ( GetDocument()->m_d3dMesh1.Parts.size() ) {
+		float dy = 1.0f / tanf ( m_Camera.GetFovY () / 2.0f ) ;
+		float zy = dy * ( GetDocument ()->m_d3dMesh1.ptMax.y - GetDocument ()->m_d3dMesh1.ptMin.y ) * 1.25f / 2.0f ;
+
+		float dx = 1.0f / tanf ( m_Camera.GetFovX () / 2.0f ) ;
+		float zx = dx * ( GetDocument ()->m_d3dMesh1.ptMax.x - GetDocument ()->m_d3dMesh1.ptMin.x ) * 1.25f / 2.0f ;
+
+		float z = zy ;
+		if ( zx > zy )
+			z = zx ;
+
+		m_Camera.SetDistance ( z ) ;
+	}
+
+	( (CMainFrame*)AfxGetMainWnd () )->m_pShader->SetMatrix ( "g_matView", &m_Camera.GetViewMatrix () ) ;
+	( (CMainFrame*)AfxGetMainWnd () )->m_pShader->SetMatrix ( "g_matProj", &m_Camera.GetProjectionMatrix () ) ;
+
 	CView::OnInitialUpdate();
 }
 
 bool CMy3DModelViewerView::LoadModelFromMemory ( void* pData, DWORD dwDataSize )
 {
-/*	if ( ! pData )
-		return false;
-
-	mz_zip_archive archive;
-
-	ZeroMemory ( &archive, sizeof ( archive ) );
-
-	if ( !mz_zip_reader_init_mem ( &archive, pData, dwDataSize, 0 ) )
-		return false;
-
-	{
-		size_t iDecompressed = 0;
-		void* pDecompressedData = mz_zip_reader_extract_file_to_heap ( &archive, "header.json", &iDecompressed, 0 );
-
-		// TODO: Find a better way if any
-		char* pszJsonText = new char [ iDecompressed + 1 ];
-		assert ( pszJsonText != NULL );
-		memcpy_s ( pszJsonText, iDecompressed, pDecompressedData, iDecompressed );
-		pszJsonText [ iDecompressed ] = 0;
-		delete pDecompressedData;
-
-		LoadobjectFromJson ( pszJsonText, pObjectSlot );
-		delete pszJsonText;
-	}
-
-	mz_zip_reader_end ( &archive );
-
-	// 		char szSystemTempPath [ MAX_PATH ] ;
-	// 		GetTempPathA ( MAX_PATH, szSystemTempPath ) ;
-	// 		strcpy_s ( szSystemTempPath, MAX_PATH, ".\\Temp\\" ) ;
-
-	char szSystemTempPath [ MAX_PATH ];
-	if ( 0 == GetTempPathA ( MAX_PATH, szSystemTempPath ) ) {
-		strcpy_s ( szSystemTempPath, MAX_PATH, "." );
-	}
-
-	char szTempName [ MAX_PATH ];
-	if ( 0 == GetTempFileNameA ( NULL, NULL, 0, szTempName ) ) {
-		strcpy_s ( szTempName, MAX_PATH, "\\tmp" );
-	}
-
-	char szPath [ MAX_PATH ];
-	strcpy_s ( szPath, MAX_PATH, szSystemTempPath );
-	strcat_s ( szPath, MAX_PATH, szTempName );
-
-	BOOL bResult = CreateDirectoryA ( szPath, NULL );
-
-	strcat_s ( szPath, MAX_PATH, "\\" );
-
-	if ( !bResult ) {
-		strcpy_s ( szPath, MAX_PATH, ".\\tmp\\" );
-	}
-
-	ZeroMemory ( &archive, sizeof ( archive ) );
-
-	if ( !mz_zip_reader_init_mem ( &archive, pData, dwDataSize, 0 ) )
-		return false;
-
-	int iFileCount = mz_zip_reader_get_num_files ( &archive );
-
-	for ( int iFile = 0; iFile < iFileCount; iFile++ ) {
-
-		char szSrcFile [ MAX_PATH ];
-		mz_zip_reader_get_filename ( &archive, iFile, szSrcFile, MAX_PATH );
-
-		char szDestFile [ MAX_PATH ];
-		strcpy_s ( szDestFile, MAX_PATH, szPath );
-		strcat_s ( szDestFile, MAX_PATH, szSrcFile );
-
-		mz_zip_reader_extract_file_to_file ( &archive, szSrcFile, szDestFile, 0 );
-	}
-
-	mz_zip_reader_end ( &archive );
-
-	char szMeshFilename [ MAX_PATH ];
-	strcpy_s ( szMeshFilename, MAX_PATH, szPath );
-	strcat_s ( szMeshFilename, MAX_PATH, pObjectSlot->szMeshFilename );
-
-	bool bRes = CXFileUtil::LoadXFile ( C3DGfx::Instance ()->GetDevice (),
-		szMeshFilename,
-		szPath,
-		"Data/Shader/",
-		&pObjectSlot->pMesh );
-
-	{ // Clean temp files
-		char szFind [ MAX_PATH ];
-		strcpy_s ( szFind, MAX_PATH, szPath );
-		strcat_s ( szFind, "*.*" );
-
-		WIN32_FIND_DATAA fd;
-		HANDLE hFind = FindFirstFileA ( szFind, &fd );
-		while ( FindNextFileA ( hFind, &fd ) ) {
-			char szFile [ MAX_PATH ];
-			strcpy_s ( szFile, MAX_PATH, szPath );
-			strcat_s ( szFile, fd.cFileName );
-
-			BOOL bb = DeleteFileA ( szFile );
-			bb = 0;
-		}
-		FindClose ( hFind );
-
-		RemoveDirectoryA ( szPath );
-	}*/
 
 	return true;
 }
@@ -725,5 +740,21 @@ void CMy3DModelViewerView::OnSize ( UINT nType, int cx, int cy )
 			D3DXCreateTeapot ( C3DGfx::GetInstance ()->GetDevice (), &m_pMesh, NULL ) ;
 	}
 
+}
+
+void CMy3DModelViewerView::UpdateObjectMatrix ()
+{
+	matrix matRotYaw ;
+	D3DXMatrixRotationY ( &matRotYaw, m_fYaw ) ;
+
+	matrix matRotPitch ;
+	D3DXMatrixRotationX ( &matRotPitch, m_fPitch ) ;
+
+	matrix matTrans ;
+	D3DXMatrixTranslation ( &matTrans, m_ptPos.x, m_ptPos.y, m_ptPos.z ) ;
+
+	m_matWorld = matRotYaw * matRotPitch * matTrans ;
+
+	((CMainFrame*)AfxGetMainWnd())->m_pShader->SetMatrix ( "g_matWorld", &m_matWorld ) ;
 }
 

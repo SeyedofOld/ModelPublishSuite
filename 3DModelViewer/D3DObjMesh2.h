@@ -79,6 +79,8 @@ struct D3D_MODEL_PART {
 
 struct D3D_MODEL {
 	vector<D3D_MODEL_PART> Parts ;
+	D3DXVECTOR3 ptMin ;
+	D3DXVECTOR3 ptMax ;
 };
 
 

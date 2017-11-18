@@ -9,7 +9,7 @@
 using namespace std ;
 
 
-# define LINE_BUFF_SIZE 4096
+#define LINE_BUFF_SIZE 4096
 
 
 
@@ -340,8 +340,7 @@ INT LoadObj( LPCTSTR sFileName, CObjMesh* pOutObjMesh )
 			nc++;
 		} else if( 0 == strncmp( "vt ", buffer, 3 ) )	{
 			// Texture coordinate
-			sscanf( buffer+2, "%f %f",
-				&obj.texCoords[tc].x, &obj.texCoords[tc].y );
+			sscanf( buffer+2, "%f %f",	&obj.texCoords[tc].x, &obj.texCoords[tc].y );
 			tc++;
 		} else if( 0 == strncmp( "f ", buffer, 2 ) ) {
 			// Face. See remark at the bottom of the file to see why the somewhat
@@ -489,13 +488,15 @@ INT LoadObj2 ( LPCTSTR sFileName, MY_OBJ* pObj )
 	MY_OBJ_PART* cur_part	  = &obj.subParts.at ( 0 ) ;
 	MY_DRAW_BATCH* cur_subset = &cur_part->subSets.at ( 0 ) ;
 
-	int iVertOfs = 0 ;
-	int iNormalOfs = 0 ;
-	int iUvOfs = 0 ;
+// 	int iVertOfs = 0 ;
+// 	int iNormalOfs = 0 ;
+// 	int iUvOfs = 0 ;
 
 	bool bApplyOfs = false ;
 	//bool bFirstVertList = true ;
 	bool bPrevWasVerts = true ;
+
+	bool bFirstMtl = true ;
 
 	while ( !feof ( pFile ) ) {
 		buffer [ 0 ] = 0;
@@ -504,40 +505,43 @@ INT LoadObj2 ( LPCTSTR sFileName, MY_OBJ* pObj )
 		if ( 0 == strncmp ( "v ", buffer, 2 ) ) {
 			if ( !bPrevWasVerts ) {
 				//bApplyOfs = true ;
-				iVertOfs = obj.Vertices.size () ;
-				iNormalOfs = obj.Normals.size () ;
-				iUvOfs = obj.UVs.size () ;
+// 				iVertOfs = obj.Vertices.size () ;
+// 				iNormalOfs = obj.Normals.size () ;
+// 				iUvOfs = obj.UVs.size () ;
 			}
 
 			TFloat3 v ;
-			sscanf ( buffer + 1, "%f %f %f", &v.x, &v.y, &v.z );
+			sscanf ( buffer + 2, "%f %f %f", &v.x, &v.y, &v.z );
 			obj.Vertices.push_back ( v ) ;
 			bPrevWasVerts = true ;
 		}
 		else if ( 0 == strncmp ( "vn ", buffer, 3 ) ) {
 			if ( !bPrevWasVerts ) {
 				//bApplyOfs = true ;
-				iVertOfs = obj.Vertices.size () ;
-				iNormalOfs = obj.Normals.size () ;
-				iUvOfs = obj.UVs.size () ;
+// 				iVertOfs = obj.Vertices.size () ;
+// 				iNormalOfs = obj.Normals.size () ;
+// 				iUvOfs = obj.UVs.size () ;
 			}
 			TFloat3 n ;
-			sscanf ( buffer + 1, "%f %f %f", &n.x, &n.y, &n.z );
+			sscanf ( buffer + 3, "%f %f %f", &n.x, &n.y, &n.z );
 			obj.Normals.push_back ( n ) ;
-			cur_subset->bHasNormal = true ;
+			//cur_subset->bHasNormal = true ;
 			bPrevWasVerts = true ;
 		}
 		else if ( 0 == strncmp ( "vt ", buffer, 3 ) ) {
 			if ( !bPrevWasVerts ) {
 				//bApplyOfs = true ;
-				iVertOfs = obj.Vertices.size () ;
-				iNormalOfs = obj.Normals.size () ;
-				iUvOfs = obj.UVs.size () ;
+// 				iVertOfs = obj.Vertices.size () ;
+// 				iNormalOfs = obj.Normals.size () ;
+// 				iUvOfs = obj.UVs.size () ;
 			}
 			UV uv ;
-			sscanf ( buffer + 2, "%f %f",	&uv.u, &uv.v);
+			float w ;
+			if ( sscanf ( buffer + 2, "%f %f %f", &uv.u, &uv.v, &w ) != 3 )
+				sscanf ( buffer + 2, "%f %f", &uv.u, &uv.v ) ;
+			uv.v = 1.0f - uv.v ;
 			obj.UVs.push_back ( uv ) ;
-			cur_subset->bHasUv = true ;
+			//cur_subset->bHasUv = true ;
 			bPrevWasVerts = true ;
 		}
 		else if ( 0 == strncmp ( "f ", buffer, 2 ) ) {
@@ -565,7 +569,7 @@ INT LoadObj2 ( LPCTSTR sFileName, MY_OBJ* pObj )
 				v = atoi ( s ); // or sscanf( s, "%d", &v );
 				if ( v < 0 ) v = /*iVertOfs +*/ v + 1;
 				if ( bApplyOfs )
-					face.VertIndex [ i ] = iVertOfs + v - 1; // NOTE: This is to make the indices 0-based.
+					face.VertIndex [ i ] = /*iVertOfs */+ v - 1; // NOTE: This is to make the indices 0-based.
 				else
 					face.VertIndex [ i ] = v - 1; // NOTE: This is to make the indices 0-based.
 				//fvc++;
@@ -576,9 +580,9 @@ INT LoadObj2 ( LPCTSTR sFileName, MY_OBJ* pObj )
 					s++;
 					if ( cur_subset->bHasUv ) {
 						t = atoi ( s );
-						if ( t < 0 ) t = iUvOfs + t + 2;
+						if ( t < 0 ) t = /*iUvOfs */+ t + 2;
 						if ( bApplyOfs )
-							face.UvIndex [ i ] = iUvOfs + t - 1;
+							face.UvIndex [ i ] = /*iUvOfs */+ t - 1;
 						else
 							face.UvIndex [ i ] = t - 1;
 						//ftc++;
@@ -589,9 +593,9 @@ INT LoadObj2 ( LPCTSTR sFileName, MY_OBJ* pObj )
 						s++;
 					s++;
 					n = atoi ( s );
-					if ( n < 0 ) n = iNormalOfs + n + 2;
+					if ( n < 0 ) n = /*iNormalOfs */+ n + 2;
 					if ( bApplyOfs )
-						face.NormalIndex [ i ] = iNormalOfs + n - 1;
+						face.NormalIndex [ i ] = /*iNormalOfs */+ n - 1;
 					else
 						face.NormalIndex [ i ] = n - 1;
 					//fnc++;
@@ -617,13 +621,23 @@ INT LoadObj2 ( LPCTSTR sFileName, MY_OBJ* pObj )
 			cur_subset = &cur_part->subSets [ 0 ] ;
 		}
 		else if ( 0 == _strnicmp ( "usemtl ", buffer, 7 ) ) {
-			MY_MTL new_mtrl ;
-			char szMtlName [ MAX_PATH ] ;
-			sscanf ( buffer + 7, "%s", szMtlName );
-			new_mtrl.sName = szMtlName ;
-			obj.Materials.push_back ( new_mtrl ) ;
+			
+			if ( bFirstMtl ) {
+				char szMtlName [ MAX_PATH ] ;
+				sscanf ( buffer + 7, "%s", szMtlName );
+				cur_mtrl->sName = szMtlName ;
 
-			cur_mtrl = &obj.Materials.at ( obj.Materials.size () - 1 ) ;
+				bFirstMtl = false ;
+			}
+			else {
+				MY_MTL new_mtrl ;
+				char szMtlName [ MAX_PATH ] ;
+				sscanf ( buffer + 7, "%s", szMtlName );
+				new_mtrl.sName = szMtlName ;
+				obj.Materials.push_back ( new_mtrl ) ;
+
+				cur_mtrl = &obj.Materials.at ( obj.Materials.size () - 1 ) ;
+			}
 		}
 		else if ( 0 == _strnicmp ( "mtllib ", buffer, 7 ) ) {
 			char szMtlLibFile [ MAX_PATH ] ;
@@ -633,216 +647,25 @@ INT LoadObj2 ( LPCTSTR sFileName, MY_OBJ* pObj )
 
 	}
 
-	int mmm = 1 ;
-
-	/*
-	int numVertices = 0;
-	int numNormals = 0;
-	int numTexCoords = 0;
-	int numFaces = 0;
-	int numObjects = 0;
-	int numGroups = 0;
-	int numMatGroups = 0;
-	int numFaceVertices = 0;
-	int numFaceNormals = 0;
-	int numFaceTexCoords = 0;
-
-	//pOutObjMesh->sMtlFileName [ 0 ] = 0;
-
-	bool hasTexCoords = false, hasNormals = false;
-
-	// We scan the file with two passes to determine the number of elements to Allocate.
-	// Stupid obj file design.
-	while ( !feof ( pFile ) )
-	{
-		buffer [ 0 ] = 0;
-		fgets ( buffer, LINE_BUFF_SIZE, pFile );
-
-		if ( 0 == strncmp ( "v ", buffer, 2 ) )
-			numVertices++;
-		else if ( 0 == strncmp ( "vn ", buffer, 3 ) )
-			numNormals++;
-		else if ( 0 == strncmp ( "vt ", buffer, 3 ) )
-			numTexCoords++;
-		else if ( 0 == strncmp ( "f ", buffer, 2 ) )
-		{
-			// TODO: 'fo' (face outline) is seemingly an old flag equivalent to f (face).
-			// Consider adding support for that too.
-			numFaces++;
-			int vCount = 0;
-			InspectFaceLine ( buffer, vCount, numFaces == 1, hasTexCoords, hasNormals );
-
-			numFaceVertices += vCount;
-			if ( hasNormals ) numFaceNormals += vCount;
-			if ( hasTexCoords ) numFaceTexCoords += vCount;
-
-			obj.numTriangles += vCount - 2;
-		}
-		else if ( 0 == strncmp ( "o ", buffer, 2 ) )
-			numObjects++;
-		else if ( 0 == _strnicmp ( "usemtl ", buffer, 7 ) )
-			numMatGroups++;
-		else if ( 0 == strncmp ( "g ", buffer, 2 ) )
-		{
-			// The 'g' statement can include more than one group.
-			for ( const char* s = buffer; *s; s++ )
-				if ( *s == ' ' )
-					numGroups++;
-		}
-		else if ( 0 == _strnicmp ( "mtllib ", buffer, 7 ) )
-			sscanf ( buffer + 7, "%s", pOutObjMesh->sMtlFileName );
-	}
-
-	if ( numVertices == 0 || numFaces == 0 ) {
-		fclose ( pFile );
-		return 0;
-	} // Failure.
-
-
-	obj.vertices.resize ( numVertices );
-	obj.normals.resize ( numNormals );
-	obj.texCoords.resize ( numTexCoords );
-	obj.faces.resize ( numFaces );
-
-	obj.faceVertices.resize ( numFaceVertices );
-	obj.faceNormals.resize ( numFaceNormals );
-	obj.faceTexCoords.resize ( numFaceTexCoords );
-
-	obj.groups.resize ( numGroups );
-	obj.matGroups.resize ( numMatGroups );
-
-	rewind ( pFile );
-
-	UINT vc = 0, nc = 0, tc = 0, fc = 0;
-	UINT fvc = 0, fnc = 0, ftc = 0;
-	UINT mc = 0; // material counter.
-	UINT gc = 0; // Group counter.
-	UINT ag = 0; // Number of groups on last encountered 'g ' line.
-
-	while ( !feof ( pFile ) ) {
-
-		buffer [ 0 ] = '\0';
-		fgets ( buffer, LINE_BUFF_SIZE, pFile );
-
-		if ( 0 == strncmp ( "v ", buffer, 2 ) ) {
-			// Vertex
-			CObjMesh::TFloat3& v = obj.vertices [ vc++ ];
-			sscanf ( buffer + 1, "%f %f %f", &v.x, &v.y, &v.z );
-			if ( vc == 1 )
-				obj.bbmin = obj.bbmax = v;
-			else {
-				if ( v.x < obj.bbmin.x ) obj.bbmin.x = v.x; else if ( v.x > obj.bbmax.x ) obj.bbmax.x = v.x;
-				if ( v.y < obj.bbmin.y ) obj.bbmin.y = v.y; else if ( v.y > obj.bbmax.y ) obj.bbmax.y = v.y;
-				if ( v.z < obj.bbmin.z ) obj.bbmin.z = v.z; else if ( v.z > obj.bbmax.z ) obj.bbmax.z = v.z;
-			}
-		}
-		else if ( 0 == strncmp ( "vn ", buffer, 3 ) ) {
-			// Normal
-			sscanf ( buffer + 2, "%f %f %f",
-				&obj.normals [ nc ].x, &obj.normals [ nc ].y, &obj.normals [ nc ].z );
-			nc++;
-		}
-		else if ( 0 == strncmp ( "vt ", buffer, 3 ) ) {
-			// Texture coordinate
-			sscanf ( buffer + 2, "%f %f",
-				&obj.texCoords [ tc ].x, &obj.texCoords [ tc ].y );
-			tc++;
-		}
-		else if ( 0 == strncmp ( "f ", buffer, 2 ) ) {
-			// Face. See remark at the bottom of the file to see why the somewhat
-			// cryptic interpretation of an 'f ' line in the source file.
-
-			CObjMesh::CFace& face = obj.faces [ fc ];
-
-			InspectFaceLine ( buffer, face.vCount, false, hasTexCoords, hasNormals );
-
-			face.firstVertex = fvc;
-			face.firstNormal = hasNormals ? fnc : -1;
-			face.firstTexCoord = hasTexCoords ? ftc : -1;
-
-
-			const char* s = buffer;
-			for ( int i = 0; i<face.vCount; i++ ) {
-				int v = -1, t = -1, n = -1;
-				while ( *s != ' ' )
-					s++;
-				s++;
-
-				// NOTE: Negative indices are relative.
-
-				v = atoi ( s ); // or sscanf( s, "%d", &v );
-				if ( v < 0 ) v = vc + v + 1;
-				obj.faceVertices [ fvc ] = v - 1; // NOTE: This is to make the indices 0-based.
-				fvc++;
-
-				if ( hasTexCoords || hasNormals ) {
-					while ( *s != '/' )
-						s++;
-					s++;
-					if ( hasTexCoords ) {
-						t = atoi ( s );
-						if ( t < 0 ) t = tc + t + 2;
-						obj.faceTexCoords [ ftc ] = t - 1;
-						ftc++;
-					}
-				}
-				if ( hasNormals ) {
-					while ( *s != '/' )
-						s++;
-					s++;
-					n = atoi ( s );
-					if ( n < 0 ) n = nc + n + 2;
-					obj.faceNormals [ fnc ] = n - 1;
-					fnc++;
-				}
-			}
-			fc++;
-		}
-		else if ( 0 == _strnicmp ( "usemtl ", buffer, 7 ) ) {
-			obj.matGroups [ mc ].firstFace = fc;
-			obj.matGroups [ mc ].name [ 0 ] = 0;
-			//strncpy( obj.matGroups[ mc ].name, buffer + 7, sizeof(obj.matGroups[0].name) );
-			sscanf ( buffer + 7, "%s", obj.matGroups [ mc ].name );
-			obj.matGroups [ mc ].numFaces = 0;
-			if ( mc > 0 )
-				obj.matGroups [ mc - 1 ].numFaces = fc - obj.matGroups [ mc - 1 ].firstFace;
-			mc++;
-		}
-		else if ( 0 == strncmp ( "g ", buffer, 2 ) ) {
-			// The 'g' statement can include more than one group, in which case all that
-			// follows belong to all groups on that line.
-			if ( gc > 0 )
-				for ( UINT j = ag; j>0; j-- )
-					obj.groups [ gc - j ].numFaces = fc - obj.groups [ gc - j ].firstFace;
-			ag = 0;
-			for ( const char* s = buffer; *s; s++ ) {
-				if ( *s == ' ' ) {
-					// TODO: sscanf() might not be the best solution to read strings.
-					sscanf ( s + 1, "%s", obj.groups [ gc + ag ].name );
-					obj.groups [ gc + ag ].firstFace = fc;
-					obj.groups [ gc + ag ].numFaces = 0;
-					ag++;
-				}
-			}
-			gc += ag;
-		}
-	}
-
-	// Calculate face count for last defined material.
-	if ( mc > 0 )
-		obj.matGroups [ mc - 1 ].numFaces = fc - obj.matGroups [ mc - 1 ].firstFace;
-
-	// Calculate face count for groups defined in last 'g ' statement.
-	if ( gc > 0 )
-		for ( UINT j = ag; j>0; j-- )
-			obj.groups [ gc - j ].numFaces = fc - obj.groups [ gc - j ].firstFace;
-
-
-*/
-
 	fclose ( pFile );
 
+	obj.ptMin.x = obj.ptMin.y = obj.ptMin.z = FLT_MAX ;
+	obj.ptMax.x = obj.ptMax.y = obj.ptMax.z = -FLT_MAX ;
+	for ( unsigned int i = 0 ; i < obj.Vertices.size() ; i++ ) {
+		if ( obj.Vertices [ i ].x < obj.ptMin.x )
+			obj.ptMin.x = obj.Vertices [ i ].x ;
+		if ( obj.Vertices [ i ].y < obj.ptMin.y )
+			obj.ptMin.y = obj.Vertices [ i ].y ;
+		if ( obj.Vertices [ i ].z < obj.ptMin.z )
+			obj.ptMin.z = obj.Vertices [ i ].z ;
 
+		if ( obj.Vertices [ i ].x > obj.ptMax.x )
+			obj.ptMax.x = obj.Vertices [ i ].x ;
+		if ( obj.Vertices [ i ].y > obj.ptMax.y )
+			obj.ptMax.y = obj.Vertices [ i ].y ;
+		if ( obj.Vertices [ i ].z > obj.ptMax.z )
+			obj.ptMax.z = obj.Vertices [ i ].z ;
+	}
 
 	// Now load mtl file.
 	if ( obj.sMtrlFilename == "" )
@@ -886,12 +709,21 @@ INT LoadMtlLib2 ( LPCTSTR sFileName, vector<MY_MTL>& materials )
 		fgets ( buffer, LINE_BUFF_SIZE, pFile );
 		if ( 0 == strncmp ( "newmtl ", buffer, 7 ) ) {
 			//pMat = new TObjMaterial;
-			MY_MTL new_mtl ;
-			materials.push_back ( new_mtl );
-			pMat = &materials.at ( materials.size () - 1 ) ;
+
 			char szName [ MAX_PATH ] ;
 			sscanf ( buffer + 7, "%s", szName );
-			pMat->sName = szName ;
+
+			pMat = NULL ;
+			for ( unsigned int i = 0 ; i < materials.size () ; i++ ) {
+				if ( materials [ i ].sName == szName ) {
+					pMat = &materials [ i ] ;
+					break ;
+				}
+			}
+// 			MY_MTL new_mtl ;
+// 			materials.push_back ( new_mtl );
+// 			pMat = &materials.at ( materials.size () - 1 ) ;
+// 			pMat->sName = szName ;
 		}
 		else if ( pMat == NULL )
 			continue; // Skip anything until we find a newmtl statement.
