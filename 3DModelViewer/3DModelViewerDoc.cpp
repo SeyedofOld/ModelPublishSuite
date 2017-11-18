@@ -171,6 +171,9 @@ bool CMy3DModelViewerDoc::LoadModelFromMemory ( void* pData, DWORD dwDataSize, C
 	if ( ! pData )
 		return false;
 
+	wchar_t szOrigPath [ MAX_PATH ] ;
+	GetCurrentDirectory ( MAX_PATH, szOrigPath ) ;
+
 	mz_zip_archive archive;
 
 	ZeroMemory ( &archive, sizeof ( archive ) );
@@ -266,11 +269,15 @@ bool CMy3DModelViewerDoc::LoadModelFromMemory ( void* pData, DWORD dwDataSize, C
 
 		mesh.Create ( C3DGfx::GetInstance ()->GetDevice(), obj, FALSE, TRUE ) ;
 
-		//bool bRes = CXFileUtil::LoadXFile ( C3DGfx::Instance ()->GetDevice (),
-		//szMeshFilename,
-		//szPath,
-		//"Data/Shader/",
-		//&pObjectSlot->pMesh );
+		SetCurrentDirectory ( szOrigPath ) ;
+
+		D3D_MODEL model ;
+		CD3DMesh2::CreateFromObj ( C3DGfx::GetInstance ()->GetDevice (),
+			C3DGfx::GetInstance ()->GetEffectPool (),
+			my_obj,
+			model ) ;
+
+		SetCurrentDirectoryA ( szPath ) ;
 
 
 		{ // Clean temp files

@@ -10,6 +10,7 @@ public:
 
 	CMyEffectInclude() : ID3DXInclude ()
 	{
+		m_szIncludePath [ 0 ] = 0 ;
 	}
 	~CMyEffectInclude ()
 	{
@@ -17,7 +18,7 @@ public:
 	STDMETHOD ( Open )( THIS_ D3DXINCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID *ppData, UINT *pBytes )
 	{
 		char szFile [ MAX_PATH ] ;
-		sprintf_s ( szFile, MAX_PATH, "%s/%s", m_szIncludePath, pFileName ) ;
+		sprintf_s ( szFile, MAX_PATH, "%s%s", m_szIncludePath, pFileName ) ;
 
 		FILE* pFile ;
 		fopen_s ( &pFile, szFile, "rb" ) ;
@@ -141,7 +142,7 @@ bool CD3DMesh2::CreateFromObj ( IDirect3DDevice9* pDevice, ID3DXEffectPool* pEff
 
 			// Material
 			MY_MTL& mtrl = Obj.Materials [ 0 ] ;
-			for ( unsigned int iMtrl = 0 ; iMtrl = Obj.Materials.size () ; iMtrl++ ) {
+			for ( unsigned int iMtrl = 0 ; iMtrl < Obj.Materials.size() ; iMtrl++ ) {
 				if ( Obj.Materials [ iMtrl ].sName == db.sMatName ) {
 					mtrl = Obj.Materials [ iMtrl ] ;
 					break ;

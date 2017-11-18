@@ -6,6 +6,7 @@
 #pragma once
 
 #include "D3DObjMesh.h"
+#include "D3DObjMesh2.h"
 
 class CMy3DModelViewerDoc : public CDocument
 {
