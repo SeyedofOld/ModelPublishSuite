@@ -64,6 +64,9 @@ struct TObjMaterial
 
 
 
+struct TFloat3 { float x, y, z; };
+struct TFloat2 { float x, y; };
+struct UV { float u, v; };
 
 
 struct CObjMesh
@@ -196,4 +199,115 @@ INT LoadObj( LPCTSTR sFileName, CObjMesh* pOutObjMesh );
 // f v//n v//n v//n .. <-- face with normals but no tex coords.
 
 // This importer handles both scenarios.
+
+using namespace std ;
+
+struct MY_MTL {
+	string sName ;
+	float Ka[3] ;
+	float Ks[3] ;
+	float Kd[3] ;
+	float Tf[3] ;
+	float fTr ;
+	float fD ;
+	float fNs ;
+	float fNi ;
+	float fIllum ;
+	string sMapKa ;
+	string sMapKd ;
+	string sMapKs ;
+	string sMapNs ;
+	string sMapTr ;
+	string sMapDisp ;
+	string sMapBump ;
+	string sMapRefl ;
+	MY_MTL () {
+		sName = "$ALI_DEFAULT_MTRL" ;
+		Ka [ 0 ] = 0.2f; Ka [ 1 ] = 0.2f; Ka [ 2 ] = 0.2f;
+		Kd [ 0 ] = 0.8f; Kd [ 1 ] = 0.8f; Kd [ 2 ] = 0.8f;
+		Ks[0] = 1.0f; Ks[1] = 1.0f; Ks[2] = 1.0f;
+		//Ks [ 0 ] = 0.0f; Ks [ 1 ] = 0.0f; Ks [ 2 ] = 0.0f;
+		Tf [ 0 ] = 1.0f; Tf [ 1 ] = 1.0f; Tf [ 2 ] = 1.0f;
+		fTr = 1.f; // Fully opaque.
+				  //Ns = 0.f;
+		fNs = 32.f;
+		fNi = 1.f;
+		fIllum = 2; // No default specified (?).
+// 		Ka = { 0.0f, 0.0f, 0.0f } ;
+// 		Ks = 1.0f ;
+// 		Kd = 1.0f ;
+// 		Tf = 1.0f ;
+		fTr = 1.0f ;
+		fD = 1.0f ;
+		fNs = 1.0f ;
+		fNi = 1.0f ;
+		fIllum = 1.0f ;
+	}
+};
+
+struct MY_FACE {
+	vector<int> VertIndex ;
+	vector<int> NormalIndex ;
+	vector<int> UvIndex ;
+	MY_FACE ( const MY_FACE& a ) {
+		VertIndex = a.VertIndex ;
+		NormalIndex = a.NormalIndex ;
+		UvIndex = a.UvIndex ;
+	} ;
+	MY_FACE () {
+	}
+};
+
+struct MY_DRAW_BATCH {
+	vector<MY_FACE> Faces ;
+// 	int iVertCount ;
+// 	int iFaceCount ;
+// 	int iStartVert ;
+// 	int iStartFace ;
+	string sMatName ;
+	bool bHasNormal ;
+	bool bHasUv ;
+	void Clear () {
+		sMatName = "$ALI_DEFAULT_MTRL" ;
+// 		iVertCount = 0 ;
+// 		iFaceCount = 0 ;
+// 		iStartVert = 0 ;
+// 		iStartFace = 0 ;
+		bHasNormal = false ;
+		bHasUv = false ;
+	}
+	MY_DRAW_BATCH () {
+		Clear () ;
+	}
+	MY_DRAW_BATCH ( const MY_DRAW_BATCH& a ) {
+		bHasUv = a.bHasUv ;
+		bHasNormal = a.bHasNormal ;
+		sMatName = a.sMatName ;
+		Faces = a.Faces ;
+	} ;
+};
+
+struct MY_OBJ_PART {
+	string sName ;
+	vector<MY_DRAW_BATCH> subSets ;
+	MY_OBJ_PART () {
+		sName = "All" ;
+	}
+	MY_OBJ_PART ( const MY_OBJ_PART& a ) { 
+		sName = a.sName ;
+		subSets = a.subSets ;
+	} ;
+};
+
+struct MY_OBJ {
+	vector<MY_OBJ_PART> subParts ;
+	vector<TFloat3> Vertices ;
+	vector<TFloat3> Normals ;
+	vector<UV> UVs ;
+	string sMtrlFilename ;
+	vector<MY_MTL> Materials ;
+};
+
+INT LoadObj2 ( LPCTSTR sFileName, MY_OBJ* pOutObjMesh );
+INT LoadMtlLib2 ( LPCTSTR sFileName, vector<MY_MTL>& materials );
 

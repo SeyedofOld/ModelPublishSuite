@@ -57,6 +57,9 @@
     <ClInclude Include="tlCSingleton.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="D3DObjMesh2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="3DModelViewer.cpp">
@@ -86,12 +89,16 @@
     <ClCompile Include="ObjLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="D3DObjMesh2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="3DModelViewer.reg" />
     <None Include="res\My3DModelViewer.rc2">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="..\Bin\common.fxh" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="3DModelViewer.rc">
@@ -114,5 +121,8 @@
     <Image Include="res\Toolbar256.bmp">
       <Filter>Resource Files</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\Bin\DiffuseMapSpec_trans.fx" />
   </ItemGroup>
 </Project>

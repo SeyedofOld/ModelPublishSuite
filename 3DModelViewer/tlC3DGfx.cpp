@@ -14,6 +14,7 @@ C3DGfx::C3DGfx ( )
 	m_pd3dxSprite = NULL ;
 	m_pd3dxLine   = NULL ;
 	m_pd3dxFont   = NULL ;
+	m_pEffectPool = NULL ;
 
 	ZeroMemory ( &m_PresentParams , sizeof(D3DPRESENT_PARAMETERS) ) ;
 }
@@ -107,6 +108,8 @@ BOOL C3DGfx::Initialize( HWND hWnd , DWORD dwWidth , DWORD dwHeight , D3DFORMAT 
  	m_pd3dxFont->PreloadCharacters ( 0 , 65535 ) ;
  	m_pd3dxFont->PreloadGlyphs ( 0 , 65535 ) ;
 
+	D3DXCreateEffectPool ( &m_pEffectPool ) ;
+
 	InitializeCriticalSection ( &m_csDevice ) ;
 
     m_bInit = TRUE ;
@@ -163,6 +166,7 @@ BOOL C3DGfx::CleanUp ( )
 	TOCHAL_RELEASE ( m_pd3dxSprite ) ;
 	TOCHAL_RELEASE ( m_pd3dDevice ) ;
 	TOCHAL_RELEASE ( m_pDirect3D ) ;
+	TOCHAL_RELEASE ( m_pEffectPool ) ;
 
 	ZeroMemory ( &m_PresentParams , sizeof(D3DPRESENT_PARAMETERS) ) ;
 

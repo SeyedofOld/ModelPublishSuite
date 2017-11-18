@@ -87,17 +87,26 @@ void CMy3DModelViewerView::OnDraw(CDC* pDC)
 
 		//C3DGfx::GetInstance ()->GetDevice ()->SetRenderState ( D3DRS_FILLMODE, D3DFILL_WIREFRAME );
 
+		IDirect3DDevice9* pDevice = C3DGfx::GetInstance ()->GetDevice () ;
+
 		if ( GetDocument ()->m_Mesh.pVB ) {
-			IDirect3DDevice9* pDevice = C3DGfx::GetInstance ()->GetDevice () ;
 
 			pDevice->SetFVF ( GetDocument ()->m_Mesh.FVF ) ;
 			pDevice->SetStreamSource ( 0, GetDocument ()->m_Mesh.pVB, 0, GetDocument ()->m_Mesh.vertexSize ) ;
 			pDevice->SetTexture ( 0, GetDocument ()->m_Mesh.pTex ) ;
 			pDevice->DrawPrimitive ( D3DPT_TRIANGLELIST, 0, GetDocument ()->m_Mesh.triCount ) ;
+
+			if ( GetDocument ()->m_Mesh2.pVB ) {
+				pDevice->SetFVF ( GetDocument ()->m_Mesh2.FVF ) ;
+				pDevice->SetStreamSource ( 0, GetDocument ()->m_Mesh2.pVB, 0, GetDocument ()->m_Mesh2.vertexSize ) ;
+				pDevice->SetTexture ( 0, GetDocument ()->m_Mesh2.pTex ) ;
+				pDevice->DrawPrimitive ( D3DPT_TRIANGLELIST, 0, GetDocument ()->m_Mesh2.triCount ) ;
+			}
 		}
-		else
+		else {
 			if ( m_pMesh )
 				m_pMesh->DrawSubset ( 0 );
+		}
 
 		C3DGfx::GetInstance ()->EndFrame ();
 		C3DGfx::GetInstance ()->ShowFrame ( NULL, NULL, GetSafeHwnd() );

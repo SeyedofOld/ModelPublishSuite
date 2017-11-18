@@ -52,6 +52,8 @@ class C3DGfx : public CSingleton<C3DGfx> {
 
 		BOOL Resize ( int iWidth, int iHeight );
 
+		ID3DXEffectPool* GetEffectPool() { return m_pEffectPool ;  }
+
 	private :
 		BOOL				m_bInit ;
 
@@ -59,6 +61,7 @@ class C3DGfx : public CSingleton<C3DGfx> {
 		LPDIRECT3DDEVICE9	m_pd3dDevice ;
 		LPD3DXSPRITE		m_pd3dxSprite ;
 		LPD3DXLINE			m_pd3dxLine ;
+		ID3DXEffectPool*	m_pEffectPool ;
 		
 		D3DPRESENT_PARAMETERS m_PresentParams ;
 		CRITICAL_SECTION	m_csDevice ;

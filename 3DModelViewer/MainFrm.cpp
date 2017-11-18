@@ -20,6 +20,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
 	ON_WM_CREATE()
 	ON_COMMAND(ID_VIEW_CUSTOMIZE, &CMainFrame::OnViewCustomize)
 	ON_REGISTERED_MESSAGE(AFX_WM_CREATETOOLBAR, &CMainFrame::OnToolbarCreateNew)
+	ON_COMMAND ( ID_OPEN_SECOND, &CMainFrame::OnOpenSecond )
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -28,6 +29,66 @@ static UINT indicators[] =
 	ID_INDICATOR_CAPS,
 	ID_INDICATOR_NUM,
 	ID_INDICATOR_SCRL,
+};
+
+class CMyEffectInclude2 : public ID3DXInclude
+{
+public:
+
+	CMyEffectInclude2 () : ID3DXInclude ()
+	{
+		//assert ( pResMan ) ;
+		//m_pResMan = pResMan ;
+		m_szIncludePath [ 0 ] = 0 ;
+	}
+	~CMyEffectInclude2 ()
+	{
+	}
+	STDMETHOD ( Open )( THIS_ D3DXINCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID *ppData, UINT *pBytes )
+	{
+		char szFile [ MAX_PATH ] ;
+		sprintf_s ( szFile, MAX_PATH, "%s%s", m_szIncludePath, pFileName ) ;
+
+		FILE* pFile ;
+		fopen_s ( &pFile, szFile, "rb" ) ;
+		fseek ( pFile, 0, SEEK_END ) ;
+		*pBytes = ftell ( pFile ) ;
+
+		*ppData = new BYTE [ *pBytes ] ;
+
+		fseek ( pFile, 0, SEEK_SET ) ;
+		fread ( (void*)*ppData, 1, *pBytes, pFile ) ;
+
+		fclose ( pFile ) ;
+
+		// 		DWORD dwSize ;
+		// 
+		// 		BYTE* pData = m_pResMan->LoadDataFile ( szFile , &dwSize ) ;
+		// 		if ( !pData ) 
+		// 		{
+		// 			return E_FAIL ;
+		// 		}
+		// 		*ppData = pData ;
+		// 		*pBytes = dwSize ;
+		return S_OK ;
+	}
+	STDMETHOD ( Close )( THIS_ LPCVOID pData )
+	{
+		//Sm_pResMan->ReleaseDataFile ( (BYTE*)pData ) ;
+		if ( pData )
+			delete pData ;
+		pData = NULL ;
+		return S_OK ;
+	}
+	void SetIncludePath ( char* pszIncludePath )
+	{
+		if ( !pszIncludePath )
+			m_szIncludePath [ 0 ] = 0 ;
+		else
+			strcpy_s ( m_szIncludePath, MAX_PATH, pszIncludePath ) ;
+	}
+private:
+	char m_szIncludePath [ MAX_PATH ] ;
 };
 
 // CMainFrame construction/destruction
@@ -108,6 +169,17 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	C3DGfx::CreateInstance() ;
 	C3DGfx::GetInstance ()->Initialize ( GetSafeHwnd (), 100, 100, D3DFMT_A8R8G8B8, FALSE, 0, FALSE );
 
+	CMyEffectInclude2 EffectInclude ;
+
+	HRESULT hr = D3DXCreateEffectFromFileA ( C3DGfx::GetInstance()->GetDevice(),
+		"DiffuseMapSpec_trans.fx",
+		NULL,
+		&EffectInclude,
+		0,
+		C3DGfx::GetInstance()->GetEffectPool(),
+		&m_pShader,
+		NULL ) ;
+
 	return 0;
 }
 
@@ -164,3 +236,8 @@ LRESULT CMainFrame::OnToolbarCreateNew(WPARAM wp,LPARAM lp)
 	return lres;
 }
 
+void CMainFrame::OnOpenSecond ()
+{
+	// TODO: Add your command handler code here
+	int mm = 1 ;
+}

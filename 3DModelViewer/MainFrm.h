@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <d3dx9.h>
+
 class CMainFrame : public CFrameWndEx
 {
 	
@@ -41,6 +43,9 @@ protected:
 	afx_msg LRESULT OnToolbarCreateNew(WPARAM wp, LPARAM lp);
 	DECLARE_MESSAGE_MAP()
 
+public:
+	afx_msg void OnOpenSecond ();
+	ID3DXEffect* m_pShader ;
 };
 
 

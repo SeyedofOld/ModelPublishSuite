@@ -25,6 +25,7 @@
 IMPLEMENT_DYNCREATE(CMy3DModelViewerDoc, CDocument)
 
 BEGIN_MESSAGE_MAP(CMy3DModelViewerDoc, CDocument)
+	ON_COMMAND ( ID_OPEN_SECOND, &CMy3DModelViewerDoc::OnOpenSecond )
 END_MESSAGE_MAP()
 
 
@@ -159,13 +160,13 @@ BOOL CMy3DModelViewerDoc::OnOpenDocument ( LPCTSTR lpszPathName )
 	fread ( pBuf, iSize, 1, pFile ) ;
 	fclose ( pFile ) ;
 
-	LoadModelFromMemory ( pBuf, iSize ) ;
+	LoadModelFromMemory ( pBuf, iSize, m_Mesh ) ;
 	delete pBuf ;
 
 	return TRUE;
 }
 
-bool CMy3DModelViewerDoc::LoadModelFromMemory ( void* pData, DWORD dwDataSize )
+bool CMy3DModelViewerDoc::LoadModelFromMemory ( void* pData, DWORD dwDataSize, CD3DMesh& mesh )
 {
 	if ( ! pData )
 		return false;
@@ -255,12 +256,15 @@ bool CMy3DModelViewerDoc::LoadModelFromMemory ( void* pData, DWORD dwDataSize )
 		int iLen = MultiByteToWideChar ( CP_ACP, 0, szMeshFilename, strlen ( szMeshFilename ), wszMeshFilename, MAX_PATH ) ;
 		wszMeshFilename [ iLen ] = 0 ;
 
-		CObjMesh mesh ;
-		int iRes = LoadObj ( wszMeshFilename, &mesh ) ;
+		CObjMesh obj ;
+		int iRes = LoadObj ( wszMeshFilename, &obj ) ;
+		
+		MY_OBJ my_obj ;
+		int iRes2 = LoadObj2 ( wszMeshFilename, &my_obj ) ;
 
 		SetCurrentDirectoryA ( szPath ) ;
 
-		m_Mesh.Create ( C3DGfx::GetInstance ()->GetDevice (), mesh, FALSE, TRUE ) ;
+		mesh.Create ( C3DGfx::GetInstance ()->GetDevice(), obj, FALSE, TRUE ) ;
 
 		//bool bRes = CXFileUtil::LoadXFile ( C3DGfx::Instance ()->GetDevice (),
 		//szMeshFilename,
@@ -290,4 +294,29 @@ bool CMy3DModelViewerDoc::LoadModelFromMemory ( void* pData, DWORD dwDataSize )
 	}
 
 	return true;
+}
+
+
+void CMy3DModelViewerDoc::OnOpenSecond ()
+{
+	wchar_t szFilters[] = L"3D Scan Files (*.3dscan)|*.3dscan||";
+	CFileDialog dlg ( TRUE, L"3dscan", L"*.3dscan", OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, szFilters, AfxGetMainWnd() ) ;
+	if ( dlg.DoModal () != IDOK )
+		return ;
+
+	FILE* pFile ;
+	_wfopen_s ( &pFile, dlg.GetPathName(), L"rb" ) ;
+	if ( !pFile )
+		return ;
+
+	fseek ( pFile, 0, SEEK_END ) ;
+	int iSize = ftell ( pFile ) ;
+	fseek ( pFile, 0, SEEK_SET ) ;
+
+	char* pBuf = new char [ iSize ] ;
+	fread ( pBuf, iSize, 1, pFile ) ;
+	fclose ( pFile ) ;
+
+	LoadModelFromMemory ( pBuf, iSize, m_Mesh2 ) ;
+	delete pBuf ;
 }
