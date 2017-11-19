@@ -218,6 +218,7 @@ INT PathFromFileName( LPCTSTR sFileName )
 	return ret + 1;
 }
 
+/*
 // Loads an Obj file. Returns 1 on success, 0 on failure. Returns 2 if the obj
 // file was loaded but the associated mtl file was not found.
 INT LoadObj( LPCTSTR sFileName, CObjMesh* pOutObjMesh )
@@ -456,7 +457,7 @@ INT LoadObj( LPCTSTR sFileName, CObjMesh* pOutObjMesh )
 	}
 	return 1; // Success
 }
-
+*/
 
 
 // Loads an Obj file. Returns 1 on success, 0 on failure. Returns 2 if the obj
@@ -538,8 +539,8 @@ INT LoadObj2 ( LPCTSTR sFileName, MY_OBJ* pObj )
 			}
 			UV uv ;
 			float w ;
-			if ( sscanf ( buffer + 2, "%f %f %f", &uv.u, &uv.v, &w ) != 3 )
-				sscanf ( buffer + 2, "%f %f", &uv.u, &uv.v ) ;
+			/*if ( */sscanf ( buffer + 2, "%f %f %f", &uv.u, &uv.v, &w ) ;// != 3 )
+				//sscanf ( buffer + 2, "%f %f", &uv.u, &uv.v ) ;
 			uv.v = 1.0f - uv.v ;
 			obj.UVs.push_back ( uv ) ;
 			//cur_subset->bHasUv = true ;

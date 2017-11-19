@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "D3DObjMesh.h"
+//#include "D3DObjMesh.h"
 #include "D3DObjMesh2.h"
 
 class CMy3DModelViewerDoc : public CDocument
@@ -49,9 +49,7 @@ protected:
 #endif // SHARED_HANDLERS
 public:
 	virtual BOOL OnOpenDocument ( LPCTSTR lpszPathName );
-	bool LoadModelFromMemory ( void * pData, DWORD dwDataSize, CD3DMesh& mesh, D3D_MODEL& d3dModel );
-	CD3DMesh m_Mesh ;
-	CD3DMesh m_Mesh2 ;
+	bool LoadModelFromMemory ( void * pData, DWORD dwDataSize, D3D_MODEL& d3dModel );
 	D3D_MODEL m_d3dMesh1 ;
 	D3D_MODEL m_d3dMesh2 ;
 	afx_msg void OnOpenSecond ();

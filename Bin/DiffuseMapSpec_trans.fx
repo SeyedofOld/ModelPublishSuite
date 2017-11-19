@@ -123,7 +123,7 @@ float4 ps_main ( PS_INPUT_STRUCT psIn ) : COLOR0
 
 	f4Result = f4Result + f4Specular ;
 
-	f4Result.a = f4BaseClr.a ;// *g_fTransparency ;
+	f4Result.a = f4BaseClr.a ;// * g_fTransparency ;
 //	if ( f4Result.a < g_fAlphaTest )
 		//discard ;
 
@@ -145,5 +145,13 @@ technique DiffuseMapSpecTrans
 		CullMode		= None ;
 	}
 
+	/*pass p1
+	{
+		VertexShader = compile vs_3_0 vs_main ();
+		PixelShader = null;
+		AlphaBlendEnable = False ;
+		CullMode = CCW ;
+	}
+*/
 }
 

@@ -160,13 +160,13 @@ BOOL CMy3DModelViewerDoc::OnOpenDocument ( LPCTSTR lpszPathName )
 	fread ( pBuf, iSize, 1, pFile ) ;
 	fclose ( pFile ) ;
 
-	LoadModelFromMemory ( pBuf, iSize, m_Mesh, m_d3dMesh1 ) ;
+	LoadModelFromMemory ( pBuf, iSize, m_d3dMesh1 ) ;
 	delete pBuf ;
 
 	return TRUE;
 }
 
-bool CMy3DModelViewerDoc::LoadModelFromMemory ( void* pData, DWORD dwDataSize, CD3DMesh& mesh, D3D_MODEL& d3dModel )
+bool CMy3DModelViewerDoc::LoadModelFromMemory ( void* pData, DWORD dwDataSize, D3D_MODEL& d3dModel )
 {
 	if ( ! pData )
 		return false;
@@ -323,6 +323,6 @@ void CMy3DModelViewerDoc::OnOpenSecond ()
 	fread ( pBuf, iSize, 1, pFile ) ;
 	fclose ( pFile ) ;
 
-	LoadModelFromMemory ( pBuf, iSize, m_Mesh2, m_d3dMesh2 ) ;
+	LoadModelFromMemory ( pBuf, iSize, m_d3dMesh2 ) ;
 	delete pBuf ;
 }

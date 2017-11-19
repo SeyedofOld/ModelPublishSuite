@@ -12,7 +12,6 @@
 #include "3DModelViewerDoc.h"
 #include "3DModelViewerView.h"
 #include "tlC3DGfx.h"
-#include "tlCHud.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -141,53 +140,12 @@ void CMy3DModelViewerView::OnDraw(CDC* pDC)
 			pDevice->SetViewport ( &C3DGfx::GetInstance()->GetFullscreenViewport() ) ;
 		}
 		else if ( bSingleView ) {
+			pDevice->SetViewport ( &C3DGfx::GetInstance ()->GetFullscreenViewport () ) ;
 			CD3DMesh2::RenderD3DMesh ( pDevice, GetDocument ()->m_d3dMesh1 ) ;
 		}
 		else
 			if ( m_pMesh )
 				m_pMesh->DrawSubset ( 0 );
-
-		{ // Update HUD
-			static float s_fTime = (float)GetTickCount () / 1000.0f ;
-			static float s_fPrevTime = s_fTime ;
-			static bool s_bUpdated = false ;
-
-			//tlGuiHud::update ( 0.01f ) ;
-
-			// 		s_fTime = (float) GetTickCount () / 1000.0f ;
-			// 		float dt = s_fTime - s_fPrevTime ;
-			// 		if ( dt > 0.0f ) {
-			// 			tlGuiHud::update ( dt ) ;
-			// 			s_bUpdated = true ;
-			// 		}
-			// 		else {
-			// 			tlGuiHud::update ( 0.001f ) ;
-			// 			s_bUpdated = true ;
-			// 		}
-			// 		s_fPrevTime = s_fTime ;
-
-			// Show the ImGui test window. Most of the sample code is in ImGui::ShowTestWindow()
-			static bool show_test_window = false;
-			if ( show_test_window ) {
-				//ImGui::SetNewWindowDefaultPos ( ImVec2 ( 5, 5 ) );
-				//ImGui::ShowTestWindow ( &show_test_window );
-			}
-
-			CPoint ptCursor ;
-			::GetCursorPos ( &ptCursor ) ;
-			::ScreenToClient ( m_hWnd, &ptCursor ) ;
-			//ptCursor.x -= 800 ;
-
-			bool bL = ( GetAsyncKeyState ( VK_LBUTTON ) & 0x8000 ) != 0 ;
-
-			//ImGui::GetIO ().MousePos = ImVec2 ( (float)ptCursor.x, (float)ptCursor.y );
-			//ImGui::GetIO ().MouseDown [ 0 ] = bL ;
-			//ImGui::GetIO ().MouseDown [ 1 ] = ( GetAsyncKeyState ( VK_RBUTTON ) & 0x8000 ) != 0 ;
-
-			//ImGui::Render () ;
-
-			//ProcessHudInput() ;
-		}
 
 		C3DGfx::GetInstance ()->EndFrame ();
 		C3DGfx::GetInstance ()->ShowFrame ( NULL, NULL, GetSafeHwnd() );
@@ -254,6 +212,7 @@ void CMy3DModelViewerView::OnRButtonUp(UINT /* nFlags */, CPoint point)
 
 void CMy3DModelViewerView::OnContextMenu(CWnd* /* pWnd */, CPoint point)
 {
+	return ;
 #ifndef SHARED_HANDLERS
 	theApp.GetContextMenuManager()->ShowPopupMenu(IDR_POPUP_EDIT, point.x, point.y, this, TRUE);
 #endif
@@ -408,7 +367,6 @@ void CMy3DModelViewerView::OnMouseMove(UINT nFlags, CPoint point)
 	// TODO: Add your message handler code here and/or call default
 	// 	CStatic::OnMouseMove ( nFlags , point ) ;
 	// 	return ;
-
 
 	m_ptCursor = ScreenToRenderPort(VECTOR2((float)point.x, (float)point.y));
 
