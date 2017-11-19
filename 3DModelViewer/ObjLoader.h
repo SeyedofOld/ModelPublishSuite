@@ -212,7 +212,7 @@ struct MY_MTL {
 	float fD ;
 	float fNs ;
 	float fNi ;
-	float fIllum ;
+	int   iIllum ;
 	string sMapKa ;
 	string sMapKd ;
 	string sMapKs ;
@@ -232,7 +232,7 @@ struct MY_MTL {
 				  //Ns = 0.f;
 		fNs = 32.f;
 		fNi = 1.f;
-		fIllum = 2; // No default specified (?).
+		iIllum = 2; // No default specified (?).
 // 		Ka = { 0.0f, 0.0f, 0.0f } ;
 // 		Ks = 1.0f ;
 // 		Kd = 1.0f ;
@@ -241,7 +241,7 @@ struct MY_MTL {
 		fD = 1.0f ;
 		fNs = 1.0f ;
 		fNi = 1.0f ;
-		fIllum = 1.0f ;
+		iIllum = 2 ;
 	}
 // 	MY_MTL ( const MY_MTL& a ) {
 // 		sName = a.sName ;
@@ -281,14 +281,14 @@ struct MY_DRAW_BATCH {
 		bHasUv = false ;
 	}
 	MY_DRAW_BATCH () {
-		Clear () ;
+//		Clear () ;
 	}
-	MY_DRAW_BATCH ( const MY_DRAW_BATCH& a ) {
-		bHasUv = a.bHasUv ;
-		bHasNormal = a.bHasNormal ;
-		sMatName = a.sMatName ;
-		Faces = a.Faces ;
-	} ;
+//	MY_DRAW_BATCH ( const MY_DRAW_BATCH& a ) {
+// 		bHasUv = a.bHasUv ;
+// 		bHasNormal = a.bHasNormal ;
+// 		sMatName = a.sMatName ;
+// 		Faces = a.Faces ;
+//	} ;
 };
 
 struct MY_OBJ_PART {

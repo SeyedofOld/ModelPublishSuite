@@ -472,11 +472,12 @@ INT LoadObj2 ( LPCTSTR sFileName, MY_OBJ* pObj )
 
 	//vector<MY_MTL> Materials ;
 	{
-		MY_MTL default_mtrl ;
-		obj.Materials.push_back ( default_mtrl ) ;
+		//MY_MTL default_mtrl ;
+		//obj.Materials.push_back ( default_mtrl ) ;
 	}
 
-	MY_MTL* cur_mtrl = &obj.Materials.at ( 0 ) ;
+	//MY_MTL* cur_mtrl = &obj.Materials.at ( 0 ) ;
+	string sCurMtl = "$ALI_DEFAULT_MTRL" ;
 
 	{
 		MY_DRAW_BATCH	cur_subset_dummy ;
@@ -609,7 +610,7 @@ INT LoadObj2 ( LPCTSTR sFileName, MY_OBJ* pObj )
 			MY_OBJ_PART new_part ;
 			MY_DRAW_BATCH new_subset ;
 			
-			new_subset.sMatName = cur_mtrl->sName ;
+			new_subset.sMatName = sCurMtl ;
 			char szPartName [ MAX_PATH ] ;
 			sscanf ( buffer + 2, "%s", szPartName );
 			new_part.sName = szPartName ;
@@ -618,26 +619,29 @@ INT LoadObj2 ( LPCTSTR sFileName, MY_OBJ* pObj )
 			obj.subParts.push_back ( new_part ) ;
 			
 			cur_part = &obj.subParts.at( obj.subParts.size() - 1 ) ;
-			cur_subset = &cur_part->subSets [ 0 ] ;
+			//cur_subset = &cur_part->subSets [ 0 ] ;
+			cur_subset = &cur_part->subSets [ cur_part->subSets.size()-1 ] ;
 		}
 		else if ( 0 == _strnicmp ( "usemtl ", buffer, 7 ) ) {
 			
 			if ( bFirstMtl ) {
 				char szMtlName [ MAX_PATH ] ;
 				sscanf ( buffer + 7, "%s", szMtlName );
-				cur_mtrl->sName = szMtlName ;
+				sCurMtl = szMtlName ;
 
 				bFirstMtl = false ;
 			}
 			else {
-				MY_MTL new_mtrl ;
+				//MY_MTL new_mtrl ;
 				char szMtlName [ MAX_PATH ] ;
 				sscanf ( buffer + 7, "%s", szMtlName );
-				new_mtrl.sName = szMtlName ;
-				obj.Materials.push_back ( new_mtrl ) ;
+				//new_mtrl.sName = szMtlName ;
+				//obj.Materials.push_back ( new_mtrl ) ;
 
-				cur_mtrl = &obj.Materials.at ( obj.Materials.size () - 1 ) ;
+				sCurMtl = szMtlName ;
+				//cur_mtrl = &obj.Materials.at ( obj.Materials.size () - 1 ) ;
 			}
+			cur_subset->sMatName = sCurMtl ;
 		}
 		else if ( 0 == _strnicmp ( "mtllib ", buffer, 7 ) ) {
 			char szMtlLibFile [ MAX_PATH ] ;
@@ -713,17 +717,17 @@ INT LoadMtlLib2 ( LPCTSTR sFileName, vector<MY_MTL>& materials )
 			char szName [ MAX_PATH ] ;
 			sscanf ( buffer + 7, "%s", szName );
 
-			pMat = NULL ;
-			for ( unsigned int i = 0 ; i < materials.size () ; i++ ) {
-				if ( materials [ i ].sName == szName ) {
-					pMat = &materials [ i ] ;
-					break ;
-				}
-			}
-// 			MY_MTL new_mtl ;
-// 			materials.push_back ( new_mtl );
-// 			pMat = &materials.at ( materials.size () - 1 ) ;
-// 			pMat->sName = szName ;
+// 			pMat = NULL ;
+// 			for ( unsigned int i = 0 ; i < materials.size () ; i++ ) {
+// 				if ( materials [ i ].sName == szName ) {
+// 					pMat = &materials [ i ] ;
+// 					break ;
+// 				}
+// 			}
+ 			MY_MTL new_mtl ;
+ 			materials.push_back ( new_mtl );
+ 			pMat = &materials.at ( materials.size () - 1 ) ;
+ 			pMat->sName = szName ;
 		}
 		else if ( pMat == NULL )
 			continue; // Skip anything until we find a newmtl statement.
@@ -745,7 +749,7 @@ INT LoadMtlLib2 ( LPCTSTR sFileName, vector<MY_MTL>& materials )
 		else if ( 0 == _strnicmp ( "Ni ", buffer, 3 ) )
 			pMat->fNi = (float)atof ( buffer + 3 );
 		else if ( 0 == _strnicmp ( "illum ", buffer, 6 ) )
-			pMat->fIllum = atoi ( buffer + 6 );
+			pMat->iIllum = atoi ( buffer + 6 );
 		else if ( 0 == _strnicmp ( "map_Ka ", buffer, 7 ) ) {
 			char szMap [ MAX_PATH ] ;
 			sscanf ( buffer + 7, "%s", szMap );

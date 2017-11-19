@@ -91,7 +91,7 @@ float4 ps_main ( PS_INPUT_STRUCT psIn ) : COLOR0
 	float4 f4BaseClr = tex2D ( SamplerDiffuse, psIn.f2TexCoord0 ) ;// *g_f4DiffuseColor ;
 
 	//return float4( 1, 1, 0, 1 );
-	return f4BaseClr ;
+	//return f4BaseClr ;
 
 	psIn.f3Normal = normalize ( psIn.f3Normal ) ;
 
@@ -123,9 +123,9 @@ float4 ps_main ( PS_INPUT_STRUCT psIn ) : COLOR0
 
 	f4Result = f4Result + f4Specular ;
 
-	f4Result.a = f4BaseClr.a * g_fTransparency ;
-	if ( f4Result.a < g_fAlphaTest )
-		discard ;
+	f4Result.a = f4BaseClr.a ;// *g_fTransparency ;
+//	if ( f4Result.a < g_fAlphaTest )
+		//discard ;
 
 	return f4Result ;
 }
@@ -139,7 +139,7 @@ technique DiffuseMapSpecTrans
 	{
 		VertexShader = compile vs_3_0 vs_main();
 		PixelShader  = compile ps_3_0 ps_main();
-		AlphaBlendEnable = False ;
+		AlphaBlendEnable = True ;
 		SrcBlend		= SrcAlpha ;
 		DestBlend		= InvSrcAlpha ;
 		CullMode		= None ;

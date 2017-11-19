@@ -85,6 +85,13 @@ void CMy3DModelViewerView::OnDraw(CDC* pDC)
 	if (!pDoc)
 		return;
 
+	bool bSingleView = GetDocument ()->m_d3dMesh1.Parts.size () != 0 ;
+	bool bDualView = bSingleView && (GetDocument()->m_d3dMesh2.Parts.size() != 0) ;
+
+	if ( bDualView ) {
+		m_Camera.SetAspect ( 0.5f * (float)C3DGfx::GetInstance()->GetFullscreenViewport().Width / C3DGfx::GetInstance()->GetFullscreenViewport().Height ) ;
+	}
+
 	if ( C3DGfx::GetInstance () ) {
 		C3DGfx::GetInstance ()->BeginFrame ();
 		C3DGfx::GetInstance ()->Clear ( 0xff200040 ) ;
@@ -102,9 +109,9 @@ void CMy3DModelViewerView::OnDraw(CDC* pDC)
 // 														// Row2 : Diffuse
 // 														// Row3 : Ambient
 // 														// Row4 : Reserved
-		( (CMainFrame*)AfxGetMainWnd () )->m_pShader->SetMatrix ( "g_matView", &m_Camera.GetViewMatrix () ) ;
-		( (CMainFrame*)AfxGetMainWnd () )->m_pShader->SetMatrix ( "g_matProj", &m_Camera.GetProjectionMatrix () ) ;
-		( (CMainFrame*)AfxGetMainWnd () )->m_pShader->SetMatrix ( "g_matWorld", &m_matWorld ) ;
+		( (CMainFrame*)AfxGetMainWnd() )->m_pShader->SetMatrix ( "g_matView", &m_Camera.GetViewMatrix () ) ;
+		( (CMainFrame*)AfxGetMainWnd() )->m_pShader->SetMatrix ( "g_matProj", &m_Camera.GetProjectionMatrix () ) ;
+		( (CMainFrame*)AfxGetMainWnd() )->m_pShader->SetMatrix ( "g_matWorld", &m_matWorld ) ;
 
 		matrix matLight ;
 
@@ -118,41 +125,27 @@ void CMy3DModelViewerView::OnDraw(CDC* pDC)
 
 		((CMainFrame*)AfxGetMainWnd())->m_pShader->SetMatrix ( "g_matSunLight", &matLight ) ;
 
-		if ( GetDocument ()->m_d3dMesh1.Parts.size() ) {
-
+		if ( bDualView ) {
+			D3DVIEWPORT9 vp = C3DGfx::GetInstance()->GetFullscreenViewport() ;
+			vp.Width /= 2 ;
+			vp.X = 0 ;
+			pDevice->SetViewport ( &vp ) ;
 			CD3DMesh2::RenderD3DMesh ( pDevice, GetDocument ()->m_d3dMesh1 ) ;
 
-			if ( GetDocument ()->m_d3dMesh2.Parts.size() ) {
-				CD3DMesh2::RenderD3DMesh ( pDevice, GetDocument ()->m_d3dMesh2 ) ;
-			}
+			vp = C3DGfx::GetInstance ()->GetFullscreenViewport () ;
+			vp.Width /= 2 ;
+			vp.X = vp.Width ;
+			pDevice->SetViewport ( &vp ) ;
+			CD3DMesh2::RenderD3DMesh ( pDevice, GetDocument ()->m_d3dMesh2 ) ;
 
-		} else {
+			pDevice->SetViewport ( &C3DGfx::GetInstance()->GetFullscreenViewport() ) ;
+		}
+		else if ( bSingleView ) {
+			CD3DMesh2::RenderD3DMesh ( pDevice, GetDocument ()->m_d3dMesh1 ) ;
+		}
+		else
 			if ( m_pMesh )
 				m_pMesh->DrawSubset ( 0 );
-		}
-
-		if ( 0 )
-		if ( GetDocument ()->m_Mesh.pVB ) {
-
-			//pDevice->SetFVF ( GetDocument ()->m_Mesh.FVF ) ;
-			//pDevice->SetStreamSource ( 0, GetDocument ()->m_Mesh.pVB, 0, GetDocument ()->m_Mesh.vertexSize ) ;
-			//pDevice->SetTexture ( 0, GetDocument ()->m_Mesh.pTex ) ;
-			//pDevice->DrawPrimitive ( D3DPT_TRIANGLELIST, 0, GetDocument ()->m_Mesh.triCount ) ;
-
-			CD3DMesh2::RenderD3DMesh ( pDevice, GetDocument()->m_d3dMesh1 ) ;
-
-			if ( GetDocument ()->m_Mesh2.pVB ) {
-				//pDevice->SetFVF ( GetDocument ()->m_Mesh2.FVF ) ;
-				//pDevice->SetStreamSource ( 0, GetDocument ()->m_Mesh2.pVB, 0, GetDocument ()->m_Mesh2.vertexSize ) ;
-				//pDevice->SetTexture ( 0, GetDocument ()->m_Mesh2.pTex ) ;
-				//pDevice->DrawPrimitive ( D3DPT_TRIANGLELIST, 0, GetDocument ()->m_Mesh2.triCount ) ;
-				CD3DMesh2::RenderD3DMesh ( pDevice, GetDocument()->m_d3dMesh2 ) ;
-			}
-		}
-		else {
-			if ( m_pMesh )
-				m_pMesh->DrawSubset ( 0 );
-		}
 
 		{ // Update HUD
 			static float s_fTime = (float)GetTickCount () / 1000.0f ;
@@ -645,7 +638,7 @@ void CMy3DModelViewerView::ProcessMouseInput(INTERACTION_MSG_DATA& imd)
 // 			m_Camera.SetPitch(fPitch);
 
 			float fYaw = m_fYaw ;
-			fYaw += fDeltaX / 100.0f;
+			fYaw -= fDeltaX / 100.0f;
 			m_fYaw = fYaw ;
 
 			float fPitch = m_fPitch;

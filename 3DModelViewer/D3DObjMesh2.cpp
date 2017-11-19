@@ -139,55 +139,55 @@ bool CD3DMesh2::CreateFromObj ( IDirect3DDevice9* pDevice, ID3DXEffectPool* pEff
 					iVbIndex += 3 ;
 				}
 			}
-
-			// Material
-			MY_MTL& mtrl = Obj.Materials [ 0 ] ;
-			for ( unsigned int iMtrl = 0 ; iMtrl < Obj.Materials.size() ; iMtrl++ ) {
-				if ( Obj.Materials [ iMtrl ].sName == db.sMatName ) {
-					mtrl = Obj.Materials [ iMtrl ] ;
-					break ;
-				}
-			}
-
-			d3dSubset.clrAmbient = D3DXCOLOR ( mtrl.Ka [ 0 ], mtrl.Ka [ 1 ], mtrl.Ka [ 2 ], 1.0f ) ;
-			d3dSubset.clrDiffuse = D3DXCOLOR ( mtrl.Kd [ 0 ], mtrl.Kd [ 1 ], mtrl.Kd [ 2 ], 1.0f ) ;
-			d3dSubset.clrSpecular = D3DXCOLOR ( mtrl.Ks [ 0 ], mtrl.Ks [ 1 ], mtrl.Ks [ 2 ], 1.0f ) ;
-			d3dSubset.fTransparency = mtrl.fTr ;
-			d3dSubset.fGlossiness = mtrl.fNs ;
-
-			//hr = D3DXCreateEffect ( pd3dDevice, pBuf, dwSize, pDefines, m_pEffectInclude, 0, m_pEffectPool, &pd3dEffect, &pErrBuf ) ;
-			hr = D3DXCreateTextureFromFileA ( pDevice, mtrl.sMapKd.c_str(), &d3dSubset.pTexDiffuse ) ;
-			
-			char szTempPath [ MAX_PATH ] ;
-			GetCurrentDirectoryA ( MAX_PATH, szTempPath ) ;
-
-			CString str ;
-			AfxGetModuleFileName ( AfxGetInstanceHandle (), str ) ;
-
-			str.ReverseFind ( '\\' ) ;
-			str = str.Left ( str.ReverseFind ( '\\' ) ) ;
-			str = str + L"\\" ;
-
-			SetCurrentDirectory ( str.GetBuffer() ) ;
-
-			//str = str + L"\\DiffuseMapSpec_trans.fx" ;
-
-			hr = D3DXCreateEffectFromFileA ( pDevice,
-				"DiffuseMapSpec_trans.fx",
-				NULL,
-				&EffectInclude,
-				0,
-				pEffectPool,
-				&d3dSubset.pShader,
-				NULL ) ;
-
-				SetCurrentDirectoryA ( szTempPath ) ;
+			d3dSubset.sMatName = db.sMatName ;
 
 			d3dPart.Batches.push_back ( d3dSubset ) ;
 		}
 
 		if ( d3dPart.Batches.size() )
 			d3dModel.Parts.push_back ( d3dPart ) ;
+	}
+
+	// Materials
+	for ( unsigned int iMtrl = 0 ; iMtrl < Obj.Materials.size () ; iMtrl++ ) {
+		MY_MTL& mtrl = Obj.Materials [ iMtrl ] ;
+
+		D3D_MATERIAL d3dMtl ;
+		d3dMtl.sName = mtrl.sName ;
+		d3dMtl.clrAmbient = D3DXCOLOR ( mtrl.Ka [ 0 ], mtrl.Ka [ 1 ], mtrl.Ka [ 2 ], 1.0f ) ;
+		d3dMtl.clrDiffuse = D3DXCOLOR ( mtrl.Kd [ 0 ], mtrl.Kd [ 1 ], mtrl.Kd [ 2 ], 1.0f ) ;
+		d3dMtl.clrSpecular = D3DXCOLOR ( mtrl.Ks [ 0 ], mtrl.Ks [ 1 ], mtrl.Ks [ 2 ], 1.0f ) ;
+		d3dMtl.fTransparency = mtrl.fTr ;
+		d3dMtl.fGlossiness = mtrl.fNs ;
+
+		hr = D3DXCreateTextureFromFileA ( pDevice, mtrl.sMapKd.c_str (), &d3dMtl.pTexDiffuse ) ;
+
+		char szTempPath [ MAX_PATH ] ;
+		GetCurrentDirectoryA ( MAX_PATH, szTempPath ) ;
+
+		CString str ;
+		AfxGetModuleFileName ( AfxGetInstanceHandle (), str ) ;
+
+		str.ReverseFind ( '\\' ) ;
+		str = str.Left ( str.ReverseFind ( '\\' ) ) ;
+		str = str + L"\\" ;
+
+		SetCurrentDirectory ( str.GetBuffer () ) ;
+
+		//str = str + L"\\DiffuseMapSpec_trans.fx" ;
+
+		hr = D3DXCreateEffectFromFileA ( pDevice,
+			"DiffuseMapSpec_trans.fx",
+			NULL,
+			&EffectInclude,
+			0,
+			pEffectPool,
+			&d3dMtl.pShader,
+			NULL ) ;
+
+		SetCurrentDirectoryA ( szTempPath ) ;
+
+		d3dModel.Materials [ mtrl.sName ] = d3dMtl ;
 	}
 
 	d3dModel.ptMin = D3DXVECTOR3 ( Obj.ptMin.x, Obj.ptMin.y, Obj.ptMin.z ) ;
@@ -208,26 +208,28 @@ bool CD3DMesh2::RenderD3DMesh ( IDirect3DDevice9* pDevice, D3D_MODEL& d3dModel )
 
 			pDevice->SetFVF ( D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_TEX2 ) ;
 
-			subset.pShader->SetFloatArray ( "g_f4AmbientColor", subset.clrAmbient, 4 ) ;
-			subset.pShader->SetFloatArray ( "g_f4DiffuseColor", subset.clrDiffuse, 4 ) ;
-			subset.pShader->SetFloatArray ( "g_f4SpecularColor", subset.clrSpecular, 4 ) ;
-			subset.pShader->SetFloat ( "g_fTransparency", subset.fTransparency ) ;
-			subset.pShader->SetTexture ( "g_txDiffuse", subset.pTexDiffuse ) ;
-			subset.pShader->SetFloat ( "g_fGlossiness", subset.fGlossiness ) ;
+			D3D_MATERIAL& d3dMtl = d3dModel.Materials [ subset.sMatName ] ;
+
+			d3dMtl.pShader->SetFloatArray ( "g_f4AmbientColor", d3dMtl.clrAmbient, 4 ) ;
+			d3dMtl.pShader->SetFloatArray ( "g_f4DiffuseColor", d3dMtl.clrDiffuse, 4 ) ;
+			d3dMtl.pShader->SetFloatArray ( "g_f4SpecularColor", d3dMtl.clrSpecular, 4 ) ;
+			d3dMtl.pShader->SetFloat ( "g_fTransparency", d3dMtl.fTransparency ) ;
+			d3dMtl.pShader->SetTexture ( "g_txDiffuse", d3dMtl.pTexDiffuse ) ;
+			d3dMtl.pShader->SetFloat ( "g_fGlossiness", d3dMtl.fGlossiness ) ;
 
 			UINT uiPassCount = 0 ;
-			subset.pShader->Begin ( &uiPassCount, 0 ) ;
+			d3dMtl.pShader->Begin ( &uiPassCount, 0 ) ;
 			for ( UINT iPass = 0 ; iPass < uiPassCount ; iPass++ ) {
-				subset.pShader->BeginPass ( iPass ) ;
+				d3dMtl.pShader->BeginPass ( iPass ) ;
 
 				pDevice->DrawPrimitiveUP ( D3DPT_TRIANGLELIST,
 					subset.iTriCount,
 					subset.pVB,
 					sizeof ( MY_VERTEX ) ) ;
 
-				subset.pShader->EndPass() ;
+				d3dMtl.pShader->EndPass() ;
 			}
-			subset.pShader->End() ;
+			d3dMtl.pShader->End() ;
 
 		}
 	}

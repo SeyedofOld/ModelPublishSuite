@@ -7,8 +7,7 @@
 #include <d3d9.h>
 #include <d3dx9.h>
 #include "ObjLoader.h"
-//# include "Win32Util.h"
-
+#include <map>
 
 #ifndef SAFE_DELETE
 /// For pointers allocated with new.
@@ -47,7 +46,23 @@ struct D3D_DRAW_BATCH {
 
 	bool bNormal ;
 	bool bUv ;
+	string sMatName ;
 
+	D3D_DRAW_BATCH() {
+		pVB = NULL ;
+		iTriCount = 0 ;
+		bNormal = false ;
+		bUv = false ;
+	}
+};
+
+struct D3D_MODEL_PART {
+	std::string sName ;
+	vector<D3D_DRAW_BATCH> Batches ;
+};
+
+struct D3D_MATERIAL {
+	string sName ;
 	ID3DXEffect* pShader ;
 
 	D3DXCOLOR clrAmbient ;
@@ -56,12 +71,7 @@ struct D3D_DRAW_BATCH {
 	float     fTransparency ;
 	float	  fGlossiness ;
 	IDirect3DTexture9* pTexDiffuse ;
-
-	D3D_DRAW_BATCH () {
-		pVB = NULL ;
-		iTriCount = 0 ;
-		bNormal = false ;
-		bUv = false ;
+	D3D_MATERIAL () {
 		pShader = NULL ;
 		pTexDiffuse = NULL ;
 		clrAmbient = D3DXCOLOR ( 0, 0, 0, 0 ) ;
@@ -72,54 +82,22 @@ struct D3D_DRAW_BATCH {
 	}
 };
 
-struct D3D_MODEL_PART {
-	std::string sName ;
-	vector<D3D_DRAW_BATCH> Batches ;
-};
-
 struct D3D_MODEL {
-	vector<D3D_MODEL_PART> Parts ;
+	vector<D3D_MODEL_PART>	 Parts ;
+	map<string,D3D_MATERIAL> Materials ;
 	D3DXVECTOR3 ptMin ;
 	D3DXVECTOR3 ptMax ;
 };
 
-
-
 class CD3DMesh2
 {
 public:
-	CD3DMesh2()
-	{
-// 		vertexSize = 0;
-// 		FVF = 0;
-// 		pVB = NULL;
-// 		pTex = NULL;
-	}
+	CD3DMesh2 (){} ;
 
-	~CD3DMesh2() { /*SAFE_RELEASE( pVB );*/ }
+	~CD3DMesh2() {}
 
 	static bool CreateFromObj ( IDirect3DDevice9* pDevice, ID3DXEffectPool* pEffectPool, MY_OBJ& Obj, D3D_MODEL& d3dModel ) ;
 	static bool RenderD3DMesh ( IDirect3DDevice9* pDevice, D3D_MODEL& d3dModel ) ;
-// 	HRESULT Create ( LPDIRECT3DDEVICE9 pD3DDevice, const CObjMesh& objMesh, BOOL flipTriangles, BOOL flipUVs );
-// 
-// 
-// 	UINT triCount;
-// 	UINT vertexSize;
-// 	DWORD FVF;
-// 	LPDIRECT3DVERTEXBUFFER9 pVB;
-// 	D3DXVECTOR3 bbmin, bbmax; // bounding box.
-// 	IDirect3DTexture9* pTex ;
-
-protected:
-	// This method is probably the most important in the sample after the obj loader.
-	// This methdo is called by the Create() method to construct the D3D vertex buffer and fill it
-	// with the triangles of the obj mesh. Each triangle has its own copy of the vertices, so it's not
-	// really very efficient. Instead, in a real world application, the vertex buffer should only contain
-	// unique vertices, and an index buffer is neaded to create the triangles. That is, if many face
-	// vertices are identical (in ALL their components), only one corresponding vertex needs to be copied
-	// to the vertex buffer.
-	// This optimization requires sorting and/or searching which can be quite slow for heavy meshes.
-	//HRESULT InitVB( LPDIRECT3DDEVICE9 pD3DDevice, const CObjMesh& objMesh, BOOL flipTriangles, BOOL flipUVs );
 };
 
 
