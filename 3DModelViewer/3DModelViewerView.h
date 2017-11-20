@@ -5,6 +5,7 @@
 #pragma once
 
 #include "tlCCamera.h"
+#include "tlCSettingsGui.h"
 
 #define WUM_INTERACTION_MSG			WM_USER + 1356
 
@@ -155,8 +156,11 @@ public:
 	float m_fPitch ;
 	vector3 m_ptPos ;
 
+	CSettingsGui m_SettingsGui ;
+
 private:
 	void UpdateObjectMatrix ();
+	virtual LRESULT WindowProc ( UINT message, WPARAM wParam, LPARAM lParam );
 };
 
 #ifndef _DEBUG  // debug version in 3DModelViewerView.cpp

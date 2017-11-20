@@ -1,4 +1,4 @@
-
+//
 // 3DModelViewerView.cpp : implementation of the CMy3DModelViewerView class
 //
 
@@ -12,11 +12,14 @@
 #include "3DModelViewerDoc.h"
 #include "3DModelViewerView.h"
 #include "tlC3DGfx.h"
+#include "tlCGuiRenderer.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
+extern CSettingsGui* g_pSettings ;
+extern CMy3DModelViewerView* g_pView ;
 
 // CMy3DModelViewerView
 
@@ -84,6 +87,8 @@ void CMy3DModelViewerView::OnDraw(CDC* pDC)
 	if (!pDoc)
 		return;
 
+	g_pSettings = &m_SettingsGui ;
+
 	bool bSingleView = GetDocument ()->m_d3dMesh1.Parts.size () != 0 ;
 	bool bDualView = bSingleView && (GetDocument()->m_d3dMesh2.Parts.size() != 0) ;
 
@@ -146,6 +151,10 @@ void CMy3DModelViewerView::OnDraw(CDC* pDC)
 		else
 			if ( m_pMesh )
 				m_pMesh->DrawSubset ( 0 );
+
+		//CGuiRenderer::Update ( 0.01f ) ;
+		//m_SettingsGui.Update () ;
+		CGuiRenderer::Render () ;
 
 		C3DGfx::GetInstance ()->EndFrame ();
 		C3DGfx::GetInstance ()->ShowFrame ( NULL, NULL, GetSafeHwnd() );
@@ -366,7 +375,6 @@ void CMy3DModelViewerView::OnMouseMove(UINT nFlags, CPoint point)
 {
 	// TODO: Add your message handler code here and/or call default
 	// 	CStatic::OnMouseMove ( nFlags , point ) ;
-	// 	return ;
 
 	m_ptCursor = ScreenToRenderPort(VECTOR2((float)point.x, (float)point.y));
 
@@ -646,6 +654,7 @@ void CMy3DModelViewerView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 
 void CMy3DModelViewerView::OnInitialUpdate()
 {
+	ModifyStyle ( 0, SS_NOTIFY ) ;
 	if ( GetDocument()->m_d3dMesh1.Parts.size() ) {
 		float dy = 1.0f / tanf ( m_Camera.GetFovY () / 2.0f ) ;
 		float zy = dy * ( GetDocument ()->m_d3dMesh1.ptMax.y - GetDocument ()->m_d3dMesh1.ptMin.y ) * 1.25f / 2.0f ;
@@ -658,10 +667,20 @@ void CMy3DModelViewerView::OnInitialUpdate()
 			z = zx ;
 
 		m_Camera.SetDistance ( z ) ;
+
+		m_SettingsGui.Initialize () ;
+		//m_SettingsGui.Update () ;
+		m_SettingsGui.Show ( true ) ;
+
+		m_fYaw = 0.0f ;
+		m_fPitch = 0.0f ;
+		UpdateObjectMatrix() ;
 	}
 
 	( (CMainFrame*)AfxGetMainWnd () )->m_pShader->SetMatrix ( "g_matView", &m_Camera.GetViewMatrix () ) ;
 	( (CMainFrame*)AfxGetMainWnd () )->m_pShader->SetMatrix ( "g_matProj", &m_Camera.GetProjectionMatrix () ) ;
+
+	g_pView = this ;
 
 	CView::OnInitialUpdate();
 }
@@ -686,6 +705,10 @@ void CMy3DModelViewerView::OnSize ( UINT nType, int cx, int cy )
 		if ( cx && cy ) {
 			C3DGfx::GetInstance ()->Resize ( cx, cy ) ;
 			m_Camera.SetAspect ( (float)cx/cy ) ;
+
+			ImGui::GetIO ().DisplaySize.x = (float)cx ;
+			ImGui::GetIO ().DisplaySize.y = (float)cy ;
+
 		}
 		if ( ! m_pMesh  )
 			D3DXCreateTeapot ( C3DGfx::GetInstance ()->GetDevice (), &m_pMesh, NULL ) ;
@@ -709,3 +732,11 @@ void CMy3DModelViewerView::UpdateObjectMatrix ()
 	((CMainFrame*)AfxGetMainWnd())->m_pShader->SetMatrix ( "g_matWorld", &m_matWorld ) ;
 }
 
+
+LRESULT CMy3DModelViewerView::WindowProc ( UINT message, WPARAM wParam, LPARAM lParam )
+{
+	// TODO: Add your specialized code here and/or call the base class
+	CGuiRenderer::WndProc ( GetSafeHwnd (), message, wParam, lParam ) ;
+
+	return CView::WindowProc ( message, wParam, lParam );
+}

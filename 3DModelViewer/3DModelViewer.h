@@ -31,6 +31,8 @@ public:
 	virtual void LoadCustomState();
 	virtual void SaveCustomState();
 
+	int OnIdle ( LONG lCount ) ;
+
 	afx_msg void OnAppAbout();
 	DECLARE_MESSAGE_MAP()
 };

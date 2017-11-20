@@ -10,11 +10,15 @@
 
 #include "3DModelViewerDoc.h"
 #include "3DModelViewerView.h"
+#include "tlCGuiRenderer.h"
+#include "tlCSettingsGui.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
+CSettingsGui* g_pSettings = false ;
+CMy3DModelViewerView* g_pView = NULL ;
 
 // CMy3DModelViewerApp
 
@@ -170,6 +174,27 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
 END_MESSAGE_MAP()
+
+int CMy3DModelViewerApp::OnIdle ( LONG lCount )
+{
+	if ( CGuiRenderer::s_pDevice ) {
+		static float s_fPrevTime = (float)GetTickCount() / 1000.0f ;
+		float fCurTime = (float)GetTickCount () / 1000.0f ;
+		float dt = fCurTime - s_fPrevTime ;
+		if ( dt > 0 ) {
+			CGuiRenderer::Update ( dt ) ;
+			if ( g_pSettings )
+				g_pSettings->Update () ;
+			if ( g_pView )
+				g_pView->OnDraw ( NULL ) ;
+			s_fPrevTime = fCurTime ;
+		}
+		else {
+			int mm = 1 ;
+		}
+	}
+	return 1;
+}
 
 // App command to run the dialog
 void CMy3DModelViewerApp::OnAppAbout()

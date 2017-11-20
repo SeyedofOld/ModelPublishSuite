@@ -7,6 +7,7 @@
 
 #include "MainFrm.h"
 #include "tlC3DGfx.h"
+#include "tlCGuiRenderer.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -179,6 +180,9 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		C3DGfx::GetInstance()->GetEffectPool(),
 		&m_pShader,
 		NULL ) ;
+
+	CGuiRenderer::Initialize ( C3DGfx::GetInstance ()->GetDevice (), 1024, 768 ) ;
+	CGuiRenderer::Update ( 0.01f ) ;
 
 	return 0;
 }

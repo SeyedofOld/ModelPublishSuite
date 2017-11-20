@@ -1,6 +1,6 @@
 #pragma once
 
-#include <tlCBaseGuiWnd.h>
+#include "tlCBaseGuiWnd.h"
 
 class C3DViewContext;
 
@@ -11,7 +11,7 @@ public:
 	~CSettingsGui();
 	bool Initialize();
 	void CleanUp();
-	void Update(C3DViewContext* pView);
+	void Update();
 	void OnShow(bool bShow);
 	void ResetToDefaults();
 	float GetAlpha() { return m_fAlpha; }

@@ -1,8 +1,7 @@
 #include "stdafx.h"
 #include "tlCGuiRenderer.h"
-#include <imgui/imgui_internal.h>
-#include "tlCResourceManager.h"
-#include "Core/tlC3DGfx.h"
+#include "imgui/imgui_internal.h"
+#include "tlC3DGfx.h"
 
 IDirect3DDevice9*		CGuiRenderer::s_pDevice			= NULL;
 IDirect3DTexture9*		CGuiRenderer::s_pFontTexture	= NULL;
@@ -146,20 +145,28 @@ bool CGuiRenderer::Initialize(IDirect3DDevice9* device, int width, int height)
 	io.MouseDrawCursor = false;
 	ShowCursor(io.MouseDrawCursor ? FALSE : TRUE );
 
-	s_pShader = CResourceManager::GetInstance()->LoadEffectFromFile( "Data/Shader/Gui.fx", device, 0, "Data/Shader/" ) ;
+	D3DXCreateEffectFromFileA ( device,
+		"Gui.fx",
+		NULL,
+		NULL,
+		0,
+		C3DGfx::GetInstance ()->GetEffectPool (),
+		&s_pShader,
+		NULL );
+	//s_pShader = CResourceManager::GetInstance()->LoadEffectFromFile( "Data/Shader/Gui.fx", device, 0, "Data/Shader/" ) ;
 	if ( ! s_pShader )
 	{
 		return false;
 	}
 
-	if (FAILED(device->CreateVertexBuffer(VB_SIZE * sizeof(Vertex), D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, FVF,
-		D3DPOOL_DEFAULT, &s_pVB, NULL)))
+	if (FAILED(device->CreateVertexBuffer(VB_SIZE * sizeof(Vertex), /*D3DUSAGE_DYNAMIC |*/ D3DUSAGE_WRITEONLY, FVF,
+		D3DPOOL_MANAGED, &s_pVB, NULL)))
 	{
 		return false;
 	}
 
-	if (FAILED(device->CreateIndexBuffer(IB_SIZE * sizeof(ImDrawIdx), D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, sizeof(ImDrawIdx) == 2 ? D3DFMT_INDEX16 : D3DFMT_INDEX32,
-		D3DPOOL_DEFAULT, &s_pIB, NULL)))
+	if (FAILED(device->CreateIndexBuffer(IB_SIZE * sizeof(ImDrawIdx), /*D3DUSAGE_DYNAMIC | */D3DUSAGE_WRITEONLY, sizeof(ImDrawIdx) == 2 ? D3DFMT_INDEX16 : D3DFMT_INDEX32,
+		D3DPOOL_MANAGED, &s_pIB, NULL)))
 	{
 		return false;
 	}
@@ -188,8 +195,7 @@ void CGuiRenderer::CleanUp()
 		s_pDevice->Release();
 
 	if ( s_pShader )
-		if ( CResourceManager::GetInstance() )
-			CResourceManager::GetInstance()->ReleaseEffect ( s_pShader, C3DGfx::GetInstance()->GetDevice() ) ;
+		s_pShader->Release () ;
 	s_pShader = NULL ;
 
 	ImGui::Shutdown();
@@ -250,7 +256,7 @@ bool CGuiRenderer::CreateFontTexture()
 
 	// Create DX9 texture
 	s_pFontTexture = NULL;
-	if (D3DXCreateTexture(s_pDevice, width, height, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8, D3DPOOL_DEFAULT, &s_pFontTexture) < 0)
+	if (D3DXCreateTexture(s_pDevice, width, height, 1, 0/*D3DUSAGE_DYNAMIC*/, D3DFMT_A8, D3DPOOL_MANAGED, &s_pFontTexture) < 0)
 		return false;
 	D3DLOCKED_RECT tex_locked_rect;
 	if (s_pFontTexture->LockRect(0, &tex_locked_rect, NULL, 0) != D3D_OK)
@@ -274,7 +280,7 @@ void CGuiRenderer::Render()
 	ImGui::Render();
 }
 
-void CGuiRenderer::WndProc(UINT message, WPARAM wParam, LPARAM lParam)
+void CGuiRenderer::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	if (message == WM_LBUTTONDOWN)
 		ImGui::GetIO().MouseDown[0] = true;
@@ -286,9 +292,13 @@ void CGuiRenderer::WndProc(UINT message, WPARAM wParam, LPARAM lParam)
 		ImGui::GetIO().MouseDown[1] = false;
 	else if (message == WM_MOUSEWHEEL)
 		ImGui::GetIO().MouseWheel = GET_WHEEL_DELTA_WPARAM(wParam);
-	else if (message == WM_MOUSEMOVE) {
-		ImGui::GetIO().MousePos.x = (float)GET_X_LPARAM(lParam);
-		ImGui::GetIO().MousePos.y = (float)GET_Y_LPARAM(lParam);
+	else if ( message == WM_MOUSEMOVE ) {
+		POINT pt;
+		pt.x = GET_X_LPARAM ( lParam );
+		pt.y = GET_Y_LPARAM ( lParam ) ;
+		//::ScreenToClient ( hWnd, &pt ) ;
+		ImGui::GetIO().MousePos.x = (float)pt.x/*GET_X_LPARAM(lParam)*/;
+		ImGui::GetIO().MousePos.y = (float)pt.y/*GET_Y_LPARAM(lParam)*/;
 	}
 	else if (message == WM_KEYDOWN) {
 		if (wParam < 256)

@@ -152,6 +152,8 @@ BOOL CMy3DModelViewerDoc::OnOpenDocument ( LPCTSTR lpszPathName )
 	if ( ! pFile )
 		return FALSE ;
 
+	CD3DMesh2::FreeModel ( m_d3dMesh1 ) ;
+
 	fseek ( pFile, 0, SEEK_END ) ;
 	int iSize = ftell ( pFile ) ;
 	fseek ( pFile, 0, SEEK_SET ) ;
@@ -314,6 +316,8 @@ void CMy3DModelViewerDoc::OnOpenSecond ()
 	_wfopen_s ( &pFile, dlg.GetPathName(), L"rb" ) ;
 	if ( !pFile )
 		return ;
+
+	CD3DMesh2::FreeModel ( m_d3dMesh2 ) ;
 
 	fseek ( pFile, 0, SEEK_END ) ;
 	int iSize = ftell ( pFile ) ;

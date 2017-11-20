@@ -200,8 +200,6 @@ bool CD3DMesh2::CreateFromObj ( IDirect3DDevice9* pDevice, ID3DXEffectPool* pEff
 bool CD3DMesh2::RenderD3DMesh ( IDirect3DDevice9* pDevice, D3D_MODEL& d3dModel )
 {
 	for ( unsigned int iPart = 0 ; iPart < d3dModel.Parts.size () ; iPart++ ) {
-// 		if ( iPart != 1 )
-// 			continue; 
 		for ( unsigned int iSubset = 0 ; iSubset < d3dModel.Parts [ iPart ].Batches.size () ; iSubset++ ) {
 			
 			D3D_DRAW_BATCH& subset = d3dModel.Parts [ iPart ].Batches [ iSubset ] ;
@@ -214,8 +212,10 @@ bool CD3DMesh2::RenderD3DMesh ( IDirect3DDevice9* pDevice, D3D_MODEL& d3dModel )
 			d3dMtl.pShader->SetFloatArray ( "g_f4DiffuseColor", d3dMtl.clrDiffuse, 4 ) ;
 			d3dMtl.pShader->SetFloatArray ( "g_f4SpecularColor", d3dMtl.clrSpecular, 4 ) ;
 			d3dMtl.pShader->SetFloat ( "g_fTransparency", d3dMtl.fTransparency ) ;
-			d3dMtl.pShader->SetTexture ( "g_txDiffuse", d3dMtl.pTexDiffuse ) ;
 			d3dMtl.pShader->SetFloat ( "g_fGlossiness", d3dMtl.fGlossiness ) ;
+
+			d3dMtl.pShader->SetTexture ( "g_txDiffuse", d3dMtl.pTexDiffuse ) ;
+			//d3dMtl.pShader->SetTexture ( "g_txDiffuse", NULL ) ;
 
 			UINT uiPassCount = 0 ;
 			d3dMtl.pShader->Begin ( &uiPassCount, 0 ) ;
@@ -235,4 +235,32 @@ bool CD3DMesh2::RenderD3DMesh ( IDirect3DDevice9* pDevice, D3D_MODEL& d3dModel )
 	}
 
 	return true ;
+}
+
+void CD3DMesh2::FreeModel ( D3D_MODEL & d3dModel )
+{
+	for ( unsigned int iPart = 0 ; iPart < d3dModel.Parts.size () ; iPart++ ) {
+		D3D_MODEL_PART& part = d3dModel.Parts [ iPart ] ;
+		for ( unsigned int iSubset = 0 ; iSubset < d3dModel.Parts [ iPart ].Batches.size () ; iSubset++ ) {
+			D3D_DRAW_BATCH& subset = part.Batches [ iSubset ] ;
+
+			if ( subset.pVB )
+				delete subset.pVB ;
+			subset.pVB = NULL ;
+			subset.iTriCount = 0 ;
+		}
+		part.Batches.clear () ;
+	}
+
+	d3dModel.Parts.clear () ;
+
+	for ( auto iMtrl = d3dModel.Materials.begin () ; iMtrl != d3dModel.Materials.end () ; iMtrl++ ) {
+		D3D_MATERIAL& mtrl = iMtrl->second ;
+		if ( mtrl.pTexDiffuse )
+			mtrl.pTexDiffuse->Release() ;
+		if ( mtrl.pShader )
+			mtrl.pShader->Release() ;
+	}
+
+	d3dModel.Materials.clear() ;
 }

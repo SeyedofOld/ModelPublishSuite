@@ -1,5 +1,5 @@
 #include <d3dx9.h>
-#include <ImGui/imgui.h>
+#include "ImGui/imgui.h"
 
 class CGuiRenderer
 {
@@ -15,7 +15,6 @@ private:
 
 private:
 
-    static IDirect3DDevice9*		s_pDevice;
 	static IDirect3DVertexBuffer9*	s_pVB;
 	static IDirect3DIndexBuffer9*	s_pIB;
     static IDirect3DTexture9*		s_pFontTexture;
@@ -30,10 +29,12 @@ private:
 	static bool CreateFontTexture();
 
 public:
+	static IDirect3DDevice9*		s_pDevice;
+
 	static bool Initialize(IDirect3DDevice9* device, int width, int height);
 	static void CleanUp();
 	static void Update(float dt);
 	static void Render();
-	static void WndProc(UINT message, WPARAM wParam, LPARAM lParam);
+	static void WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 };
 

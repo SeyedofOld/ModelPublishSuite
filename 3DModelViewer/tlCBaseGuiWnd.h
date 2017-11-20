@@ -1,5 +1,7 @@
 #pragma once
 
+#include "tlMathTypes.h"
+
 class CBaseGuiWnd
 {
 public:
