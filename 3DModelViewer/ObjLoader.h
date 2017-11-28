@@ -228,7 +228,7 @@ struct MY_MTL {
 		Ks[0] = 1.0f; Ks[1] = 1.0f; Ks[2] = 1.0f;
 		//Ks [ 0 ] = 0.0f; Ks [ 1 ] = 0.0f; Ks [ 2 ] = 0.0f;
 		Tf [ 0 ] = 1.0f; Tf [ 1 ] = 1.0f; Tf [ 2 ] = 1.0f;
-		fTr = 1.f; // Fully opaque.
+		fTr = 0.0f; // Fully opaque.
 				  //Ns = 0.f;
 		fNs = 32.f;
 		fNi = 1.f;

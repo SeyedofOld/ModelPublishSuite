@@ -130,11 +130,13 @@ void CMy3DModelViewerView::OnDraw(CDC* pDC)
 
 		matrix matLight ;
 
-		vector4 vLightDir ( 0.0f, -1.0f, 0.5f, 0.0f ) ;
+		vector4 vLightDir ( 0.0f, 0.0f, 1.0f, 0.0f ) ;
 		D3DXVec4Normalize ( &vLightDir, &vLightDir ) ;
 		CopyMemory ( &matLight[0], &vLightDir, 4*sizeof(float) ) ;
+		
 		vector4 vLightColor ( 1.0f, 1.0f, 1.0f, 0.0f ) ;
 		CopyMemory ( &matLight[4], &vLightColor, 4*sizeof(float) ) ;
+		
 		vector4 vAmbLight ( 0.5f, 0.5f, 0.5f, 0.0f ) ;
 		CopyMemory ( &matLight[8], &vAmbLight, 4*sizeof(float) ) ;
 

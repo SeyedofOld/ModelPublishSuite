@@ -91,33 +91,33 @@ bool CD3DMesh2::CreateFromObj ( IDirect3DDevice9* pDevice, ID3DXEffectPool* pEff
 				for ( unsigned int iVert = 2 ; iVert < face.VertIndex.size() ; iVert++ ) {
 
 					d3dSubset.pVB [ iVbIndex ].ptPos = 
-						D3DXVECTOR3 ( VertList [ face.VertIndex [ 0 ] ].x,
+						D3DXVECTOR3 ( -VertList [ face.VertIndex [ 0 ] ].x,
 						VertList [ face.VertIndex [ 0 ] ].y,
 						VertList [ face.VertIndex [ 0 ] ].z ) ;
 
 					d3dSubset.pVB [ iVbIndex + 1 ].ptPos =
-						D3DXVECTOR3 ( VertList [ face.VertIndex [ iVert - 1 ] ].x,
+						D3DXVECTOR3 ( -VertList [ face.VertIndex [ iVert - 1 ] ].x,
 							VertList [ face.VertIndex [ iVert - 1 ] ].y,
 							VertList [ face.VertIndex [ iVert - 1 ] ].z ) ;
 
 					d3dSubset.pVB [ iVbIndex + 2 ].ptPos =
-						D3DXVECTOR3 ( VertList [ face.VertIndex [ iVert - 0 ] ].x,
+						D3DXVECTOR3 ( -VertList [ face.VertIndex [ iVert - 0 ] ].x,
 							VertList [ face.VertIndex [ iVert - 0 ] ].y,
 							VertList [ face.VertIndex [ iVert - 0 ] ].z ) ;
 
 					if ( db.bHasNormal ) {
 						d3dSubset.pVB [ iVbIndex ].vNormal =
-							D3DXVECTOR3 ( NormalList [ face.NormalIndex [ 0 ] ].x,
+							D3DXVECTOR3 ( -NormalList [ face.NormalIndex [ 0 ] ].x,
 								NormalList [ face.NormalIndex [ 0 ] ].y,
 								NormalList [ face.NormalIndex [ 0 ] ].z ) ;
 
 						d3dSubset.pVB [ iVbIndex + 1 ].vNormal =
-							D3DXVECTOR3 ( NormalList [ face.NormalIndex [ iVert - 1 ] ].x,
+							D3DXVECTOR3 ( -NormalList [ face.NormalIndex [ iVert - 1 ] ].x,
 								NormalList [ face.NormalIndex [ iVert - 1 ] ].y,
 								NormalList [ face.NormalIndex [ iVert - 1 ] ].z ) ;
 
 						d3dSubset.pVB [ iVbIndex + 2 ].vNormal =
-							D3DXVECTOR3 ( NormalList [ face.NormalIndex [ iVert - 0 ] ].x,
+							D3DXVECTOR3 ( -NormalList [ face.NormalIndex [ iVert - 0 ] ].x,
 								NormalList [ face.NormalIndex [ iVert - 0 ] ].y,
 								NormalList [ face.NormalIndex [ iVert - 0 ] ].z ) ;
 					}
@@ -157,7 +157,7 @@ bool CD3DMesh2::CreateFromObj ( IDirect3DDevice9* pDevice, ID3DXEffectPool* pEff
 		d3dMtl.clrAmbient = D3DXCOLOR ( mtrl.Ka [ 0 ], mtrl.Ka [ 1 ], mtrl.Ka [ 2 ], 1.0f ) ;
 		d3dMtl.clrDiffuse = D3DXCOLOR ( mtrl.Kd [ 0 ], mtrl.Kd [ 1 ], mtrl.Kd [ 2 ], 1.0f ) ;
 		d3dMtl.clrSpecular = D3DXCOLOR ( mtrl.Ks [ 0 ], mtrl.Ks [ 1 ], mtrl.Ks [ 2 ], 1.0f ) ;
-		d3dMtl.fTransparency = mtrl.fTr ;
+		d3dMtl.fTransparency = 1.0f - mtrl.fTr ;
 		d3dMtl.fGlossiness = mtrl.fNs ;
 
 		hr = D3DXCreateTextureFromFileA ( pDevice, mtrl.sMapKd.c_str (), &d3dMtl.pTexDiffuse ) ;
