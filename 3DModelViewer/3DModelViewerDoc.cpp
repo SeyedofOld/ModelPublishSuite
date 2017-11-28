@@ -173,8 +173,8 @@ bool CMy3DModelViewerDoc::LoadModelFromMemory ( void* pData, DWORD dwDataSize, D
 	if ( ! pData )
 		return false;
 
-	wchar_t szOrigPath [ MAX_PATH ] ;
-	GetCurrentDirectory ( MAX_PATH, szOrigPath ) ;
+	char szOrigPath [ MAX_PATH ] ;
+	GetCurrentDirectoryA ( MAX_PATH, szOrigPath ) ;
 
 	mz_zip_archive archive;
 
@@ -205,26 +205,27 @@ bool CMy3DModelViewerDoc::LoadModelFromMemory ( void* pData, DWORD dwDataSize, D
 	// 		strcpy_s ( szSystemTempPath, MAX_PATH, ".\\Temp\\" ) ;
 
 	char szSystemTempPath [ MAX_PATH ];
-	if ( 0 == GetTempPathA ( MAX_PATH, szSystemTempPath ) ) {
-	strcpy_s ( szSystemTempPath, MAX_PATH, "." );
-	}
+	strcpy_s(szSystemTempPath, MAX_PATH, "./Temp/");
+	//if ( 0 == GetTempPathA ( MAX_PATH, szSystemTempPath ) ) {
+	//strcpy_s ( szSystemTempPath, MAX_PATH, "." );
+	//}
 
-	char szTempName [ MAX_PATH ];
-	if ( 0 == GetTempFileNameA ( NULL, NULL, 0, szTempName ) ) {
-	strcpy_s ( szTempName, MAX_PATH, "\\tmp" );
-	}
+// 	char szTempName [ MAX_PATH ];
+// 	if ( 0 == GetTempFileNameA ( NULL, NULL, 0, szTempName ) ) {
+// 	strcpy_s ( szTempName, MAX_PATH, "\\tmp" );
+// 	}
 
 	char szPath [ MAX_PATH ];
 	strcpy_s ( szPath, MAX_PATH, szSystemTempPath );
-	strcat_s ( szPath, MAX_PATH, szTempName );
+	//strcat_s ( szPath, MAX_PATH, szTempName );
 
 	BOOL bResult = CreateDirectoryA ( szPath, NULL );
 
-	strcat_s ( szPath, MAX_PATH, "\\" );
+	//strcat_s ( szPath, MAX_PATH, "\\" );
 
 	if ( !bResult ) {
-		strcpy_s ( szPath, MAX_PATH, ".\\tmp\\" );
-		}
+		//strcpy_s ( szPath, MAX_PATH, ".\\tmp\\" );
+	}
 
 		ZeroMemory ( &archive, sizeof ( archive ) );
 
@@ -278,23 +279,28 @@ bool CMy3DModelViewerDoc::LoadModelFromMemory ( void* pData, DWORD dwDataSize, D
 			my_obj,
 			d3dModel ) ;
 
-		SetCurrentDirectoryA ( szPath ) ;
+		//SetCurrentDirectoryA ( szPath ) ;
+		SetCurrentDirectoryA ( szOrigPath ) ;
+
+		//char szPath2[MAX_PATH];
+		//GetCurrentDirectoryA(MAX_PATH, szPath2);
 
 
-		{ // Clean temp files
-			char szFind [ MAX_PATH ];
-			strcpy_s ( szFind, MAX_PATH, szPath );
-			strcat_s ( szFind, "*.*" );
+	{ // Clean temp files
+		char szFind [ MAX_PATH ];
+		strcpy_s ( szFind, MAX_PATH, szPath );
+		strcat_s ( szFind, "*.*" );
 
-			WIN32_FIND_DATAA fd;
-			HANDLE hFind = FindFirstFileA ( szFind, &fd );
-			while ( FindNextFileA ( hFind, &fd ) ) {
+		bResult = DeleteFileA(szPath);
+
+		WIN32_FIND_DATAA fd;
+		HANDLE hFind = FindFirstFileA ( szFind, &fd );
+		while ( FindNextFileA ( hFind, &fd ) ) {
 			char szFile [ MAX_PATH ];
 			strcpy_s ( szFile, MAX_PATH, szPath );
 			strcat_s ( szFile, fd.cFileName );
 
 			BOOL bb = DeleteFileA ( szFile );
-			bb = 0;
 		}
 		FindClose ( hFind );
 

@@ -196,7 +196,6 @@ bool CD3DMesh2::CreateFromObj ( IDirect3DDevice9* pDevice, ID3DXEffectPool* pEff
 	return true ;
 }
 
-
 bool CD3DMesh2::RenderD3DMesh ( IDirect3DDevice9* pDevice, D3D_MODEL& d3dModel )
 {
 	for ( unsigned int iPart = 0 ; iPart < d3dModel.Parts.size () ; iPart++ ) {
@@ -265,3 +264,4 @@ void CD3DMesh2::FreeModel ( D3D_MODEL & d3dModel )
 
 	d3dModel.Materials.clear() ;
 }
+
