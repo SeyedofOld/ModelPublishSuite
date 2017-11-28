@@ -175,16 +175,19 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
 END_MESSAGE_MAP()
 
+float g_fYaw = 0.0f;
+
 int CMy3DModelViewerApp::OnIdle ( LONG lCount )
 {
-	if ( CGuiRenderer::s_pDevice ) {
+	if ( 0 )
+	if ( g_pView/* CGuiRenderer::s_pDevice */) {
 		static float s_fPrevTime = (float)GetTickCount() / 1000.0f ;
 		float fCurTime = (float)GetTickCount () / 1000.0f ;
 		float dt = fCurTime - s_fPrevTime ;
 		if ( dt > 0 ) {
-			CGuiRenderer::Update ( dt ) ;
-			if ( g_pSettings )
-				g_pSettings->Update () ;
+			//CGuiRenderer::Update ( dt ) ;
+			//if ( g_pSettings )
+				//g_pSettings->Update () ;
 			if ( g_pView )
 				g_pView->OnDraw ( NULL ) ;
 			s_fPrevTime = fCurTime ;
@@ -193,6 +196,9 @@ int CMy3DModelViewerApp::OnIdle ( LONG lCount )
 			int mm = 1 ;
 		}
 	}
+
+	//g_fYaw += 0.001f;
+
 	return 1;
 }
 

@@ -181,8 +181,8 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		&m_pShader,
 		NULL ) ;
 
-	CGuiRenderer::Initialize ( C3DGfx::GetInstance ()->GetDevice (), 1024, 768 ) ;
-	CGuiRenderer::Update ( 0.01f ) ;
+// 	CGuiRenderer::Initialize ( C3DGfx::GetInstance ()->GetDevice (), 1024, 768 ) ;
+// 	CGuiRenderer::Update ( 0.01f ) ;
 
 	return 0;
 }

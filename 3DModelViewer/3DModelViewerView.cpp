@@ -20,6 +20,7 @@
 
 extern CSettingsGui* g_pSettings ;
 extern CMy3DModelViewerView* g_pView ;
+extern float g_fYaw ;
 
 // CMy3DModelViewerView
 
@@ -75,6 +76,14 @@ BOOL CMy3DModelViewerView::PreCreateWindow(CREATESTRUCT& cs)
 	m_Camera.SetPosition ( 0.0f, 0.0f, -10.0f );
 	m_Camera.SetTarget ( 0.0f, 0.0f, 0.0f );
 
+	CCamera *pCamera = new CCamera;
+	pCamera->Initialize(D3DXToRadian(45.0f), 4.0f / 3.0f, 0.01f, 1000.0f);
+	pCamera->SetPosition(0.0f, 0.0f, -2.0f);
+	pCamera->SetTarget(0.0f, 0.0f, 0.0f);
+	pCamera->SetMode(CCamera::MODE_TARGET);
+	pCamera->SetMode(CCamera::MODE_FREE);
+
+
 	return CView::PreCreateWindow(cs);
 }
 
@@ -91,6 +100,8 @@ void CMy3DModelViewerView::OnDraw(CDC* pDC)
 
 	bool bSingleView = GetDocument ()->m_d3dMesh1.Parts.size () != 0 ;
 	bool bDualView = bSingleView && (GetDocument()->m_d3dMesh2.Parts.size() != 0) ;
+
+	UpdateObjectMatrix();
 
 	if ( bDualView ) {
 		m_Camera.SetAspect ( 0.5f * (float)C3DGfx::GetInstance()->GetFullscreenViewport().Width / C3DGfx::GetInstance()->GetFullscreenViewport().Height ) ;
@@ -154,7 +165,7 @@ void CMy3DModelViewerView::OnDraw(CDC* pDC)
 
 		//CGuiRenderer::Update ( 0.01f ) ;
 		//m_SettingsGui.Update () ;
-		CGuiRenderer::Render () ;
+		//CGuiRenderer::Render () ;
 
 		C3DGfx::GetInstance ()->EndFrame ();
 		C3DGfx::GetInstance ()->ShowFrame ( NULL, NULL, GetSafeHwnd() );
@@ -668,9 +679,9 @@ void CMy3DModelViewerView::OnInitialUpdate()
 
 		m_Camera.SetDistance ( z ) ;
 
-		m_SettingsGui.Initialize () ;
+		//m_SettingsGui.Initialize () ;
 		//m_SettingsGui.Update () ;
-		m_SettingsGui.Show ( true ) ;
+		//m_SettingsGui.Show ( true ) ;
 
 		m_fYaw = 0.0f ;
 		m_fPitch = 0.0f ;
@@ -706,8 +717,8 @@ void CMy3DModelViewerView::OnSize ( UINT nType, int cx, int cy )
 			C3DGfx::GetInstance ()->Resize ( cx, cy ) ;
 			m_Camera.SetAspect ( (float)cx/cy ) ;
 
-			ImGui::GetIO ().DisplaySize.x = (float)cx ;
-			ImGui::GetIO ().DisplaySize.y = (float)cy ;
+// 			ImGui::GetIO ().DisplaySize.x = (float)cx ;
+// 			ImGui::GetIO ().DisplaySize.y = (float)cy ;
 
 		}
 		if ( ! m_pMesh  )
@@ -719,7 +730,7 @@ void CMy3DModelViewerView::OnSize ( UINT nType, int cx, int cy )
 void CMy3DModelViewerView::UpdateObjectMatrix ()
 {
 	matrix matRotYaw ;
-	D3DXMatrixRotationY ( &matRotYaw, m_fYaw ) ;
+	D3DXMatrixRotationY ( &matRotYaw, m_fYaw + g_fYaw ) ;
 
 	matrix matRotPitch ;
 	D3DXMatrixRotationX ( &matRotPitch, m_fPitch ) ;
@@ -736,7 +747,7 @@ void CMy3DModelViewerView::UpdateObjectMatrix ()
 LRESULT CMy3DModelViewerView::WindowProc ( UINT message, WPARAM wParam, LPARAM lParam )
 {
 	// TODO: Add your specialized code here and/or call the base class
-	CGuiRenderer::WndProc ( GetSafeHwnd (), message, wParam, lParam ) ;
+	//CGuiRenderer::WndProc ( GetSafeHwnd (), message, wParam, lParam ) ;
 
 	return CView::WindowProc ( message, wParam, lParam );
 }

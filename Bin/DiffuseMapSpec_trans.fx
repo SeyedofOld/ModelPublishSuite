@@ -36,11 +36,11 @@ float g_fGlossiness <
 
 float g_fSpecularIntensity <
 	string UIName = "Specular Intensity" ;
-    string UIWidget = "FloatSpinner";
+    	string UIWidget = "FloatSpinner";
 	float UIMin = 0.0 ;
 	float UIMax = 100.0 ;
 	float UIStep = 0.1 ;
-> = 1.0f ;
+> = 0.5f ;
 
 sampler2D SamplerDiffuse = sampler_state
 {
@@ -95,6 +95,8 @@ float4 ps_main ( PS_INPUT_STRUCT psIn ) : COLOR0
 
 	psIn.f3Normal = normalize ( psIn.f3Normal ) ;
 
+	//return float4(psIn.f3Normal.xyz, 1);
+
 #ifdef _3DSMAX_
 	g_matSunLight [ ROW_LIGHT_DIRECTION ] = normalize ( float4(g_LightDir,0) ) ;
 	g_matSunLight [ ROW_LIGHT_COLOR		] = g_LightColor ;
@@ -107,6 +109,7 @@ float4 ps_main ( PS_INPUT_STRUCT psIn ) : COLOR0
 	float4 f4AmbientFactor = g_matSunLight [ ROW_LIGHT_AMBIENT ] * g_f4AmbientColor ;
 
 	//return f4DiffuseFactor ;
+
 
 	float4 f4Result = f4BaseClr ;
 
