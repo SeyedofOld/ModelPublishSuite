@@ -197,6 +197,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Common\3DScanFmt.h" />
     <ClInclude Include="..\Common\imgui\imconfig.h" />
     <ClInclude Include="..\Common\imgui\imgui.h" />
     <ClInclude Include="..\Common\imgui\imgui_internal.h" />
@@ -205,6 +206,7 @@
     <ClInclude Include="..\Common\imgui\stb_truetype.h" />
     <ClInclude Include="..\Common\tlBaseTypes.h" />
     <ClInclude Include="..\Common\tlC3DGfx.h" />
+    <ClInclude Include="..\Common\tlC3DViewContext.h" />
     <ClInclude Include="..\Common\tlCBaseGuiWnd.h" />
     <ClInclude Include="..\Common\tlCCamera.h" />
     <ClInclude Include="..\Common\tlCGuiRenderer.h" />
@@ -225,6 +227,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\Common\tlC3DGfx.cpp" />
+    <ClCompile Include="..\Common\tlC3DViewContext.cpp" />
     <ClCompile Include="..\Common\tlCBaseGuiWnd.cpp" />
     <ClCompile Include="..\Common\tlCCamera.cpp" />
     <ClCompile Include="..\Common\tlCGuiRenderer.cpp" />

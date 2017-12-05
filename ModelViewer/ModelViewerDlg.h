@@ -7,6 +7,7 @@
 #include "tlCCamera.h"
 #include "tlCGuiRenderer.h"
 #include "tlCSettingsGui.h"
+#include "tlC3DViewContext.h"
 
 
 // CModelViewerDlg dialog
@@ -42,10 +43,12 @@ public:
 	CCamera			m_Camera ;
 	CGuiRenderer	m_GuiRenderer ;
 	CSettingsGui	m_SettingsGui ;
+	C3DViewContext*  m_pView ;
 
 public:
 	void Update() ;
 	void Render() ;
 	afx_msg void OnSize ( UINT nType, int cx, int cy );
 	virtual LRESULT WindowProc ( UINT message, WPARAM wParam, LPARAM lParam );
+	afx_msg BOOL OnEraseBkgnd ( CDC* pDC );
 };
