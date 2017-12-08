@@ -156,6 +156,8 @@ BOOL CModelViewerDlg::OnInitDialog()
 		true ) ;
 
 
+	SetWindowPos ( NULL, 0, 0, 1200, 675, SWP_NOMOVE ) ;
+
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
@@ -360,17 +362,21 @@ void CModelViewerDlg::Render()
 		GetClientRect ( rc ) ;
 
 		ImGuiWindowFlags flags = 0;
-		//flags |= ImGuiWindowFlags_NoMove;
-		//flags |= ImGuiWindowFlags_NoResize;
+		flags |= ImGuiWindowFlags_NoMove;
+		flags |= ImGuiWindowFlags_NoResize;
 		flags |= ImGuiWindowFlags_NoCollapse;
 		flags |= ImGuiWindowFlags_MenuBar;
-		flags |= ImGuiWindowFlags_ShowBorders;
-		flags |= ImGuiWindowFlags_NoTitleBar;
+		//flags |= ImGuiWindowFlags_ShowBorders;
+
+        //ImGui::SetStyleColor
 
 		//CRect rcOld = rc ;
 
 		if ( ImGui::Begin ( "Model Viewer", NULL, ImVec2 ( rc.Width(), rc.Height() ), 1.0f, flags ) ) {
-			//ImGui::SetWindowPos ( ImVec2 ( 0, 0 ) ) ;
+			ImGui::SetWindowPos ( ImVec2 ( 0, 0 ) ) ;
+			ImGuiStyle& style = ImGui::GetStyle ();
+			style.WindowRounding = 0.0f ;
+			style.FrameBorderSize = 1.0f ;
 
 			// 		ImGui::Checkbox("Show FPS", &pSettings->bShowFPS);
 			// 		ImGui::Checkbox("Show Sky", &pEngSettings->Sky.bShowSky);
@@ -408,7 +414,7 @@ void CModelViewerDlg::Render()
 
 	}
 
-	if ( 0 ) {
+	if ( 1 ) {
 		if ( ImGui::BeginMainMenuBar () )
 		{
 			if ( ImGui::BeginMenu ( "File" ) )
@@ -456,8 +462,8 @@ void CModelViewerDlg::OnSize ( UINT nType, int cx, int cy )
 
 			m_pView->GetCamera ()->SetAspect ( (float)cx / cy ) ;
 
-			ImGui::GetIO ().DisplaySize.x = (float)cx ;
-			ImGui::GetIO ().DisplaySize.y = (float)cy ;
+			ImGui::GetIO ().DisplaySize.x = (float)cx - 1 ;
+			ImGui::GetIO ().DisplaySize.y = (float)cy - 1 ;
 
 		}
 // 		if ( !m_pMesh )
@@ -475,22 +481,22 @@ LRESULT CModelViewerDlg::WindowProc ( UINT message, WPARAM wParam, LPARAM lParam
 	if ( CGuiRenderer::s_pDevice )
 		CGuiRenderer::WndProc ( GetSafeHwnd(), message, wParam, lParam ) ;
 
-	if ( 0 )
-	if ( CGuiRenderer::s_pDevice ) {
-		
-		struct ImGuiState* st = ( struct ImGuiState*)ImGui::GetInternalState () ;
-		struct ImGuiWindow* window = st->MovedWindow ;
-		if ( window ) {
-			int x = window->Pos.x ;
-			int y = window->Pos.y ;
-			if ( x != 0 || y != 0 ) {
-				CRect rcWnd ;
-				GetWindowRect ( rcWnd ) ;
-				MoveWindow ( rcWnd.left + x, rcWnd.top + y, rcWnd.Width (), rcWnd.Height () ) ;
-			}
-		}
-
-	}
+// 	if ( 0 )
+// 	if ( CGuiRenderer::s_pDevice ) {
+// 		
+// 		struct ImGuiState* st = ( struct ImGuiState*)ImGui::GetState () ;
+// 		struct ImGuiWindow* window = st->MovedWindow ;
+// 		if ( window ) {
+// 			int x = window->Pos.x ;
+// 			int y = window->Pos.y ;
+// 			if ( x != 0 || y != 0 ) {
+// 				CRect rcWnd ;
+// 				GetWindowRect ( rcWnd ) ;
+// 				MoveWindow ( rcWnd.left + x, rcWnd.top + y, rcWnd.Width (), rcWnd.Height () ) ;
+// 			}
+// 		}
+// 
+// 	}
 
 
 	return CDialogEx::WindowProc ( message, wParam, lParam );

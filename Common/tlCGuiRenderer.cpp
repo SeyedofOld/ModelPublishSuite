@@ -175,7 +175,7 @@ bool CGuiRenderer::Initialize(IDirect3DDevice9* device, int width, int height)
 		return false;
 
 	//((ImGuiState*)ImGui::GetInternalState())->Style.Colors[ImGuiCol_WindowBg] = ImColor(255, 255, 0, 255);
-	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImColor(32, 32, 32, 255));
+	//ImGui::PushStyleColor(ImGuiCol_WindowBg, ImColor(32, 32, 32, 255));
 
 	return true;
 }
