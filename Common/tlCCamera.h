@@ -1,6 +1,9 @@
 #pragma once
 
+#pragma warning( push )  
+#pragma warning(disable:4005)
 #include <d3dx9.h>
+#pragma warning( pop )  
 #include "tlMathTypes.h"
 
 using namespace tochal ;

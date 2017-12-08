@@ -22,6 +22,7 @@ CModelViewerDlg::CModelViewerDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(IDD_MODELVIEWER_DIALOG, pParent)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+	m_bFileOpened = false ;
 }
 
 void CModelViewerDlg::DoDataExchange(CDataExchange* pDX)
@@ -117,7 +118,6 @@ BOOL CModelViewerDlg::OnInitDialog()
 	C3DGfx::CreateInstance () ;
 	C3DGfx::GetInstance ()->Initialize ( GetSafeHwnd (), rc.Width(), rc.Height(), D3DFMT_A8R8G8B8, FALSE, 0, FALSE );
 
-
 	m_Camera.Initialize ( D3DXToRadian ( 45.0f ), 4.0f / 3.0f, 0.01f, 1000.0f );
 	m_Camera.SetMode ( CCamera::MODE_TARGET );
 	m_Camera.SetPosition ( 0.0f, 0.0f, -10.0f );
@@ -156,7 +156,8 @@ BOOL CModelViewerDlg::OnInitDialog()
 		true ) ;
 
 
-	SetWindowPos ( NULL, 0, 0, 1200, 675, SWP_NOMOVE ) ;
+	//SetWindowPos ( NULL, 0, 0, 1200, 675, SWP_NOMOVE ) ;
+
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -220,39 +221,38 @@ void CModelViewerDlg::Update()
 	//m_SettingsGui.Update() ;
 }
 
-static void ShowExampleMenuFile ()
+void CModelViewerDlg::ShowExampleMenuFile ()
 {
-	ImGui::MenuItem ( "(dummy menu)", NULL, false, false );
-	if ( ImGui::MenuItem ( "New" ) ) {}
-	if ( ImGui::MenuItem ( "Open", "Ctrl+O" ) ) {
+	if (ImGui::MenuItem("Import Obj File", "Ctrl+I")) {
+		wchar_t szFilters[] = L"3D Scan Files (*.obj)|*.iobj||";
+		CFileDialog dlg(TRUE, L"obj", L"*.obj", OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, szFilters, AfxGetMainWnd());
+		if (dlg.DoModal() != IDOK)
+			return;
+	}
+
+	if ( ImGui::MenuItem ( "Open 3D Scan File", "Ctrl+O" ) ) {
 		wchar_t szFilters[] = L"3D Scan Files (*.3dscan)|*.3dscan||";
 		CFileDialog dlg ( TRUE, L"3dscan", L"*.3dscan", OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, szFilters, AfxGetMainWnd () ) ;
 		if ( dlg.DoModal () != IDOK )
 			return ;
 	}
-	if ( ImGui::BeginMenu ( "Open Recent" ) )
-	{
+	
+	if ( ImGui::BeginMenu ( "Open Recent" ) ) {
 		ImGui::MenuItem ( "fish_hat.c" );
 		ImGui::MenuItem ( "fish_hat.inl" );
 		ImGui::MenuItem ( "fish_hat.h" );
-		if ( ImGui::BeginMenu ( "More.." ) )
-		{
-			ImGui::MenuItem ( "Hello" );
-			ImGui::MenuItem ( "Sailor" );
-			if ( ImGui::BeginMenu ( "Recurse.." ) )
-			{
-				ShowExampleMenuFile ();
-				ImGui::EndMenu ();
-			}
-			ImGui::EndMenu ();
-		}
 		ImGui::EndMenu ();
 	}
-	if ( ImGui::MenuItem ( "Save", "Ctrl+S" ) ) {}
-	if ( ImGui::MenuItem ( "Save As.." ) ) {}
+	
+	if ( ImGui::MenuItem ( "Save", "Ctrl+S", false, m_bFileOpened ) ) {
+	}
+	
+	if ( ImGui::MenuItem ( "Save As..", NULL, false, m_bFileOpened) ) {
+	}
+
 	ImGui::Separator ();
-	if ( ImGui::BeginMenu ( "Options" ) )
-	{
+
+	if ( ImGui::BeginMenu ( "Options" ) ) {
 		static bool enabled = true;
 		ImGui::MenuItem ( "Enabled", "", &enabled );
 		ImGui::BeginChild ( "child", ImVec2 ( 0, 60 ), true );
@@ -267,9 +267,9 @@ static void ShowExampleMenuFile ()
 		ImGui::Combo ( "Combo", &n, "Yes\0No\0Maybe\0\0" );
 		ImGui::Checkbox ( "Check", &b );
 		ImGui::EndMenu ();
-	}
-	if ( ImGui::BeginMenu ( "Colors" ) )
-	{
+	}	
+	
+	if ( ImGui::BeginMenu ( "Colors" ) ) {
 		ImGui::PushStyleVar ( ImGuiStyleVar_FramePadding, ImVec2 ( 0, 0 ) );
 		for ( int i = 0; i < ImGuiCol_COUNT; i++ )
 		{
@@ -281,6 +281,7 @@ static void ShowExampleMenuFile ()
 		ImGui::PopStyleVar ();
 		ImGui::EndMenu ();
 	}
+
 	if ( ImGui::BeginMenu ( "Disabled", false ) ) // Disabled
 	{
 		IM_ASSERT ( 0 );
@@ -355,7 +356,7 @@ void CModelViewerDlg::Render()
 		*/
 	CGuiRenderer::Update ( 0.01f ) ;
 	
-	//m_SettingsGui.Update () ;
+	m_SettingsGui.Update () ;
 
 	{
 		CRect rc ;
@@ -367,6 +368,7 @@ void CModelViewerDlg::Render()
 		flags |= ImGuiWindowFlags_NoCollapse;
 		flags |= ImGuiWindowFlags_MenuBar;
 		//flags |= ImGuiWindowFlags_ShowBorders;
+		flags |= ImGuiWindowFlags_NoTitleBar;
 
         //ImGui::SetStyleColor
 
@@ -387,17 +389,16 @@ void CModelViewerDlg::Render()
 			// 		ImGui::Checkbox("Show Scene Nodes", &pEngSettings->Scene.bShowSceneNodes);
 			// 		ImGui::Checkbox("Show Object Bounding", &pEngSettings->Objects.bShowBoundings);
 			// 		ImGui::Checkbox("Show Object Path", &pEngSettings->Objects.bShowPath);
-			bool s_b = false ;
-			ImGui::Checkbox ( "Wire-frame", &s_b );
-			ImGui::PushItemWidth ( 120.0f );
+// 			bool s_b = false ;
+// 			ImGui::Checkbox ( "Wire-frame", &s_b );
+			//ImGui::PushItemWidth ( 120.0f );
 			//ImGui::InputFloat ( "Transparency", &m_fAlpha, 0.01f, 0.1f, 2 );
-			ImGui::PopItemWidth ();
+			//ImGui::PopItemWidth ();
 			//VALIDATE_RANGE ( m_fAlpha, 0.1f, 1.0f );
 			int w = ImGui::GetWindowSize ().x ;
 			int h = ImGui::GetWindowSize ().y ;
 			int x = ImGui::GetWindowPos ().x ;
 			int y = ImGui::GetWindowPos ().y ;
-			ImGui::End ();
 
 			if ( w != rc.Width () || h != rc.Height () ) {
 				//MoveWindow ( rc.left, rc.top, w, h ) ;
@@ -417,28 +418,38 @@ void CModelViewerDlg::Render()
 	if ( 1 ) {
 		if ( ImGui::BeginMainMenuBar () )
 		{
-			if ( ImGui::BeginMenu ( "File" ) )
-			{
+			if ( ImGui::BeginMenu ( "File" ) )	{
 				ShowExampleMenuFile ();
 				ImGui::EndMenu ();
 			}
 
-			if ( ImGui::BeginMenu ( "Edit" ) )
-			{
+			if ( ImGui::BeginMenu ( "Edit" ) ) {
 				if ( ImGui::MenuItem ( "Undo", "CTRL+Z" ) ) {}
 				if ( ImGui::MenuItem ( "Redo", "CTRL+Y", false, false ) ) {}  // Disabled item
 				ImGui::Separator ();
 				if ( ImGui::MenuItem ( "Cut", "CTRL+X" ) ) {}
 				if ( ImGui::MenuItem ( "Copy", "CTRL+C" ) ) {}
 				if ( ImGui::MenuItem ( "Paste", "CTRL+V" ) ) {}
-				static bool s_b = true ;
-				ImGui::Checkbox ( "Wire-frame", &s_b );
 				ImGui::EndMenu ();
 			}
+
+			if (ImGui::BeginMenu("Options")) {
+				if (ImGui::MenuItem("Undo", "CTRL+Z")) {}
+				if (ImGui::MenuItem("Redo", "CTRL+Y", false, false)) {}  // Disabled item
+				ImGui::Separator();
+				if (ImGui::MenuItem("Cut", "CTRL+X")) {}
+				if (ImGui::MenuItem("Copy", "CTRL+C")) {}
+				if (ImGui::MenuItem("Paste", "CTRL+V")) {}
+				static bool s_b = true;
+				ImGui::Checkbox("Wire-frame", &s_b);
+				ImGui::EndMenu();
+			}
+
 
 			ImGui::EndMainMenuBar ();
 		}
 	}
+	ImGui::End();
 
 	CGuiRenderer::Render () ;
 	

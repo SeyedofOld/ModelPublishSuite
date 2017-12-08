@@ -1,7 +1,5 @@
 #include "StdAfx.h"
 #include "tlC3DGfx.h"
-
-//#include "tlCErrorLog.h"
 #include "tlMacros.h"
 
 

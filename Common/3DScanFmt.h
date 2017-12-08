@@ -7,7 +7,11 @@
 #pragma once
 
 #include <stdint.h>
+#pragma warning( push )  
+#pragma warning(disable:4005)
 #include <d3dx9.h>
+#pragma warning( pop )  
+#include "BaseTypes.h"
 
 #include <pshpack1.h>
 
@@ -34,22 +38,6 @@ enum VERTEX_FORMAT {
 	VF_POSITIION = 1,
 	VF_NORMAL = 2,
 	VF_UV = 4
-} ;
-
-struct float3 {
-	float x, y, z ;
-} ;
-
-struct float2 {
-	float x, y ;
-} ;
-
-struct float2_uv {
-	float u, v ;
-} ;
-
-struct float4_rgba {
-	float r, g, b, a ;
 } ;
 
 struct TDSCAN_FILE_HEADER {

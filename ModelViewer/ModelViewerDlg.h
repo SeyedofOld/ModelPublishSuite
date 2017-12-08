@@ -3,7 +3,6 @@
 //
 
 #pragma once
-#include <d3dx9.h>
 #include "tlCCamera.h"
 #include "tlCGuiRenderer.h"
 #include "tlCSettingsGui.h"
@@ -44,10 +43,12 @@ public:
 	CGuiRenderer	m_GuiRenderer ;
 	CSettingsGui	m_SettingsGui ;
 	C3DViewContext*  m_pView ;
+	bool			m_bFileOpened ;
 
 public:
 	void Update() ;
-	void Render() ;
+	void ShowExampleMenuFile();
+	void Render();
 	afx_msg void OnSize ( UINT nType, int cx, int cy );
 	virtual LRESULT WindowProc ( UINT message, WPARAM wParam, LPARAM lParam );
 	afx_msg BOOL OnEraseBkgnd ( CDC* pDC );
