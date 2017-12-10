@@ -1,3 +1,9 @@
+/********************************************************************
+*	Created:	2017/12/05
+*	Author:		Ali Seyedof (seyedof@gmail.com)
+*	Purpose:	D3D model structures
+*********************************************************************/
+
 #pragma once
 
 
@@ -7,12 +13,10 @@
 #include <d3d9.h>
 #include <d3dx9.h>
 #pragma warning(pop)
-#include <vector>
-#include <map>
-#include <stdint.h>
-#include "BaseTypes.h"
+#include "3DScanModel.h"
 
-#ifndef SAFE_DELETE
+
+/*#ifndef SAFE_DELETE
 /// For pointers allocated with new.
 #define SAFE_DELETE(p)			{ if(p) { delete (p);     (p)=NULL; } }
 #endif
@@ -25,7 +29,7 @@
 #ifndef SAFE_RELEASE
 /// For use with COM pointers.
 #define SAFE_RELEASE(p)			{ if(p) { (p)->Release(); (p)=NULL; } }
-#endif
+#endif*/
 
 using namespace std ;
 
@@ -35,67 +39,44 @@ struct D3D_VERTEX {
 	float2 vUv ;
 } ;
 
-struct D3D_SUBSET {
-	void*		pVB ;
-	uint32_t*	pIB ;
-	int32_t		iTriCount ;
-
-	//bool		bNormal ;
-	//bool		bUv ;
-	//string		sMatName ;
-	int32_t		iMatIndex;
-	uint32_t	uiVertexFmt ;
+struct D3DMODEL_SUBSET : public MODEL_SUBSET {
 	uint32_t	uiFVF ;
 
-	D3D_SUBSET() {
-		pVB = NULL ;
-		pIB = NULL ;
-		iTriCount = 0 ;
-		iMatIndex = 0 ;
-// 		bNormal = false ;
-// 		bUv = false ;
-		uiVertexFmt = 0 ;
+	D3DMODEL_SUBSET() {
 		uiFVF = 0 ;
 	}
 };
 
-struct D3D_MODEL_PART {
-	string				sName ;
-	vector<D3D_SUBSET>	Subsets ;
+struct D3DMODEL_PART : public MODEL_PART {
 };
 
-struct D3D_MATERIAL {
-	string			sName ;
+struct D3DMODEL_MATERIAL {
 	ID3DXEffect*	pShader ;
+	IDirect3DTexture9* pTexDiffuse ;
+	IDirect3DTexture9* pTexSpec;
+	IDirect3DTexture9* pTexAlpha;
+	IDirect3DTexture9* pTexNormal;
+	IDirect3DTexture9* pTexReflection ;
 
-	float4_rgba		clrAmbient ;
-	float4_rgba		clrDiffuse ;
-	float4_rgba		clrSpecular ;
-	float			fTransparency ;
-	float			fGlossiness ;
-	//IDirect3DTexture9* pTexDiffuse ;
-	string			sTextureName ;
-	D3D_MATERIAL () {
-		pShader		= NULL ;
-		//pTexDiffuse = NULL ;
-		clrAmbient	= float4_rgba{ 0, 0, 0, 0 };
-		clrDiffuse	= float4_rgba{ 1, 1, 1, 1 };
-		clrSpecular = float4_rgba{ 1, 1, 1, 1 };
-		fTransparency	= 1.0f ;
-		fGlossiness		= 0.0f ;
+	D3DMODEL_MATERIAL() {
+		pShader = NULL ;
+		pTexDiffuse = NULL ;
+		pTexAlpha = NULL ;
+		pTexSpec = NULL ;
+		pTexNormal = NULL ;
+		pTexReflection = NULL ;
 	}
 };
 
-struct TEXTURE_SLOT {
-	string sName ;
+struct D3DMODEL_TEXTURE_SLOT : public MODEL_TEXTURE_SLOT {
 	IDirect3DTexture9* pTexture;
 };
 
 struct D3D_MODEL {
-	vector<D3D_MODEL_PART>		Parts ;
-	map<string, D3D_MATERIAL>	Materials;
-	map<string, TEXTURE_SLOT>	Textures ;
-	float3						ptMin ;
-	float3						ptMax ;
+	vector<D3DMODEL_PART>				Parts;
+	map<string, D3DMODEL_MATERIAL>		Materials;
+	map<string, D3DMODEL_TEXTURE_SLOT>	Textures;
+	float3								ptMin;
+	float3								ptMax;
 };
 

@@ -1,21 +1,16 @@
+/********************************************************************
+*	Created:	2017/12/05
+*	Author:		Ali Seyedof (seyedof@gmail.com)
+*	Purpose:	3D model in-memory structures
+*********************************************************************/
+
 #pragma once
 
-
-#include <windows.h>
+#include <stdint.h>
 #include <vector>
 #include <map>
-#include <stdint.h>
+#include <string>
 #include "BaseTypes.h"
-
-#ifndef SAFE_DELETE
-/// For pointers allocated with new.
-#define SAFE_DELETE(p)			{ if(p) { delete (p);     (p)=NULL; } }
-#endif
-
-#ifndef SAFE_DELETE_ARRAY
-/// For arrays allocated with new [].
-#define SAFE_DELETE_ARRAY(p)	{ if(p) { delete[] (p);   (p)=NULL; } }
-#endif
 
 using namespace std ;
 
@@ -23,23 +18,15 @@ struct MODEL_SUBSET {
 	void*		pVB ;
 	uint32_t*	pIB ;
 	int32_t		iTriCount ;
-
-	//bool		bNormal ;
-	//bool		bUv ;
-	//string		sMatName ;
+	string		sMatName ;
 	int32_t		iMatIndex;
 	uint32_t	uiVertexFmt ;
-//	uint32_t	uiFVF ;
-
 	MODEL_SUBSET() {
 		pVB = NULL ;
 		pIB = NULL ;
 		iTriCount = 0 ;
 		iMatIndex = 0 ;
-// 		bNormal = false ;
-// 		bUv = false ;
 		uiVertexFmt = 0 ;
-//		uiFVF = 0 ;
 	}
 };
 
@@ -50,18 +37,13 @@ struct MODEL_PART {
 
 struct MODEL_MATERIAL {
 	string			sName ;
-	//ID3DXEffect*	pShader ;
-
 	float4_rgba		clrAmbient ;
 	float4_rgba		clrDiffuse ;
 	float4_rgba		clrSpecular ;
 	float			fTransparency ;
 	float			fGlossiness ;
-	//IDirect3DTexture9* pTexDiffuse ;
 	string			sTextureName ;
 	MODEL_MATERIAL () {
-		//pShader		= NULL ;
-		//pTexDiffuse = NULL ;
 		clrAmbient	= float4_rgba{ 0, 0, 0, 0 };
 		clrDiffuse	= float4_rgba{ 1, 1, 1, 1 };
 		clrSpecular = float4_rgba{ 1, 1, 1, 1 };
@@ -72,7 +54,6 @@ struct MODEL_MATERIAL {
 
 struct MODEL_TEXTURE_SLOT {
 	string sName ;
-	//IDirect3DTexture9* pTexture;
 };
 
 struct TDSCAN_MODEL {

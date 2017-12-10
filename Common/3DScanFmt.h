@@ -60,6 +60,7 @@ struct TDSCAN_FILE_PART {
 
 struct TDSCAN_FILE_MATERIAL {
 	uint8_t		szSign [ 8 ] ; // = MATERIAL
+	int8_t		szName [ 32 ] ;
 	int32_t		iNextMaterialOfs ;
 	float4_rgba f4Diffuse ;
 	float4_rgba f4Ambient ;

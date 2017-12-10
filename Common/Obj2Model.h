@@ -1,29 +1,12 @@
 /********************************************************************
 *	Created:	2017/12/05
 *	Author:		Ali Seyedof (seyedof@gmail.com)
-*	Purpose:	Basic math types
+*	Purpose:	Convert Obj data structure to 3d scan model structure
 *********************************************************************/
 
 #pragma once
 
-#include <PshPack1.h>
+#include "3DScanModel.h"
+#include "ObjLoader.h"
 
-struct float3 {
-	float x, y, z;
-};
-
-struct float2 {
-	float x, y;
-};
-
-struct float2_uv {
-	float u, v;
-};
-
-struct float4_rgba {
-	float r, g, b, a;
-};
-
-#include <PopPack.h>
-
-
+bool ConvertObjTo3DModel ( MY_OBJ& obj, TDSCAN_MODEL& model ) ;

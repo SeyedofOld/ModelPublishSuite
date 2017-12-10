@@ -238,8 +238,8 @@ bool CD3DModelUtils::RenderD3DModel ( IDirect3DDevice9* pDevice, D3D_MODEL& d3dM
 */
 void CD3DModelUtils::FreeD3DModel ( D3D_MODEL & d3dModel )
 {
-	for ( unsigned int iPart = 0 ; iPart < d3dModel.Parts.size () ; iPart++ ) {
-		D3D_MODEL_PART& part = d3dModel.Parts [ iPart ] ;
+/*	for ( unsigned int iPart = 0 ; iPart < d3dModel.Parts.size () ; iPart++ ) {
+		D3DMODEL_PART& part = d3dModel.Parts [ iPart ] ;
 		for ( unsigned int iSubset = 0 ; iSubset < d3dModel.Parts [ iPart ].Subsets.size () ; iSubset++ ) {
 			D3D_SUBSET& subset = part.Subsets [ iSubset ] ;
 
@@ -261,6 +261,6 @@ void CD3DModelUtils::FreeD3DModel ( D3D_MODEL & d3dModel )
 			mtrl.pShader->Release() ;
 	}
 
-	d3dModel.Materials.clear() ;
+	d3dModel.Materials.clear() ;*/
 }
 

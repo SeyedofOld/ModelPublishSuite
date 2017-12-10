@@ -8,6 +8,9 @@
 #include "afxdialogex.h"
 #include "tlC3DGfx.h"
 #include "Imgui/imgui_internal.h"
+#include "ObjLoader.h"
+#include "C3DScanFile.h"
+#include "Obj2Model.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -224,17 +227,24 @@ void CModelViewerDlg::Update()
 void CModelViewerDlg::ShowExampleMenuFile ()
 {
 	if (ImGui::MenuItem("Import Obj File", "Ctrl+I")) {
-		wchar_t szFilters[] = L"3D Scan Files (*.obj)|*.iobj||";
-		CFileDialog dlg(TRUE, L"obj", L"*.obj", OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, szFilters, AfxGetMainWnd());
-		if (dlg.DoModal() != IDOK)
-			return;
+		char szFilters[] = "3D Scan Files (*.obj)|*.iobj||";
+		CFileDialog dlg(TRUE, "obj", "*.obj", OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, szFilters, AfxGetMainWnd());
+		if (dlg.DoModal() == IDOK) {
+			MY_OBJ obj ;
+			LoadObj2 ( dlg.GetPathName(), &obj ) ;
+			TDSCAN_MODEL* pModel = new TDSCAN_MODEL ;
+			ConvertObjTo3DModel ( obj, *pModel ) ;
+		}
+
+
 	}
 
 	if ( ImGui::MenuItem ( "Open 3D Scan File", "Ctrl+O" ) ) {
-		wchar_t szFilters[] = L"3D Scan Files (*.3dscan)|*.3dscan||";
-		CFileDialog dlg ( TRUE, L"3dscan", L"*.3dscan", OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, szFilters, AfxGetMainWnd () ) ;
-		if ( dlg.DoModal () != IDOK )
-			return ;
+		char szFilters[] = "3D Scan Files (*.3dscan)|*.3dscan||";
+		CFileDialog dlg ( TRUE, "3dscan", "*.3dscan", OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, szFilters, AfxGetMainWnd () ) ;
+		if (dlg.DoModal() == IDOK) {
+			TDSCAN_MODEL* pModel = C3DScanFile::Load3DScanModel ( dlg.GetPathName().GetBuffer() ) ;
+		}
 	}
 	
 	if ( ImGui::BeginMenu ( "Open Recent" ) ) {
@@ -374,7 +384,7 @@ void CModelViewerDlg::Render()
 
 		//CRect rcOld = rc ;
 
-		if ( ImGui::Begin ( "Model Viewer", NULL, ImVec2 ( rc.Width(), rc.Height() ), 1.0f, flags ) ) {
+		if ( ImGui::Begin ( "Model Viewer", NULL, ImVec2 ( (float)rc.Width(), (float)rc.Height() ), 1.0f, flags ) ) {
 			ImGui::SetWindowPos ( ImVec2 ( 0, 0 ) ) ;
 			ImGuiStyle& style = ImGui::GetStyle ();
 			style.WindowRounding = 0.0f ;
@@ -395,21 +405,21 @@ void CModelViewerDlg::Render()
 			//ImGui::InputFloat ( "Transparency", &m_fAlpha, 0.01f, 0.1f, 2 );
 			//ImGui::PopItemWidth ();
 			//VALIDATE_RANGE ( m_fAlpha, 0.1f, 1.0f );
-			int w = ImGui::GetWindowSize ().x ;
-			int h = ImGui::GetWindowSize ().y ;
-			int x = ImGui::GetWindowPos ().x ;
-			int y = ImGui::GetWindowPos ().y ;
+// 			int w = ImGui::GetWindowSize ().x ;
+// 			int h = ImGui::GetWindowSize ().y ;
+// 			int x = ImGui::GetWindowPos ().x ;
+// 			int y = ImGui::GetWindowPos ().y ;
+// 
+// 			if ( w != rc.Width () || h != rc.Height () ) {
+// 				//MoveWindow ( rc.left, rc.top, w, h ) ;
+// 			}
 
-			if ( w != rc.Width () || h != rc.Height () ) {
-				//MoveWindow ( rc.left, rc.top, w, h ) ;
-			}
-
-			if ( 0 )
-			if ( x != 0 || y != 0 ) {
-				CRect rcWnd ;
-				GetWindowRect ( rcWnd ) ;
-				MoveWindow ( rcWnd.left + x, rc.top + y, w, h ) ;
-			}
+// 			if ( 0 )
+// 			if ( x != 0 || y != 0 ) {
+// 				CRect rcWnd ;
+// 				GetWindowRect ( rcWnd ) ;
+// 				MoveWindow ( rcWnd.left + x, rc.top + y, w, h ) ;
+// 			}
 		}
 
 
