@@ -47,17 +47,18 @@ struct TDSCAN_FILE_HEADER {
 	int32_t		iFirstPartOfs ;
 	int32_t		iMaterialLibOfs ;
 	int32_t		iTexLibOfs ;
+	uint32_t	uiCrc ;
 	uint8_t		uiPadding [ 5 ] ;
 } ;
 
-struct TDSCAN_PART {
+struct TDSCAN_FILE_PART {
 	uint8_t		szSign [ 4 ] ; // = PART
 	int8_t		szName [ 32 ] ;
 	int32_t		iNextPartOfs ;
 	int32_t		iFirstSubset ;
 } ;
 
-struct TDSCAN_MATERIAL {
+struct TDSCAN_FILE_MATERIAL {
 	uint8_t		szSign [ 8 ] ; // = MATERIAL
 	int32_t		iNextMaterialOfs ;
 	float4_rgba f4Diffuse ;
@@ -75,7 +76,7 @@ struct TDSCAN_MATERIAL {
 	uint8_t		uiPadding [ 64 ] ;
 } ;
 
-struct TDSCAN_TEXTURE {
+struct TDSCAN_FILE_TEXTURE {
 	uint8_t			szSign [ 3 ] ; // = TEX
 	int8_t			szName [ 32 ] ;
 	int32_t			iNextTexOfs ;
@@ -84,10 +85,11 @@ struct TDSCAN_TEXTURE {
 	uint32_t		uiDataSize ;
 	uint32_t		uiCompressedSize ;
 	uint32_t		uiFlags ;
+	float4_rgba		clrAvgColor ;
 	uint8_t			uiPadding [ 5 ] ;
 } ;
 
-struct TDSCAN_SUBSET {
+struct TDSCAN_FILE_SUBSET {
 	uint8_t		szSign [ 6 ] ; // = SUBSET
 	int32_t		iNextSubsetOfs ;
 	uint32_t	iMaterialIndex ;

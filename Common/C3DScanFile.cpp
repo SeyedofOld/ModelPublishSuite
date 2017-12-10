@@ -9,7 +9,7 @@
 #include "C3DScanFile.h"
 #include "C3DScanFileUtils.h"
 
-D3D_MODEL* C3DScanFile::Load3DScanModel ( char* pszFilename )
+TDSCAN_MODEL* C3DScanFile::Load3DScanModel ( char* pszFilename )
 {
 	if ( ! pszFilename )
 		return NULL;
@@ -26,7 +26,7 @@ D3D_MODEL* C3DScanFile::Load3DScanModel ( char* pszFilename )
 	if ( hdr.uiVersion != (1 << 16) + 0 )
 		goto load_error ;
 
-	D3D_MODEL* pModel = new D3D_MODEL ;
+	TDSCAN_MODEL* pModel = new TDSCAN_MODEL ;
 	if ( ! pModel )
 		goto load_error ;
 
@@ -36,16 +36,16 @@ D3D_MODEL* C3DScanFile::Load3DScanModel ( char* pszFilename )
 
 		fseek ( pFile, iNextPartOfs, SEEK_SET ) ;
 
-		TDSCAN_PART part_hdr;
-		fread ( &part_hdr, sizeof(TDSCAN_PART), 1, pFile ) ;
+		TDSCAN_FILE_PART part_hdr;
+		fread ( &part_hdr, sizeof(TDSCAN_FILE_PART), 1, pFile ) ;
 		if ( memcmp ( part_hdr.szSign, "PART", sizeof(part_hdr.szSign) ) != 0 )
 			goto load_error ;
 
 		{
-			D3D_MODEL_PART part ;
+			MODEL_PART part ;
 			pModel->Parts.push_back ( part ) ;
 		}
-		D3D_MODEL_PART& part = pModel->Parts.front() ;
+		MODEL_PART& part = pModel->Parts.front() ;
 
 		part.sName = (char*)part_hdr.szName ;
 		
@@ -54,15 +54,15 @@ D3D_MODEL* C3DScanFile::Load3DScanModel ( char* pszFilename )
 		while ( iNextSubsetOfs > 0 ) {
 
 			{
-				D3D_SUBSET subset;
+				MODEL_SUBSET subset;
 				part.Subsets.push_back ( subset ) ;
 			}
-			D3D_SUBSET& subset = part.Subsets.front() ;
+			MODEL_SUBSET& subset = part.Subsets.front() ;
 
 			fseek ( pFile, iNextPartOfs, SEEK_SET ) ;
 
-			TDSCAN_SUBSET sub_hdr;
-			fread ( &sub_hdr, sizeof(TDSCAN_SUBSET), 1, pFile ) ;
+			TDSCAN_FILE_SUBSET sub_hdr;
+			fread ( &sub_hdr, sizeof(TDSCAN_FILE_SUBSET), 1, pFile ) ;
 			if ( memcmp ( sub_hdr.szSign, "SUBSET", sizeof(sub_hdr.szSign) ) != 0 )
 				goto load_error ;
 
@@ -89,12 +89,15 @@ D3D_MODEL* C3DScanFile::Load3DScanModel ( char* pszFilename )
 		iNextPartOfs = part_hdr.iNextPartOfs ;
 	}
 
+	fclose  ( pFile ) ;
+	
+	return pModel ;
 
 load_error:
 	if ( pFile )
 		fclose ( pFile ) ;
-	if ( pModel )
-		CD3DModelUtils::FreeD3DModel ( pModel ) ;
+// 	if ( pModel )
+// 		CD3DModelUtils::FreeD3DModel ( pModel ) ;
 
 	return NULL ;
 }

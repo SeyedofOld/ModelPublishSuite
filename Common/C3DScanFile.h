@@ -7,12 +7,12 @@
 #pragma once
 
 #include "3DScanFmt.h"
-#include "D3DModel.h"
+#include "3DScanModel.h"
 
 class C3DScanFile {
 
 public:
-	static D3D_MODEL* Load3DScanModel ( char* pszFilename) ;
+	static TDSCAN_MODEL* Load3DScanModel ( char* pszFilename ) ;
 	static bool Save3DScanModel ( char* pszFilename ) ;
 
 };

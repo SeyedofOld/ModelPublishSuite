@@ -195,6 +195,7 @@ bool CD3DModelUtils::CreateFromObj ( IDirect3DDevice9* pDevice, ID3DXEffectPool*
 }
 */
 
+/*
 bool CD3DModelUtils::RenderD3DModel ( IDirect3DDevice9* pDevice, D3D_MODEL& d3dModel )
 {
 	for ( unsigned int iPart = 0 ; iPart < d3dModel.Parts.size() ; iPart++ ) {
@@ -234,7 +235,7 @@ bool CD3DModelUtils::RenderD3DModel ( IDirect3DDevice9* pDevice, D3D_MODEL& d3dM
 
 	return true ;
 }
-
+*/
 void CD3DModelUtils::FreeD3DModel ( D3D_MODEL & d3dModel )
 {
 	for ( unsigned int iPart = 0 ; iPart < d3dModel.Parts.size () ; iPart++ ) {
