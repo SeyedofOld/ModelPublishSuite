@@ -12,7 +12,7 @@
 class C3DScanFile {
 
 public:
-	static TDSCAN_MODEL* Load3DScanModel ( char* pszFilename ) ;
+	static TD_SCAN_MODEL* Load3DScanModel ( char* pszFilename ) ;
 	static bool Save3DScanModel ( char* pszFilename ) ;
 
 };

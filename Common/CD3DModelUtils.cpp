@@ -1,5 +1,6 @@
 #include "CD3DModelUtils.h"
 #include <assert.h>
+#include "C3DScanFileUtils.h"
 
 class CMyEffectInclude : public ID3DXInclude
 {
@@ -195,6 +196,95 @@ bool CD3DModelUtils::CreateFromObj ( IDirect3DDevice9* pDevice, ID3DXEffectPool*
 }
 */
 
+bool CD3DModelUtils::CreateFromTDModel ( IDirect3DDevice9* pDevice, ID3DXEffectPool* pEffectPool, TD_SCAN_MODEL& model, D3D_MODEL& d3dModel )
+{
+	if ( ! pDevice )
+		return false ;
+
+	HRESULT hr ;
+	CMyEffectInclude EffectInclude ;
+
+	for ( uint32_t iPart = 0 ; iPart < model.Parts.size() ; iPart++ ) {
+
+		D3DMODEL_PART part ;
+		part.sName = model.Parts [ iPart ].sName ;
+
+		for ( uint32_t iSubset = 0 ; iSubset < model.Parts [ iPart ].Subsets.size() ; iSubset++ ) {
+			TD_MODEL_SUBSET& mdlsub = model.Parts [ iPart ].Subsets [ iSubset ] ;
+			D3DMODEL_SUBSET subset ;
+			subset.iTriCount = mdlsub.iTriCount ;
+			if ( mdlsub.pIB ) {
+				subset.pIB = new uint32_t [ mdlsub.iTriCount * 3 ] ;
+				memcpy ( subset.pIB, mdlsub.pIB, mdlsub.iTriCount * 3 * sizeof ( uint32_t ) ) ;
+			}
+			if ( mdlsub.pVB ) {
+				subset.pVB = new uint8_t [ mdlsub.iTriCount * 3 * C3DScanFileUtils::GetVertexSize ( mdlsub.uiVertexFmt ) ] ;
+				memcpy ( subset.pVB, mdlsub.pVB, mdlsub.iTriCount * 3 * C3DScanFileUtils::GetVertexSize ( mdlsub.uiVertexFmt ) ) ;
+			}
+			subset.sMatName = mdlsub.sMatName ;
+			subset.uiVertexFmt = mdlsub.uiVertexFmt ;
+			subset.uiFVF = VertexFormatToFvf ( subset.uiVertexFmt ) ;
+
+			part.Subsets.push_back ( subset ) ;
+		}
+
+		d3dModel.Parts.push_back ( part ) ;
+	}
+
+	for ( uint32_t iTex = 0 ; iTex < model.Textures.size() ; iTex++ ) {
+		auto i = model.Textures.begin () ;
+		advance ( i, iTex ) ;
+
+		D3DMODEL_TEXTURE_SLOT slot ;
+		slot.sName = i->second.sName ;
+		slot.eFormat = i->second.eFormat ;
+		slot.uiSize = i->second.uiSize ;
+		slot.pData = new uint8_t [ slot.uiSize ] ;
+		memcpy ( slot.pData, i->second.pData, slot.uiSize ) ;
+
+		D3DXCreateTextureFromFileInMemory ( pDevice, slot.pData, slot.uiSize, &slot.pTexture ) ;
+
+		d3dModel.Textures [ slot.sName ] = slot ;
+	}
+
+	for ( uint32_t iMat = 0 ; iMat < model.Materials.size() ; iMat++ ) {
+		auto i = model.Materials.begin() ;
+		advance ( i, iMat ) ;
+
+		TD_MODEL_MATERIAL& mdlmtrl = i->second ;
+		D3DMODEL_MATERIAL mtrl ;
+		
+		mtrl.sName = mdlmtrl.sName ;
+		mtrl.clrAmbient = mdlmtrl.clrAmbient ;
+		mtrl.clrDiffuse = mdlmtrl.clrDiffuse ;
+		mtrl.fSpecIntensity = mdlmtrl.fSpecIntensity ;
+		mtrl.fGlossiness = mdlmtrl.fGlossiness ;
+		mtrl.fTransparency = mdlmtrl.fTransparency ;
+
+		mtrl.sDiffuseTextureName = mdlmtrl.sDiffuseTextureName ;
+		mtrl.sAlphaTextureName = mdlmtrl.sAlphaTextureName ;
+		mtrl.sNormalTextureName = mdlmtrl.sNormalTextureName ;
+		mtrl.sSpecularTextureName = mdlmtrl.sSpecularTextureName ;
+		mtrl.sReflectionTextureName = mdlmtrl.sReflectionTextureName ;
+
+		hr = D3DXCreateEffectFromFileA ( pDevice,
+			"DiffuseMapSpec_trans.fx",
+			NULL,
+			&EffectInclude,
+			0,
+			pEffectPool,
+			&mtrl.pShader,
+			NULL ) ;
+
+		d3dModel.Materials [ mtrl.sName ] = mtrl ;
+	}
+
+	d3dModel.ptMin = model.ptMin ;
+	d3dModel.ptMax = model.ptMax ;
+
+	return true ;
+}
+
 /*
 bool CD3DModelUtils::RenderD3DModel ( IDirect3DDevice9* pDevice, D3D_MODEL& d3dModel )
 {
@@ -262,5 +352,18 @@ void CD3DModelUtils::FreeD3DModel ( D3D_MODEL & d3dModel )
 	}
 
 	d3dModel.Materials.clear() ;*/
+}
+
+uint32_t CD3DModelUtils::VertexFormatToFvf ( uint32_t uiVertFmt )
+{
+	uint32_t uiFvf = 0 ;
+	if ( uiVertFmt & VF_POSITIION )
+		uiFvf |= D3DFVF_XYZ ;
+	if ( uiVertFmt & VF_NORMAL )
+		uiFvf |= D3DFVF_NORMAL ;
+	if ( uiVertFmt & VF_UV )
+		uiFvf |= D3DFVF_TEX2 ;
+
+	return uiFvf ;
 }
 

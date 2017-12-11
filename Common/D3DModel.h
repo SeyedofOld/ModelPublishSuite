@@ -39,36 +39,38 @@ struct D3D_VERTEX {
 	float2 vUv ;
 } ;
 
-struct D3DMODEL_SUBSET : public MODEL_SUBSET {
+struct D3DMODEL_SUBSET : public TD_MODEL_SUBSET {
 	uint32_t	uiFVF ;
+	int32_t		iMatIndex ;
 
 	D3DMODEL_SUBSET() {
 		uiFVF = 0 ;
+		iMatIndex = -1 ;
 	}
 };
 
-struct D3DMODEL_PART : public MODEL_PART {
+struct D3DMODEL_PART : public TD_MODEL_PART {
 };
 
-struct D3DMODEL_MATERIAL {
+struct D3DMODEL_MATERIAL : public TD_MODEL_MATERIAL {
 	ID3DXEffect*	pShader ;
-	IDirect3DTexture9* pTexDiffuse ;
-	IDirect3DTexture9* pTexSpec;
-	IDirect3DTexture9* pTexAlpha;
-	IDirect3DTexture9* pTexNormal;
-	IDirect3DTexture9* pTexReflection ;
+// 	IDirect3DTexture9* pTexDiffuse ;
+// 	IDirect3DTexture9* pTexSpec;
+// 	IDirect3DTexture9* pTexAlpha;
+// 	IDirect3DTexture9* pTexNormal;
+// 	IDirect3DTexture9* pTexReflection ;
 
 	D3DMODEL_MATERIAL() {
 		pShader = NULL ;
-		pTexDiffuse = NULL ;
-		pTexAlpha = NULL ;
-		pTexSpec = NULL ;
-		pTexNormal = NULL ;
-		pTexReflection = NULL ;
+// 		pTexDiffuse = NULL ;
+// 		pTexAlpha = NULL ;
+// 		pTexSpec = NULL ;
+// 		pTexNormal = NULL ;
+// 		pTexReflection = NULL ;
 	}
 };
 
-struct D3DMODEL_TEXTURE_SLOT : public MODEL_TEXTURE_SLOT {
+struct D3DMODEL_TEXTURE_SLOT : public TD_MODEL_TEXTURE_SLOT {
 	IDirect3DTexture9* pTexture;
 };
 

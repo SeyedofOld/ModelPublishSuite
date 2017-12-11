@@ -208,7 +208,6 @@
     <ClInclude Include="..\Common\3DScanModel.h" />
     <ClInclude Include="..\Common\C3DScanFile.h" />
     <ClInclude Include="..\Common\C3DScanFileUtils.h" />
-    <ClInclude Include="..\Common\C3DScanModel.h" />
     <ClInclude Include="..\Common\CD3DModelUtils.h" />
     <ClInclude Include="..\Common\D3DModel.h" />
     <ClInclude Include="..\Common\imgui\imconfig.h" />
@@ -248,7 +247,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\Common\C3DScanModel.cpp">
+    <ClCompile Include="..\Common\3DScanModel.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>

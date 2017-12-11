@@ -3,7 +3,6 @@
 #include "tlC3DGfx.h"
 #include "tlMacros.h"
 #include "tlCCamera.h"
-//#include "Core/tlCGlobalShaderParams.h"
 
 
 C3DViewContext::C3DViewContext( const wchar_t* pszName, const HWND hWnd, const D3DVIEWPORT9& rViewport, const IDirect3DSurface9* pRenderTarget, const CCamera* pCamera, bool bOffScreen, bool bOwnCamera, bool bOwnTarget )

@@ -11,6 +11,7 @@
 #include "ObjLoader.h"
 #include "C3DScanFile.h"
 #include "Obj2Model.h"
+#include "CD3DModelUtils.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -232,8 +233,11 @@ void CModelViewerDlg::ShowExampleMenuFile ()
 		if (dlg.DoModal() == IDOK) {
 			MY_OBJ obj ;
 			LoadObj2 ( dlg.GetPathName(), &obj ) ;
-			TDSCAN_MODEL* pModel = new TDSCAN_MODEL ;
+			TD_SCAN_MODEL* pModel = new TD_SCAN_MODEL ;
 			ConvertObjTo3DModel ( obj, *pModel ) ;
+			
+			D3D_MODEL* pd3dModel = new D3D_MODEL ;
+			CD3DModelUtils::CreateFromTDModel ( C3DGfx::GetInstance ()->GetDevice (), C3DGfx::GetInstance ()->GetEffectPool (), *pModel, *pd3dModel ) ;
 		}
 
 
@@ -243,7 +247,7 @@ void CModelViewerDlg::ShowExampleMenuFile ()
 		char szFilters[] = "3D Scan Files (*.3dscan)|*.3dscan||";
 		CFileDialog dlg ( TRUE, "3dscan", "*.3dscan", OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, szFilters, AfxGetMainWnd () ) ;
 		if (dlg.DoModal() == IDOK) {
-			TDSCAN_MODEL* pModel = C3DScanFile::Load3DScanModel ( dlg.GetPathName().GetBuffer() ) ;
+			TD_SCAN_MODEL* pModel = C3DScanFile::Load3DScanModel ( dlg.GetPathName().GetBuffer() ) ;
 		}
 	}
 	

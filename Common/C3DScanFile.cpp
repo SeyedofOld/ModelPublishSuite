@@ -9,7 +9,7 @@
 #include "C3DScanFile.h"
 #include "C3DScanFileUtils.h"
 
-TDSCAN_MODEL* C3DScanFile::Load3DScanModel ( char* pszFilename )
+TD_SCAN_MODEL* C3DScanFile::Load3DScanModel ( char* pszFilename )
 {
 	if ( ! pszFilename )
 		return NULL;
@@ -26,7 +26,7 @@ TDSCAN_MODEL* C3DScanFile::Load3DScanModel ( char* pszFilename )
 	if ( hdr.uiVersion != (1 << 16) + 0 )
 		goto load_error ;
 
-	TDSCAN_MODEL* pModel = new TDSCAN_MODEL ;
+	TD_SCAN_MODEL* pModel = new TD_SCAN_MODEL ;
 	if ( ! pModel )
 		goto load_error ;
 
@@ -42,10 +42,10 @@ TDSCAN_MODEL* C3DScanFile::Load3DScanModel ( char* pszFilename )
 			goto load_error ;
 
 		{
-			MODEL_PART part ;
+			TD_MODEL_PART part ;
 			pModel->Parts.push_back ( part ) ;
 		}
-		MODEL_PART& part = pModel->Parts.front() ;
+		TD_MODEL_PART& part = pModel->Parts.front() ;
 
 		part.sName = (char*)part_hdr.szName ;
 		
@@ -54,10 +54,10 @@ TDSCAN_MODEL* C3DScanFile::Load3DScanModel ( char* pszFilename )
 		while ( iNextSubsetOfs > 0 ) {
 
 			{
-				MODEL_SUBSET subset;
+				TD_MODEL_SUBSET subset;
 				part.Subsets.push_back ( subset ) ;
 			}
-			MODEL_SUBSET& subset = part.Subsets.front() ;
+			TD_MODEL_SUBSET& subset = part.Subsets.front() ;
 
 			fseek ( pFile, iNextPartOfs, SEEK_SET ) ;
 
@@ -81,7 +81,8 @@ TDSCAN_MODEL* C3DScanFile::Load3DScanModel ( char* pszFilename )
 			fread ( subset.pVB, uiVertexSize, sub_hdr.iVertexCount, pFile ) ;
 			fread ( subset.pIB, sizeof(uint32_t), sub_hdr.iFaceCount * 3, pFile ) ;
 
-			sub_hdr.iMaterialIndex = 
+			//sub_hdr.iMaterialIndex = 
+
 
 			iNextSubsetOfs = sub_hdr.iNextSubsetOfs ;
 		}

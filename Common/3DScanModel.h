@@ -11,56 +11,70 @@
 #include <map>
 #include <string>
 #include "BaseTypes.h"
+#include "3DScanFmt.h"
 
 using namespace std ;
 
-struct MODEL_SUBSET {
+struct TD_MODEL_SUBSET {
 	void*		pVB ;
 	uint32_t*	pIB ;
 	int32_t		iTriCount ;
 	string		sMatName ;
-	int32_t		iMatIndex;
+	//int32_t		iMatIndex;
 	uint32_t	uiVertexFmt ;
-	MODEL_SUBSET() {
+	TD_MODEL_SUBSET() {
 		pVB = NULL ;
 		pIB = NULL ;
 		iTriCount = 0 ;
-		iMatIndex = 0 ;
+		//iMatIndex = 0 ;
 		uiVertexFmt = 0 ;
 	}
 };
 
-struct MODEL_PART {
+struct TD_MODEL_PART {
 	string					sName ;
-	vector<MODEL_SUBSET>	Subsets ;
+	vector<TD_MODEL_SUBSET>	Subsets ;
 };
 
-struct MODEL_MATERIAL {
+struct TD_MODEL_MATERIAL {
 	string			sName ;
 	float4_rgba		clrAmbient ;
 	float4_rgba		clrDiffuse ;
-	float4_rgba		clrSpecular ;
 	float			fTransparency ;
+	float			fSpecIntensity ;
 	float			fGlossiness ;
-	string			sTextureName ;
-	MODEL_MATERIAL () {
-		clrAmbient	= float4_rgba{ 0, 0, 0, 0 };
+	string			sDiffuseTextureName ;
+	string			sNormalTextureName ;
+	string			sSpecularTextureName ;
+	string			sAlphaTextureName ;
+	string			sReflectionTextureName ;
+	TD_MODEL_MATERIAL () {
+		clrAmbient	= float4_rgba{ 0, 0, 0, 1 };
 		clrDiffuse	= float4_rgba{ 1, 1, 1, 1 };
-		clrSpecular = float4_rgba{ 1, 1, 1, 1 };
+		fSpecIntensity  = 1.0f ;
 		fTransparency	= 1.0f ;
-		fGlossiness		= 0.0f ;
+		fGlossiness		= 10.0f ;
 	}
 };
 
-struct MODEL_TEXTURE_SLOT {
-	string sName ;
+struct TD_MODEL_TEXTURE_SLOT {
+	string			sName ;
+	uint32_t		uiSize ;
+	void*			pData ;
+	TEXTURE_FORMAT	eFormat ;
+	TD_MODEL_TEXTURE_SLOT()	{
+		uiSize = 0 ;
+		pData = NULL ;
+		eFormat = TEX_UNKNWON ;
+	}
 };
 
-struct TDSCAN_MODEL {
-	vector<MODEL_PART>				Parts ;
-	map<string, MODEL_MATERIAL>		Materials;
-	map<string, MODEL_TEXTURE_SLOT>	Textures ;
-	float3							ptMin ;
-	float3							ptMax ;
+struct TD_SCAN_MODEL {
+	vector<TD_MODEL_PART>				Parts ;
+	map<string, TD_MODEL_MATERIAL>		Materials;
+	map<string, TD_MODEL_TEXTURE_SLOT>	Textures ;
+	float3								ptMin ;
+	float3								ptMax ;
 };
 
+void FreeModel ( TD_SCAN_MODEL& model ) ;

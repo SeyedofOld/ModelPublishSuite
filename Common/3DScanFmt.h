@@ -22,16 +22,17 @@ enum TDSCAN_FLAGS {
 } ;
 
 enum TEXTURE_FORMAT {
-	TEX_JPG = 0,
-	TEX_PNG = 1,
-	TEX_DDS = 2,
-	TEX_BMP = 3,
-	TEX_TIFF = 4,
-	TEX_JP2 = 5,
-	TEX_TGA = 6,
-	TEX_ETC1 = 7,
-	TEX_ETC2 = 8,
-	TEX_EAC = 9
+	TEX_UNKNWON = 0,
+	TEX_JPG = 1,
+	TEX_PNG = 2,
+	TEX_DDS = 3,
+	TEX_BMP = 4,
+	TEX_TIFF = 5,
+	TEX_JP2 = 6,
+	TEX_TGA = 7,
+	TEX_ETC1 = 8,
+	TEX_ETC2 = 9,
+	TEX_EAC = 10
 } ;
 
 enum VERTEX_FORMAT {
@@ -93,7 +94,7 @@ struct TDSCAN_FILE_TEXTURE {
 struct TDSCAN_FILE_SUBSET {
 	uint8_t		szSign [ 6 ] ; // = SUBSET
 	int32_t		iNextSubsetOfs ;
-	uint32_t	iMaterialIndex ;
+	//uint32_t	iMaterialIndex ;
 	uint32_t	iVertexCount ;
 	uint32_t	iFaceCount ;
 	uint32_t	uiVertexFormat ;

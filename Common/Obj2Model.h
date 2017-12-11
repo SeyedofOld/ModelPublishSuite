@@ -9,4 +9,4 @@
 #include "3DScanModel.h"
 #include "ObjLoader.h"
 
-bool ConvertObjTo3DModel ( MY_OBJ& obj, TDSCAN_MODEL& model ) ;
+bool ConvertObjTo3DModel ( MY_OBJ& obj, TD_SCAN_MODEL& model ) ;
