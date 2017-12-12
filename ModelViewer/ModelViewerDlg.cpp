@@ -27,6 +27,10 @@ CModelViewerDlg::CModelViewerDlg(CWnd* pParent /*=NULL*/)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_bFileOpened = false ;
+	m_pModel1 = NULL ;
+	D3DXMatrixIdentity ( &m_matWorld ) ;
+	m_fYaw = 0.0f ;
+	m_fPitch = 0.0f ;
 }
 
 void CModelViewerDlg::DoDataExchange(CDataExchange* pDX)
@@ -45,7 +49,7 @@ END_MESSAGE_MAP()
 
 
 // CModelViewerDlg message handlers
-class CMyEffectInclude2 : public ID3DXInclude
+/*class CMyEffectInclude2 : public ID3DXInclude
 {
 public:
 
@@ -103,7 +107,7 @@ public:
 	}
 private:
 	char m_szIncludePath [ MAX_PATH ] ;
-};
+};*/
 
 
 BOOL CModelViewerDlg::OnInitDialog()
@@ -127,7 +131,7 @@ BOOL CModelViewerDlg::OnInitDialog()
 	m_Camera.SetPosition ( 0.0f, 0.0f, -10.0f );
 	m_Camera.SetTarget ( 0.0f, 0.0f, 0.0f );
 
-	CMyEffectInclude2 EffectInclude ;
+	CMyEffectInclude EffectInclude ;
 
 	HRESULT hr = D3DXCreateEffectFromFileA ( C3DGfx::GetInstance ()->GetDevice (),
 		"DiffuseMapSpec_trans.fx",
@@ -159,6 +163,9 @@ BOOL CModelViewerDlg::OnInitDialog()
 		false,
 		true ) ;
 
+// 	CMyEffectInclude EffectInclude ;
+// 
+// 	D3DXCreateEffectFromFileA ( C3DGfx::GetInstance ()->GetDevice (), "DiffuseMapSpec_trans.fx", NULL, &EffectInclude, 0, NULL, &m_pShader, NULL ) ;
 
 	//SetWindowPos ( NULL, 0, 0, 1200, 675, SWP_NOMOVE ) ;
 
@@ -223,6 +230,23 @@ void CModelViewerDlg::OnBnClickedOk ()
 void CModelViewerDlg::Update()
 {
 	//m_SettingsGui.Update() ;
+
+	if ( GetAsyncKeyState ( VK_LEFT ) & 0x8000 )
+		m_fYaw -= 0.005f ;
+	if ( GetAsyncKeyState ( VK_RIGHT ) & 0x8000 )
+		m_fYaw += 0.005f ;
+
+	if ( GetAsyncKeyState ( VK_UP ) & 0x8000 )
+		m_fPitch -= 0.005f ;
+	if ( GetAsyncKeyState ( VK_DOWN ) & 0x8000 )
+		m_fPitch += 0.005f ;
+
+	if ( GetAsyncKeyState ( 'W' ) & 0x8000 )
+		m_Camera.SetPosition ( m_Camera.GetPosition () + m_Camera.GetDirection () * 0.01f ) ;
+	if ( GetAsyncKeyState ( 'S' ) & 0x8000 )
+		m_Camera.SetPosition ( m_Camera.GetPosition () - m_Camera.GetDirection () * 0.01f ) ;
+
+	UpdateWorldMatrix () ;
 }
 
 void CModelViewerDlg::ShowExampleMenuFile ()
@@ -236,8 +260,11 @@ void CModelViewerDlg::ShowExampleMenuFile ()
 			TD_SCAN_MODEL* pModel = new TD_SCAN_MODEL ;
 			ConvertObjTo3DModel ( obj, *pModel ) ;
 			
-			D3D_MODEL* pd3dModel = new D3D_MODEL ;
-			CD3DModelUtils::CreateFromTDModel ( C3DGfx::GetInstance ()->GetDevice (), C3DGfx::GetInstance ()->GetEffectPool (), *pModel, *pd3dModel ) ;
+			m_pModel1 = new D3D_MODEL ;
+			if ( !CD3DModelUtils::CreateFromTDModel ( C3DGfx::GetInstance ()->GetDevice (), C3DGfx::GetInstance ()->GetEffectPool (), *pModel, *m_pModel1 ) ) {
+				delete m_pModel1 ;
+				m_pModel1 = NULL ;
+			}
 		}
 
 
@@ -312,11 +339,11 @@ void CModelViewerDlg::Render()
 	bool bSingleView = true ;
 
 	C3DGfx::GetInstance ()->BeginFrame ();
-	//C3DGfx::GetInstance ()->Clear ( 0xff200040 ) ;
+	C3DGfx::GetInstance ()->Clear ( 0xff200040 ) ;
 
 	m_pView->SelectView() ;
 
-/*
+
 	//C3DGfx::GetInstance ()->GetDevice ()->SetRenderState ( D3DRS_FILLMODE, D3DFILL_WIREFRAME );
 
 	IDirect3DDevice9* pDevice = C3DGfx::GetInstance ()->GetDevice () ;
@@ -327,9 +354,10 @@ void CModelViewerDlg::Render()
 	// 														// Row2 : Diffuse
 	// 														// Row3 : Ambient
 	// 														// Row4 : Reserved
-	( (CMainFrame*)AfxGetMainWnd () )->m_pShader->SetMatrix ( "g_matView", &m_Camera.GetViewMatrix () ) ;
-	( (CMainFrame*)AfxGetMainWnd () )->m_pShader->SetMatrix ( "g_matProj", &m_Camera.GetProjectionMatrix () ) ;
-	( (CMainFrame*)AfxGetMainWnd () )->m_pShader->SetMatrix ( "g_matWorld", &m_matWorld ) ;
+	
+	m_pShader->SetMatrix ( "g_matView", &m_Camera.GetViewMatrix () ) ;
+	m_pShader->SetMatrix ( "g_matProj", &m_Camera.GetProjectionMatrix () ) ;
+	m_pShader->SetMatrix ( "g_matWorld", &m_matWorld ) ;
 
 	matrix matLight ;
 
@@ -343,9 +371,9 @@ void CModelViewerDlg::Render()
 	vector4 vAmbLight ( 0.5f, 0.5f, 0.5f, 0.0f ) ;
 	CopyMemory ( &matLight [ 8 ], &vAmbLight, 4 * sizeof ( float ) ) ;
 
-	( (CMainFrame*)AfxGetMainWnd () )->m_pShader->SetMatrix ( "g_matSunLight", &matLight ) ;
+	m_pShader->SetMatrix ( "g_matSunLight", &matLight ) ;
 
-	if ( bDualView ) {
+	/*if ( bDualView ) {
 		D3DVIEWPORT9 vp = C3DGfx::GetInstance ()->GetFullscreenViewport () ;
 		vp.Width /= 2 ;
 		vp.X = 0 ;
@@ -466,7 +494,11 @@ void CModelViewerDlg::Render()
 	ImGui::End();
 
 	CGuiRenderer::Render () ;
-	
+
+	if ( m_pModel1 ) {
+		CD3DModelUtils::RenderD3DModel ( pDevice, *m_pModel1 ) ;
+	}
+
 	C3DGfx::GetInstance ()->EndFrame ();
 	m_pView->ShowFrame( ) ;
 }
@@ -536,4 +568,9 @@ BOOL CModelViewerDlg::OnEraseBkgnd ( CDC* pDC )
 	return TRUE ;
 
 	return CDialogEx::OnEraseBkgnd ( pDC );
+}
+
+void CModelViewerDlg::UpdateWorldMatrix ()
+{
+	D3DXMatrixRotationYawPitchRoll ( &m_matWorld, m_fYaw, m_fPitch, 0.0f ) ;
 }

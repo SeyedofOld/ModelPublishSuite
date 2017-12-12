@@ -2,54 +2,6 @@
 #include <assert.h>
 #include "C3DScanFileUtils.h"
 
-class CMyEffectInclude : public ID3DXInclude
-{
-public:
-
-	CMyEffectInclude() : ID3DXInclude ()
-	{
-		m_szIncludePath [ 0 ] = 0 ;
-	}
-	~CMyEffectInclude ()
-	{
-	}
-	STDMETHOD ( Open )( THIS_ D3DXINCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID *ppData, UINT *pBytes )
-	{
-		char szFile [ MAX_PATH ] ;
-		sprintf_s ( szFile, MAX_PATH, "%s%s", m_szIncludePath, pFileName ) ;
-
-		FILE* pFile ;
-		fopen_s ( &pFile, szFile, "rb" ) ;
-		fseek ( pFile, 0, SEEK_END ) ;
-		*pBytes = ftell ( pFile ) ;
-
-		*ppData = new BYTE [ *pBytes ] ;
-
-		fseek ( pFile, 0, SEEK_SET ) ;
-		fread ( (void*)*ppData, 1, *pBytes, pFile ) ;
-
-		fclose ( pFile ) ;
-
-		return S_OK ;
-	}
-	STDMETHOD ( Close )( THIS_ LPCVOID pData )
-	{
-		//Sm_pResMan->ReleaseDataFile ( (BYTE*)pData ) ;
-		if ( pData )
-			delete pData ;
-		pData = NULL ;
-		return S_OK ;
-	}
-	void SetIncludePath ( char* pszIncludePath )
-	{
-		if ( !pszIncludePath )
-			m_szIncludePath [ 0 ] = 0 ;
-		else
-			strcpy_s ( m_szIncludePath, MAX_PATH, pszIncludePath ) ;
-	}
-private:
-	char m_szIncludePath [ MAX_PATH ] ;
-};
 
 /*
 bool CD3DModelUtils::CreateFromObj ( IDirect3DDevice9* pDevice, ID3DXEffectPool* pEffectPool, MY_OBJ& Obj, D3D_MODEL& d3dModel )
@@ -285,26 +237,29 @@ bool CD3DModelUtils::CreateFromTDModel ( IDirect3DDevice9* pDevice, ID3DXEffectP
 	return true ;
 }
 
-/*
+
 bool CD3DModelUtils::RenderD3DModel ( IDirect3DDevice9* pDevice, D3D_MODEL& d3dModel )
 {
 	for ( unsigned int iPart = 0 ; iPart < d3dModel.Parts.size() ; iPart++ ) {
 		for ( unsigned int iSubset = 0 ; iSubset < d3dModel.Parts [ iPart ].Subsets.size () ; iSubset++ ) {
 			
-			D3D_SUBSET& subset = d3dModel.Parts [ iPart ].Subsets [ iSubset ] ;
+			D3DMODEL_SUBSET& subset = d3dModel.Parts [ iPart ].Subsets [ iSubset ] ;
+				//d3dModel.Parts [ iPart ].Subsets [ iSubset ] ;
 
-			pDevice->SetFVF ( D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_TEX2 ) ;
 
-			D3D_MATERIAL& d3dMtl = d3dModel.Materials [ subset.sMatName ] ;
+			D3DMODEL_MATERIAL& d3dMtl = d3dModel.Materials [ subset.sMatName ] ;
+			
+			pDevice->SetFVF ( subset.uiFVF ) ;
 
 			d3dMtl.pShader->SetFloatArray ( "g_f4AmbientColor", (float*)&d3dMtl.clrAmbient, 4 ) ;
 			d3dMtl.pShader->SetFloatArray ( "g_f4DiffuseColor", (float*)&d3dMtl.clrDiffuse, 4 ) ;
-			d3dMtl.pShader->SetFloatArray ( "g_f4SpecularColor", (float*)&d3dMtl.clrSpecular, 4 ) ;
+			//d3dMtl.pShader->SetFloatArray ( "g_f4SpecularColor", (float*)&d3dMtl.clrSpecular, 4 ) ;
 			d3dMtl.pShader->SetFloat ( "g_fTransparency", d3dMtl.fTransparency ) ;
 			d3dMtl.pShader->SetFloat ( "g_fGlossiness", d3dMtl.fGlossiness ) ;
-			d3dMtl.pShader->SetFloat ( "g_fSpecularIntensity", d3dMtl.clrSpecular.r ) ;
+			d3dMtl.pShader->SetFloat ( "g_fSpecularIntensity", d3dMtl.fSpecIntensity ) ;
 
-			//d3dMtl.pShader->SetTexture ( "g_txDiffuse", d3dMtl.pTexDiffuse ) ;
+			if ( d3dModel.Textures.find ( d3dMtl.sDiffuseTextureName  ) != d3dModel.Textures.end() )
+				d3dMtl.pShader->SetTexture ( "g_txDiffuse", d3dModel.Textures [ d3dMtl.sDiffuseTextureName ].pTexture ) ;
 
 			UINT uiPassCount = 0 ;
 			d3dMtl.pShader->Begin ( &uiPassCount, 0 ) ;
@@ -314,7 +269,7 @@ bool CD3DModelUtils::RenderD3DModel ( IDirect3DDevice9* pDevice, D3D_MODEL& d3dM
 				pDevice->DrawPrimitiveUP ( D3DPT_TRIANGLELIST,
 					subset.iTriCount,
 					subset.pVB,
-					sizeof ( D3D_VERTEX ) ) ;
+					C3DScanFileUtils::GetVertexSize (subset.uiVertexFmt) ) ;
 
 				d3dMtl.pShader->EndPass() ;
 			}
@@ -325,7 +280,7 @@ bool CD3DModelUtils::RenderD3DModel ( IDirect3DDevice9* pDevice, D3D_MODEL& d3dM
 
 	return true ;
 }
-*/
+
 void CD3DModelUtils::FreeD3DModel ( D3D_MODEL & d3dModel )
 {
 /*	for ( unsigned int iPart = 0 ; iPart < d3dModel.Parts.size () ; iPart++ ) {

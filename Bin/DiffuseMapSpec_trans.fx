@@ -126,7 +126,7 @@ float4 ps_main ( PS_INPUT_STRUCT psIn ) : COLOR0
 
 	f4Result = f4Result + f4Specular ;
 
-	f4Result.a = f4BaseClr.a ;// *g_fTransparency ;
+	f4Result.a = f4BaseClr.a * g_fTransparency ;
 //	if ( f4Result.a < g_fAlphaTest )
 		//discard ;
 

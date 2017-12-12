@@ -7,7 +7,7 @@
 #include "tlCGuiRenderer.h"
 #include "tlCSettingsGui.h"
 #include "tlC3DViewContext.h"
-
+#include "D3DModel.h"
 
 // CModelViewerDlg dialog
 class CModelViewerDlg : public CDialogEx
@@ -44,11 +44,17 @@ public:
 	CSettingsGui	m_SettingsGui ;
 	C3DViewContext*  m_pView ;
 	bool			m_bFileOpened ;
+	D3D_MODEL*		m_pModel1 ;
+	D3DXMATRIX		m_matWorld ;
+	float			m_fYaw ;
+	float			m_fPitch ;
 
 public:
 	void Update() ;
 	void ShowExampleMenuFile();
 	void Render();
+	void UpdateWorldMatrix() ;
+
 	afx_msg void OnSize ( UINT nType, int cx, int cy );
 	virtual LRESULT WindowProc ( UINT message, WPARAM wParam, LPARAM lParam );
 	afx_msg BOOL OnEraseBkgnd ( CDC* pDC );

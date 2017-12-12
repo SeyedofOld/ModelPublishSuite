@@ -50,6 +50,7 @@ struct D3DMODEL_SUBSET : public TD_MODEL_SUBSET {
 };
 
 struct D3DMODEL_PART : public TD_MODEL_PART {
+	vector<D3DMODEL_SUBSET> Subsets ;
 };
 
 struct D3DMODEL_MATERIAL : public TD_MODEL_MATERIAL {
