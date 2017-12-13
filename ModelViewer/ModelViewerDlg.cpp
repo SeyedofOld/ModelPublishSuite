@@ -12,6 +12,7 @@
 #include "C3DScanFile.h"
 #include "Obj2Model.h"
 #include "CD3DModelUtils.h"
+#include "C3DModelUtils.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -23,10 +24,11 @@
 
 
 CModelViewerDlg::CModelViewerDlg(CWnd* pParent /*=NULL*/)
-	: CDialogEx(IDD_MODELVIEWER_DIALOG, pParent)
+	: CRenderDialog(IDD_MODELVIEWER_DIALOG, pParent) 
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_bFileOpened = false ;
+	m_pd3dModel1 = NULL ;
 	m_pModel1 = NULL ;
 	D3DXMatrixIdentity ( &m_matWorld ) ;
 	m_fYaw = 0.0f ;
@@ -38,7 +40,7 @@ void CModelViewerDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 }
 
-BEGIN_MESSAGE_MAP(CModelViewerDlg, CDialogEx)
+BEGIN_MESSAGE_MAP(CModelViewerDlg, CRenderDialog)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED ( IDCANCEL, &CModelViewerDlg::OnBnClickedCancel )
@@ -145,7 +147,7 @@ BOOL CModelViewerDlg::OnInitDialog()
 
 	CGuiRenderer::Initialize ( C3DGfx::GetInstance()->GetDevice(), rc.Width(), rc.Height() ) ;
 
-	m_SettingsGui.Initialize() ;
+	//m_SettingsGui.Initialize() ;
 	//CGuiRenderer::Update ( 0.01f ) ;
 	D3DVIEWPORT9 vp ;
 	vp.Width = rc.Width() ;
@@ -169,6 +171,7 @@ BOOL CModelViewerDlg::OnInitDialog()
 
 	//SetWindowPos ( NULL, 0, 0, 1200, 675, SWP_NOMOVE ) ;
 
+	ModifyStyleEx ( 0, SS_NOTIFY ) ;
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -247,6 +250,8 @@ void CModelViewerDlg::Update()
 		m_Camera.SetPosition ( m_Camera.GetPosition () - m_Camera.GetDirection () * 0.01f ) ;
 
 	UpdateWorldMatrix () ;
+
+	UpdateGui() ;
 }
 
 void CModelViewerDlg::ShowExampleMenuFile ()
@@ -257,11 +262,13 @@ void CModelViewerDlg::ShowExampleMenuFile ()
 		if (dlg.DoModal() == IDOK) {
 			MY_OBJ obj ;
 			LoadObj2 ( dlg.GetPathName(), &obj ) ;
-			TD_SCAN_MODEL* pModel = new TD_SCAN_MODEL ;
-			ConvertObjTo3DModel ( obj, *pModel ) ;
+			m_pModel1 = new TD_SCAN_MODEL ;
+			ConvertObjTo3DModel ( obj, *m_pModel1 ) ;
 			
-			m_pModel1 = new D3D_MODEL ;
-			if ( !CD3DModelUtils::CreateFromTDModel ( C3DGfx::GetInstance ()->GetDevice (), C3DGfx::GetInstance ()->GetEffectPool (), *pModel, *m_pModel1 ) ) {
+			m_pd3dModel1 = new D3D_MODEL ;
+			if ( ! CD3DModelUtils::CreateFromTDModel ( C3DGfx::GetInstance ()->GetDevice (), C3DGfx::GetInstance ()->GetEffectPool (), *m_pModel1, *m_pd3dModel1 ) ) {
+				delete m_pd3dModel1 ;
+				m_pd3dModel1 = NULL ;
 				delete m_pModel1 ;
 				m_pModel1 = NULL ;
 			}
@@ -316,7 +323,7 @@ void CModelViewerDlg::ShowExampleMenuFile ()
 		{
 			//const char* name = ImGui::GetStyleColorName ( (ImGuiCol)i );
 			//ImGui::ColorButton ( name, ImGui::GetStyleColorVec4 ( (ImGuiCol)i ) );
-			ImGui::SameLine ();
+			//ImGui::SameLine ();
 			//ImGui::MenuItem ( name );
 		}
 		ImGui::PopStyleVar ();
@@ -355,23 +362,6 @@ void CModelViewerDlg::Render()
 	// 														// Row3 : Ambient
 	// 														// Row4 : Reserved
 	
-	m_pShader->SetMatrix ( "g_matView", &m_Camera.GetViewMatrix () ) ;
-	m_pShader->SetMatrix ( "g_matProj", &m_Camera.GetProjectionMatrix () ) ;
-	m_pShader->SetMatrix ( "g_matWorld", &m_matWorld ) ;
-
-	matrix matLight ;
-
-	vector4 vLightDir ( 0.0f, 0.0f, 1.0f, 0.0f ) ;
-	D3DXVec4Normalize ( &vLightDir, &vLightDir ) ;
-	CopyMemory ( &matLight [ 0 ], &vLightDir, 4 * sizeof ( float ) ) ;
-
-	vector4 vLightColor ( 1.0f, 1.0f, 1.0f, 0.0f ) ;
-	CopyMemory ( &matLight [ 4 ], &vLightColor, 4 * sizeof ( float ) ) ;
-
-	vector4 vAmbLight ( 0.5f, 0.5f, 0.5f, 0.0f ) ;
-	CopyMemory ( &matLight [ 8 ], &vAmbLight, 4 * sizeof ( float ) ) ;
-
-	m_pShader->SetMatrix ( "g_matSunLight", &matLight ) ;
 
 	/*if ( bDualView ) {
 		D3DVIEWPORT9 vp = C3DGfx::GetInstance ()->GetFullscreenViewport () ;
@@ -396,108 +386,33 @@ void CModelViewerDlg::Render()
 		if ( m_pMesh )
 			m_pMesh->DrawSubset ( 0 );
 		*/
-	CGuiRenderer::Update ( 0.01f ) ;
-	
-	m_SettingsGui.Update () ;
+	//CGuiRenderer::Update ( 0.01f ) ;
 
-	{
-		CRect rc ;
-		GetClientRect ( rc ) ;
+	//CGuiRenderer::Render () ;
 
-		ImGuiWindowFlags flags = 0;
-		flags |= ImGuiWindowFlags_NoMove;
-		flags |= ImGuiWindowFlags_NoResize;
-		flags |= ImGuiWindowFlags_NoCollapse;
-		flags |= ImGuiWindowFlags_MenuBar;
-		//flags |= ImGuiWindowFlags_ShowBorders;
-		flags |= ImGuiWindowFlags_NoTitleBar;
+	m_pShader->SetMatrix ( "g_matView", &m_Camera.GetViewMatrix () ) ;
+	m_pShader->SetMatrix ( "g_matProj", &m_Camera.GetProjectionMatrix () ) ;
+	m_pShader->SetMatrix ( "g_matWorld", &m_matWorld ) ;
 
-        //ImGui::SetStyleColor
+	matrix matLight ;
 
-		//CRect rcOld = rc ;
+	vector4 vLightDir ( 0.0f, 0.0f, 1.0f, 0.0f ) ;
+	D3DXVec4Normalize ( &vLightDir, &vLightDir ) ;
+	CopyMemory ( &matLight [ 0 ], &vLightDir, 4 * sizeof ( float ) ) ;
 
-		if ( ImGui::Begin ( "Model Viewer", NULL, ImVec2 ( (float)rc.Width(), (float)rc.Height() ), 1.0f, flags ) ) {
-			ImGui::SetWindowPos ( ImVec2 ( 0, 0 ) ) ;
-			ImGuiStyle& style = ImGui::GetStyle ();
-			style.WindowRounding = 0.0f ;
-			style.FrameBorderSize = 1.0f ;
+	vector4 vLightColor ( 1.0f, 1.0f, 1.0f, 0.0f ) ;
+	CopyMemory ( &matLight [ 4 ], &vLightColor, 4 * sizeof ( float ) ) ;
 
-			// 		ImGui::Checkbox("Show FPS", &pSettings->bShowFPS);
-			// 		ImGui::Checkbox("Show Sky", &pEngSettings->Sky.bShowSky);
-			// 		ImGui::Checkbox("Show Terrain", &pEngSettings->Terrain.bShowTerrain);
-			// 		ImGui::Checkbox("Show Foliage", &pEngSettings->Foliage.bShowFoliage);
-			// 		ImGui::Checkbox("Show Objects", &pEngSettings->Objects.bShowObjects);
-			// 		ImGui::Checkbox("Show Physics", &pEngSettings->Physics.bShowPhysicsModels);
-			// 		ImGui::Checkbox("Show Scene Nodes", &pEngSettings->Scene.bShowSceneNodes);
-			// 		ImGui::Checkbox("Show Object Bounding", &pEngSettings->Objects.bShowBoundings);
-			// 		ImGui::Checkbox("Show Object Path", &pEngSettings->Objects.bShowPath);
-// 			bool s_b = false ;
-// 			ImGui::Checkbox ( "Wire-frame", &s_b );
-			//ImGui::PushItemWidth ( 120.0f );
-			//ImGui::InputFloat ( "Transparency", &m_fAlpha, 0.01f, 0.1f, 2 );
-			//ImGui::PopItemWidth ();
-			//VALIDATE_RANGE ( m_fAlpha, 0.1f, 1.0f );
-// 			int w = ImGui::GetWindowSize ().x ;
-// 			int h = ImGui::GetWindowSize ().y ;
-// 			int x = ImGui::GetWindowPos ().x ;
-// 			int y = ImGui::GetWindowPos ().y ;
-// 
-// 			if ( w != rc.Width () || h != rc.Height () ) {
-// 				//MoveWindow ( rc.left, rc.top, w, h ) ;
-// 			}
+	vector4 vAmbLight ( 0.5f, 0.5f, 0.5f, 0.0f ) ;
+	CopyMemory ( &matLight [ 8 ], &vAmbLight, 4 * sizeof ( float ) ) ;
 
-// 			if ( 0 )
-// 			if ( x != 0 || y != 0 ) {
-// 				CRect rcWnd ;
-// 				GetWindowRect ( rcWnd ) ;
-// 				MoveWindow ( rcWnd.left + x, rc.top + y, w, h ) ;
-// 			}
-		}
+	m_pShader->SetMatrix ( "g_matSunLight", &matLight ) ;
 
-
+	if ( m_pd3dModel1 ) {
+		CD3DModelUtils::RenderD3DModel ( pDevice, *m_pd3dModel1 ) ;
 	}
 
-	if ( 1 ) {
-		if ( ImGui::BeginMainMenuBar () )
-		{
-			if ( ImGui::BeginMenu ( "File" ) )	{
-				ShowExampleMenuFile ();
-				ImGui::EndMenu ();
-			}
-
-			if ( ImGui::BeginMenu ( "Edit" ) ) {
-				if ( ImGui::MenuItem ( "Undo", "CTRL+Z" ) ) {}
-				if ( ImGui::MenuItem ( "Redo", "CTRL+Y", false, false ) ) {}  // Disabled item
-				ImGui::Separator ();
-				if ( ImGui::MenuItem ( "Cut", "CTRL+X" ) ) {}
-				if ( ImGui::MenuItem ( "Copy", "CTRL+C" ) ) {}
-				if ( ImGui::MenuItem ( "Paste", "CTRL+V" ) ) {}
-				ImGui::EndMenu ();
-			}
-
-			if (ImGui::BeginMenu("Options")) {
-				if (ImGui::MenuItem("Undo", "CTRL+Z")) {}
-				if (ImGui::MenuItem("Redo", "CTRL+Y", false, false)) {}  // Disabled item
-				ImGui::Separator();
-				if (ImGui::MenuItem("Cut", "CTRL+X")) {}
-				if (ImGui::MenuItem("Copy", "CTRL+C")) {}
-				if (ImGui::MenuItem("Paste", "CTRL+V")) {}
-				static bool s_b = true;
-				ImGui::Checkbox("Wire-frame", &s_b);
-				ImGui::EndMenu();
-			}
-
-
-			ImGui::EndMainMenuBar ();
-		}
-	}
-	ImGui::End();
-
-	CGuiRenderer::Render () ;
-
-	if ( m_pModel1 ) {
-		CD3DModelUtils::RenderD3DModel ( pDevice, *m_pModel1 ) ;
-	}
+	ImGui::Render () ;
 
 	C3DGfx::GetInstance ()->EndFrame ();
 	m_pView->ShowFrame( ) ;
@@ -509,6 +424,8 @@ void CModelViewerDlg::OnSize ( UINT nType, int cx, int cy )
 	CDialogEx::OnSize ( nType, cx, cy );
 
 	// TODO: Add your message handler code here
+	SetRange ( 0.0f, 0.0f, D3DX_PI*2.0f, D3DX_PI ) ;
+
 	if ( C3DGfx::GetInstance () && C3DGfx::GetInstance ()->IsInitialized () ) {
 		if ( cx && cy ) {
 			m_pView->CreateRenderTarget ( cx, cy, false ) ;
@@ -532,31 +449,74 @@ using namespace ImGui ;
 
 //extern struct ImGuiState*             GImGui ;
 
+LRESULT ImGui_ImplWin32_WndProcHandler ( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) ;
+
 LRESULT CModelViewerDlg::WindowProc ( UINT message, WPARAM wParam, LPARAM lParam )
 {
 	// TODO: Add your specialized code here and/or call the base class
-	if ( CGuiRenderer::s_pDevice )
-		CGuiRenderer::WndProc ( GetSafeHwnd(), message, wParam, lParam ) ;
+	//if ( CGuiRenderer::s_pDevice )
+		//CGuiRenderer::WndProc ( GetSafeHwnd(), message, wParam, lParam ) ;
+	ImGui_ImplWin32_WndProcHandler ( GetSafeHwnd (), message, wParam, lParam ) ;
 
-// 	if ( 0 )
-// 	if ( CGuiRenderer::s_pDevice ) {
-// 		
-// 		struct ImGuiState* st = ( struct ImGuiState*)ImGui::GetState () ;
-// 		struct ImGuiWindow* window = st->MovedWindow ;
-// 		if ( window ) {
-// 			int x = window->Pos.x ;
-// 			int y = window->Pos.y ;
-// 			if ( x != 0 || y != 0 ) {
-// 				CRect rcWnd ;
-// 				GetWindowRect ( rcWnd ) ;
-// 				MoveWindow ( rcWnd.left + x, rcWnd.top + y, rcWnd.Width (), rcWnd.Height () ) ;
-// 			}
-// 		}
-// 
-// 	}
+	if ( message == WUM_INTERACTION_MSG ) {
+		INTERACTION_MSG_DATA& imd = *((INTERACTION_MSG_DATA*)lParam) ;
+
+		static VECTOR2 s_ptStart ( 0.0f, 0.0f ) ;
+
+		if ( imd.eEvent == MOUSE_DRAG_START ) {
+			s_ptStart = imd.ptCursor ;
+		}
+		else if ( imd.eEvent == MOUSE_DRAGGING ) {
+			float fDeltaX = imd.ptCursor.x - s_ptStart.x ;
+			float fDeltaY = imd.ptCursor.y - s_ptStart.y ;
+
+			if ( imd.ButtonStatus.bLButton ) {
+				m_fYaw -= fDeltaX ;
+				m_fPitch -= fDeltaY ;
+
+				UpdateWorldMatrix () ;
+			}
+			
+			if ( imd.ButtonStatus.bRButton ) {
+				float fDelta = - fDeltaY * 2.0f ;
+				m_Camera.SetPosition ( m_Camera.GetPosition () + m_Camera.GetDirection () * fDelta ) ;
+			}
+
+			s_ptStart = imd.ptCursor ;
+		}
+		else if ( imd.eEvent == MOUSE_DRAG_END ) {
+
+		}
+		else if ( imd.eEvent == MOUSE_LBDOWN ) {
+			if ( m_pModel1 ) {
+				CPoint ptScreen = RenderPortToScreenPixel ( imd.ptCursor ) ;
+				D3DXVECTOR3 vDir, ptPos ;
+
+				CRect rc ;
+				GetClientRect ( rc ) ;
+
+				m_Camera.GetRayFromScreen ( ptScreen, &vDir, rc.Width (), rc.Height () ) ;
+
+				D3DXMATRIX matInvWorld ;
+				D3DXMatrixInverse ( &matInvWorld, NULL, &m_matWorld ) ;
+
+				D3DXVec3TransformNormal ( &vDir, &vDir, &matInvWorld ) ;
+
+				ptPos = m_Camera.GetPosition () ;
+				D3DXVec3TransformCoord ( &ptPos, &ptPos, &matInvWorld ) ;
+
+				float3 ptHit ;
+				D3DMODEL_SUBSET* pSubset = NULL ;
+				if ( CD3DModelUtils::IntersectRay ( float3{ ptPos.x, ptPos.y, ptPos.z }, float3{ vDir.x, vDir.y, vDir.z }, *m_pd3dModel1, &ptHit, &pSubset ) ) {
+					//pSubset->iTriCount = 0 ;
+				}
+			}
+		}
 
 
-	return CDialogEx::WindowProc ( message, wParam, lParam );
+	}
+
+	return CRenderDialog::WindowProc ( message, wParam, lParam );
 }
 
 
@@ -570,7 +530,174 @@ BOOL CModelViewerDlg::OnEraseBkgnd ( CDC* pDC )
 	return CDialogEx::OnEraseBkgnd ( pDC );
 }
 
+void CModelViewerDlg::UpdateGui ()
+{
+	static float s_fPrevTime = 0.0f ;
+	float fCurTime = (float)GetTickCount () / 1000.0f ;
+	float fDeltaTime = fCurTime - s_fPrevTime ;
+	ImGui::GetIO ().DeltaTime = fDeltaTime ;
+	if ( fDeltaTime == 0.0f )
+		return ;
+
+	s_fPrevTime = fCurTime ;
+
+	ImGui::NewFrame() ;
+
+	CRect rc ;
+	GetClientRect ( rc ) ;
+
+	if ( ImGui::BeginMainMenuBar () ) {
+		if ( ImGui::BeginMenu ( "File" ) ) {
+			ShowExampleMenuFile ();
+			ImGui::EndMenu ();
+		}
+
+		if ( ImGui::BeginMenu ( "Edit" ) ) {
+			if ( ImGui::MenuItem ( "Undo", "CTRL+Z" ) ) {}
+			if ( ImGui::MenuItem ( "Redo", "CTRL+Y", false, false ) ) {}  // Disabled item
+			ImGui::Separator ();
+			if ( ImGui::MenuItem ( "Cut", "CTRL+X" ) ) {}
+			if ( ImGui::MenuItem ( "Copy", "CTRL+C" ) ) {}
+			if ( ImGui::MenuItem ( "Paste", "CTRL+V" ) ) {}
+			ImGui::EndMenu ();
+		}
+
+		if ( ImGui::BeginMenu ( "Options" ) ) {
+			if ( ImGui::MenuItem ( "Undo", "CTRL+Z" ) ) {}
+			if ( ImGui::MenuItem ( "Redo", "CTRL+Y", false, false ) ) {}  // Disabled item
+			ImGui::Separator ();
+			if ( ImGui::MenuItem ( "Cut", "CTRL+X" ) ) {}
+			if ( ImGui::MenuItem ( "Copy", "CTRL+C" ) ) {}
+			if ( ImGui::MenuItem ( "Paste", "CTRL+V" ) ) {}
+			static bool s_b = true;
+			ImGui::Checkbox ( "Wire-frame", &s_b );
+			ImGui::EndMenu ();
+		}
+
+		ImGui::EndMainMenuBar ();
+	}
+
+	ImGuiWindowFlags flags = 0;
+	//flags |= ImGuiWindowFlags_NoMove;
+	//flags |= ImGuiWindowFlags_NoResize;
+	//flags |= ImGuiWindowFlags_NoCollapse;
+	//flags |= ImGuiWindowFlags_MenuBar;
+	//flags |= ImGuiWindowFlags_ShowBorders;
+	//flags |= ImGuiWindowFlags_NoTitleBar;
+
+	static bool opn = false ;
+
+	if ( ! ImGui::Begin ( "Hierarchy", &opn, flags ) ) {
+		ImGui::End ();
+	}
+	else /*( ! ImGui::Begin ( "Hierarchy", &opn, flags ) )*/ {
+		ImGuiStyle& style = ImGui::GetStyle ();
+		//style.WindowRounding = 0.0f ;
+		style.FrameBorderSize = 1.0f ;
+
+		bool b = false ;
+		ImGui::Checkbox("Show FPS", &b);
+		// 		ImGui::Checkbox("Show Sky", &pEngSettings->Sky.bShowSky);
+		// 		ImGui::Checkbox("Show Terrain", &pEngSettings->Terrain.bShowTerrain);
+		// 		ImGui::Checkbox("Show Foliage", &pEngSettings->Foliage.bShowFoliage);
+		// 		ImGui::Checkbox("Show Objects", &pEngSettings->Objects.bShowObjects);
+		// 		ImGui::Checkbox("Show Physics", &pEngSettings->Physics.bShowPhysicsModels);
+		// 		ImGui::Checkbox("Show Scene Nodes", &pEngSettings->Scene.bShowSceneNodes);
+		// 		ImGui::Checkbox("Show Object Bounding", &pEngSettings->Objects.bShowBoundings);
+		// 		ImGui::Checkbox("Show Object Path", &pEngSettings->Objects.bShowPath);
+		// 			bool s_b = false ;
+		// 			ImGui::Checkbox ( "Wire-frame", &s_b );
+		//ImGui::PushItemWidth ( 120.0f );
+		//ImGui::InputFloat ( "Transparency", &m_fAlpha, 0.01f, 0.1f, 2 );
+		//ImGui::PopItemWidth ();
+		//VALIDATE_RANGE ( m_fAlpha, 0.1f, 1.0f );
+		ImGui::End ();
+	}
+
+	static bool show_another_window = true ;
+	if ( show_another_window )
+	{
+		ImGui::Begin ( "Another Window", &show_another_window );
+		ImGui::Text ( "Hello from another window!" );
+		ImGui::End ();
+	}
+
+	ImGui::EndFrame () ;
+}
+
 void CModelViewerDlg::UpdateWorldMatrix ()
 {
-	D3DXMatrixRotationYawPitchRoll ( &m_matWorld, m_fYaw, m_fPitch, 0.0f ) ;
+	D3DXMATRIX matYaw ;
+	D3DXMatrixRotationY ( &matYaw, m_fYaw ) ;
+	D3DXMATRIX matPitch ;
+	D3DXMatrixRotationX ( &matPitch, m_fPitch ) ;
+
+	m_matWorld = matYaw * matPitch ;
+	//D3DXMatrixRotationYawPitchRoll ( &m_matWorld, m_fYaw, m_fPitch, 0.0f ) ;
+}
+
+static bool IsAnyMouseButtonDown ()
+{
+	ImGuiIO& io = ImGui::GetIO ();
+	for ( int n = 0; n < ARRAYSIZE ( io.MouseDown ); n++ )
+		if ( io.MouseDown [ n ] )
+			return true;
+	return false;
+}
+
+LRESULT ImGui_ImplWin32_WndProcHandler ( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+{
+	ImGuiIO& io = ImGui::GetIO ();
+	switch ( msg )
+	{
+	case WM_LBUTTONDOWN:
+	case WM_RBUTTONDOWN:
+	case WM_MBUTTONDOWN:
+	{
+		int button = 0;
+		if ( msg == WM_LBUTTONDOWN ) button = 0;
+		if ( msg == WM_RBUTTONDOWN ) button = 1;
+		if ( msg == WM_MBUTTONDOWN ) button = 2;
+		if ( !IsAnyMouseButtonDown () && GetCapture () == NULL )
+			SetCapture ( hwnd );
+		io.MouseDown [ button ] = true;
+		return 0;
+	}
+	case WM_LBUTTONUP:
+	case WM_RBUTTONUP:
+	case WM_MBUTTONUP:
+	{
+		int button = 0;
+		if ( msg == WM_LBUTTONUP ) button = 0;
+		if ( msg == WM_RBUTTONUP ) button = 1;
+		if ( msg == WM_MBUTTONUP ) button = 2;
+		io.MouseDown [ button ] = false;
+		if ( !IsAnyMouseButtonDown () && GetCapture () == hwnd )
+			ReleaseCapture ();
+		return 0;
+	}
+	case WM_MOUSEWHEEL:
+		io.MouseWheel += GET_WHEEL_DELTA_WPARAM ( wParam ) > 0 ? +1.0f : -1.0f;
+		return 0;
+	case WM_MOUSEMOVE:
+		io.MousePos.x = (signed short)( lParam );
+		io.MousePos.y = (signed short)( lParam >> 16 );
+		return 0;
+	case WM_KEYDOWN:
+	case WM_SYSKEYDOWN:
+		if ( wParam < 256 )
+			io.KeysDown [ wParam ] = 1;
+		return 0;
+	case WM_KEYUP:
+	case WM_SYSKEYUP:
+		if ( wParam < 256 )
+			io.KeysDown [ wParam ] = 0;
+		return 0;
+	case WM_CHAR:
+		// You can also use ToAscii()+GetKeyboardState() to retrieve characters.
+		if ( wParam > 0 && wParam < 0x10000 )
+			io.AddInputCharacter ( (unsigned short)wParam );
+		return 0;
+	}
+	return 0;
 }

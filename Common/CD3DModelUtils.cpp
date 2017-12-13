@@ -322,3 +322,50 @@ uint32_t CD3DModelUtils::VertexFormatToFvf ( uint32_t uiVertFmt )
 	return uiFvf ;
 }
 
+bool CD3DModelUtils::IntersectRay ( float3 ptStart, float3 vDir, D3D_MODEL& model, float3* pptHit, D3DMODEL_SUBSET** ppSubset )
+{
+	D3DXVECTOR3 ptRayPos = D3DXVECTOR3 ( ptStart.x, ptStart.y, ptStart.z ) ;
+	D3DXVECTOR3 vRayDir = D3DXVECTOR3 ( vDir.x, vDir.y, vDir.z ) ;
+
+	std::vector<pair<D3DMODEL_SUBSET*,float>> hitlist ;
+
+	for ( uint32_t iPart = 0 ; iPart < model.Parts.size () ; iPart++ ) {
+
+		for ( uint32_t iSubset = 0 ; iSubset < model.Parts [ iPart ].Subsets.size () ; iSubset++ ) {
+			D3DMODEL_SUBSET& mdlsub = model.Parts [ iPart ].Subsets [ iSubset ] ;
+
+			float* pVB = (float*)mdlsub.pVB ;
+			uint32_t iVertSize = C3DScanFileUtils::GetVertexSize ( mdlsub.uiVertexFmt ) / sizeof ( float ) ;
+			for ( uint32_t iTri = 0 ; iTri < mdlsub.iTriCount ; iTri++ ) {
+				D3DXVECTOR3 p1 = *( (D3DXVECTOR3*)pVB ) ;
+				pVB += iVertSize ;
+				D3DXVECTOR3 p2 = *( (D3DXVECTOR3*)pVB ) ;
+				pVB += iVertSize ;
+				D3DXVECTOR3 p3 = *( (D3DXVECTOR3*)pVB ) ;
+				pVB += iVertSize ;
+
+				float fDist = 0.0f ;
+				float fU, fV ;
+				BOOL bHit = D3DXIntersectTri ( &p1, &p2, &p3, &ptRayPos, &vRayDir, &fU, &fV, &fDist )  ;
+
+				if ( bHit ) {
+					hitlist.push_back ( pair<D3DMODEL_SUBSET*,float>(&mdlsub,fDist) ) ;
+				}
+			}
+		}
+	}
+
+	if ( hitlist.size () == 0 )
+		return false ;
+
+	pair<D3DMODEL_SUBSET*, float> closest = pair<D3DMODEL_SUBSET*, float>(NULL, FLT_MAX) ;
+	for ( size_t iHit = 0 ; iHit < hitlist.size () ; iHit++ ) {
+		if ( hitlist [ iHit ].second < closest.second ) {
+			closest = hitlist [ iHit ] ;
+		}
+	}
+	*ppSubset = closest.first ;
+
+	return true ;
+}
+

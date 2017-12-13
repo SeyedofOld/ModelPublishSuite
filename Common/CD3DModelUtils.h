@@ -10,6 +10,7 @@ public:
 	static bool RenderD3DModel ( IDirect3DDevice9* pDevice, D3D_MODEL& d3dModel ) ;
 	static void FreeD3DModel ( D3D_MODEL& d3dModel ) ;
 	static uint32_t VertexFormatToFvf ( uint32_t uiVertFmt ) ;
+	static bool IntersectRay ( float3 ptStart, float3 vDir, D3D_MODEL& model, float3* pptHit, D3DMODEL_SUBSET** ppSubset ) ;
 };
 
 
