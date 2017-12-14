@@ -24,8 +24,8 @@ private:
 	static ID3DXEffect*				s_pShader ;
 
     static const UINT FVF		= (D3DFVF_XYZ|D3DFVF_DIFFUSE|D3DFVF_TEX1);
-    static const UINT VB_SIZE	= 10000;
-	static const UINT IB_SIZE	= 20000;
+    static const UINT VB_SIZE	= 100000;
+	static const UINT IB_SIZE	= 200000;
 
 private:
 	static void RenderCallback(ImDrawData* draw_data);

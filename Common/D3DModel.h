@@ -39,20 +39,6 @@ struct D3D_VERTEX {
 	float2 vUv ;
 } ;
 
-struct D3DMODEL_SUBSET : public TD_MODEL_SUBSET {
-	uint32_t	uiFVF ;
-	int32_t		iMatIndex ;
-
-	D3DMODEL_SUBSET() {
-		uiFVF = 0 ;
-		iMatIndex = -1 ;
-	}
-};
-
-struct D3DMODEL_PART : public TD_MODEL_PART {
-	vector<D3DMODEL_SUBSET> Subsets ;
-};
-
 struct D3DMODEL_MATERIAL : public TD_MODEL_MATERIAL {
 	ID3DXEffect*	pShader ;
 // 	IDirect3DTexture9* pTexDiffuse ;
@@ -73,6 +59,33 @@ struct D3DMODEL_MATERIAL : public TD_MODEL_MATERIAL {
 
 struct D3DMODEL_TEXTURE_SLOT : public TD_MODEL_TEXTURE_SLOT {
 	IDirect3DTexture9* pTexture;
+};
+
+struct D3DMODEL_SUBSET : public TD_MODEL_SUBSET {
+	uint32_t	uiFVF ;
+	//int32_t		iMatIndex ;
+	bool		bOwnMaterial ;
+	D3DMODEL_MATERIAL Material ;
+	bool		bVisible ;
+	bool		bSelected ;
+
+	D3DMODEL_SUBSET () {
+		uiFVF = 0 ;
+		//iMatIndex = -1 ;
+		bOwnMaterial = false ;
+		bVisible = true ;
+		bSelected = false ;
+	}
+};
+
+struct D3DMODEL_PART : public TD_MODEL_PART {
+	bool bVisible ;
+	bool bSelected ;
+	vector<D3DMODEL_SUBSET> Subsets ;
+	D3DMODEL_PART () {
+		bVisible = true ;
+		bSelected = false ;
+	}
 };
 
 struct D3D_MODEL {

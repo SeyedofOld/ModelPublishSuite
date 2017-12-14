@@ -508,7 +508,7 @@ LRESULT CModelViewerDlg::WindowProc ( UINT message, WPARAM wParam, LPARAM lParam
 				float3 ptHit ;
 				D3DMODEL_SUBSET* pSubset = NULL ;
 				if ( CD3DModelUtils::IntersectRay ( float3{ ptPos.x, ptPos.y, ptPos.z }, float3{ vDir.x, vDir.y, vDir.z }, *m_pd3dModel1, &ptHit, &pSubset ) ) {
-					//pSubset->iTriCount = 0 ;
+					pSubset->bSelected = ! pSubset->bSelected ;
 				}
 			}
 		}
@@ -614,13 +614,45 @@ void CModelViewerDlg::UpdateGui ()
 		ImGui::End ();
 	}
 
-	static bool show_another_window = true ;
-	if ( show_another_window )
-	{
-		ImGui::Begin ( "Another Window", &show_another_window );
-		ImGui::Text ( "Hello from another window!" );
+	SetNextWindowSize ( ImVec2 ( 300, 400 ), ImGuiCond_FirstUseEver );
+	static bool s_b = false ;
+	if ( m_pd3dModel1 && ImGui::Begin ( "Object Inspector", &s_b, ImVec2(200,100)) ) {
+		D3D_MODEL& model = *m_pd3dModel1 ;
+		for ( uint32_t iPart = 0 ; iPart < model.Parts.size () ; iPart++ ) {
+
+			D3DMODEL_PART& part = model.Parts [ iPart ] ;
+			ImGui::Checkbox( part.sName.c_str(), &part.bVisible );
+
+			ImGui::Indent ( 20.0f ) ;
+			for ( uint32_t iSubset = 0 ; iSubset < model.Parts [ iPart ].Subsets.size () ; iSubset++ ) {
+				//TD_MODEL_SUBSET& mdlsub = model.Parts [ iPart ].Subsets [ iSubset ] ;
+				D3DMODEL_SUBSET& subset = model.Parts [ iPart ].Subsets [ iSubset ] ;
+				CString s ;
+				s.Format ( "Subset %d", iSubset ) ;
+				ImGui::Checkbox ( s.GetBuffer(), &subset.bVisible );
+
+				ImGui::BeginGroup () ;
+				ImGui::Indent ( 20.0f ) ;
+				ImGui::Text ( "Material" );
+				ImGui::Indent ( 5.0f ) ;
+				ImGui::ColorEdit3 ( "Diffuse Color", (float*)&model.Parts [ iPart ].Subsets [ iSubset ].Material.clrDiffuse ) ;
+				ImGui::ColorEdit3 ( "Ambient Color", (float*)&model.Parts [ iPart ].Subsets [ iSubset ].Material.clrAmbient ) ;
+				//ImGui::SliderFloat ( "Specular Intensity", &model.Materials [ subset.sMatName ].fSpecIntensity, 0.0f, 2.0f ) ;
+				//ImGui::SliderFloat ( "Glossiness", &model.Materials [ subset.sMatName ].fGlossiness, 0.0f, 1000.0f ) ;
+				ImGui::Unindent ( 5.0f ) ;
+				ImGui::EndGroup () ;
+
+				ImGui::Unindent ( 20.0f ) ;
+				
+			}
+			ImGui::Unindent ( 20.0f ) ;
+
+		}
+
 		ImGui::End ();
 	}
+
+
 
 	ImGui::EndFrame () ;
 }

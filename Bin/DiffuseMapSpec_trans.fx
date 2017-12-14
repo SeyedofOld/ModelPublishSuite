@@ -88,7 +88,7 @@ float4 ps_main ( PS_INPUT_STRUCT psIn ) : COLOR0
 	//return float4(1,0,0,0.1) ;
 
 	// Base color
-	float4 f4BaseClr = tex2D ( SamplerDiffuse, psIn.f2TexCoord0 ) ;// *g_f4DiffuseColor ;
+	float4 f4BaseClr = tex2D ( SamplerDiffuse, psIn.f2TexCoord0 ) *g_f4DiffuseColor ;
 
 	//return float4( 1, 1, 0, 1 );
 	//return f4BaseClr ;
