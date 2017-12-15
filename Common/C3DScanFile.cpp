@@ -47,7 +47,7 @@ TD_SCAN_MODEL* C3DScanFile::Load3DScanModel ( char* pszFilename )
 			TD_MODEL_PART part ;
 			pModel->Parts.push_back ( part ) ;
 		}
-		TD_MODEL_PART& part = pModel->Parts.front() ;
+		TD_MODEL_PART& part = pModel->Parts [ pModel->Parts.size() - 1 ] ;
 
 		part.sName = (char*)part_hdr.szName ;
 		
@@ -59,7 +59,7 @@ TD_SCAN_MODEL* C3DScanFile::Load3DScanModel ( char* pszFilename )
 				TD_MODEL_SUBSET subset;
 				part.Subsets.push_back ( subset ) ;
 			}
-			TD_MODEL_SUBSET& subset = part.Subsets.front() ;
+			TD_MODEL_SUBSET& subset = part.Subsets [ part.Subsets.size () - 1 ] ;
 
 			fseek ( pFile, iNextSubsetOfs, SEEK_SET ) ;
 

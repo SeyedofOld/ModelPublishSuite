@@ -82,8 +82,6 @@ bool CD3DModelUtils::CreateFromTDModel ( IDirect3DDevice9* pDevice, ID3DXEffectP
 			subset.uiFVF = VertexFormatToFvf ( subset.uiVertexFmt ) ;
 
 			subset.Material = d3dModel.Materials [ subset.sMatName ] ;
-// 			if ( iPart == 0 )
-// 				subset.Material.clrDiffuse.r = 1.0f ;
 
 			part.Subsets.push_back ( subset ) ;
 		}
