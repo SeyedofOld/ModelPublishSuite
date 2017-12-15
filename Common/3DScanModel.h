@@ -18,14 +18,16 @@ using namespace std ;
 struct TD_MODEL_SUBSET {
 	void*		pVB ;
 	uint32_t*	pIB ;
-	int32_t		iTriCount ;
+	uint32_t	uiVertCount ;
+	uint32_t	uiTriCount ;
 	string		sMatName ;
 	//int32_t		iMatIndex;
 	uint32_t	uiVertexFmt ;
 	TD_MODEL_SUBSET() {
 		pVB = NULL ;
 		pIB = NULL ;
-		iTriCount = 0 ;
+		uiTriCount = 0 ;
+		uiVertCount = 0 ;
 		//iMatIndex = 0 ;
 		uiVertexFmt = 0 ;
 	}
@@ -43,6 +45,7 @@ struct TD_MODEL_MATERIAL {
 	float			fTransparency ;
 	float			fSpecIntensity ;
 	float			fGlossiness ;
+	float			fReflectionFactor ;
 	string			sDiffuseTextureName ;
 	string			sNormalTextureName ;
 	string			sSpecularTextureName ;
@@ -54,6 +57,7 @@ struct TD_MODEL_MATERIAL {
 		fSpecIntensity  = 1.0f ;
 		fTransparency	= 1.0f ;
 		fGlossiness		= 10.0f ;
+		fReflectionFactor = 0.0f ;
 	}
 };
 
@@ -62,6 +66,7 @@ struct TD_MODEL_TEXTURE_SLOT {
 	uint32_t		uiSize ;
 	void*			pData ;
 	TEXTURE_FORMAT	eFormat ;
+	float4_rgba		clrAvgColor ;
 	TD_MODEL_TEXTURE_SLOT()	{
 		uiSize = 0 ;
 		pData = NULL ;

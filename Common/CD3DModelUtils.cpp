@@ -24,6 +24,7 @@ bool CD3DModelUtils::CreateFromTDModel ( IDirect3DDevice9* pDevice, ID3DXEffectP
 		mtrl.fSpecIntensity = mdlmtrl.fSpecIntensity ;
 		mtrl.fGlossiness = mdlmtrl.fGlossiness ;
 		mtrl.fTransparency = mdlmtrl.fTransparency ;
+		mtrl.fReflectionFactor = mdlmtrl.fReflectionFactor ;
 
 		mtrl.sDiffuseTextureName = mdlmtrl.sDiffuseTextureName ;
 		mtrl.sAlphaTextureName = mdlmtrl.sAlphaTextureName ;
@@ -67,14 +68,14 @@ bool CD3DModelUtils::CreateFromTDModel ( IDirect3DDevice9* pDevice, ID3DXEffectP
 		for ( uint32_t iSubset = 0 ; iSubset < model.Parts [ iPart ].Subsets.size() ; iSubset++ ) {
 			TD_MODEL_SUBSET& mdlsub = model.Parts [ iPart ].Subsets [ iSubset ] ;
 			D3DMODEL_SUBSET subset ;
-			subset.iTriCount = mdlsub.iTriCount ;
+			subset.uiTriCount = mdlsub.uiTriCount ;
 			if ( mdlsub.pIB ) {
-				subset.pIB = new uint32_t [ mdlsub.iTriCount * 3 ] ;
-				memcpy ( subset.pIB, mdlsub.pIB, mdlsub.iTriCount * 3 * sizeof ( uint32_t ) ) ;
+				subset.pIB = new uint32_t [ mdlsub.uiTriCount * 3 ] ;
+				memcpy ( subset.pIB, mdlsub.pIB, mdlsub.uiTriCount * 3 * sizeof ( uint32_t ) ) ;
 			}
 			if ( mdlsub.pVB ) {
-				subset.pVB = new uint8_t [ mdlsub.iTriCount * 3 * C3DScanFileUtils::GetVertexSize ( mdlsub.uiVertexFmt ) ] ;
-				memcpy ( subset.pVB, mdlsub.pVB, mdlsub.iTriCount * 3 * C3DScanFileUtils::GetVertexSize ( mdlsub.uiVertexFmt ) ) ;
+				subset.pVB = new uint8_t [ mdlsub.uiTriCount * 3 * C3DScanFileUtils::GetVertexSize ( mdlsub.uiVertexFmt ) ] ;
+				memcpy ( subset.pVB, mdlsub.pVB, mdlsub.uiTriCount * 3 * C3DScanFileUtils::GetVertexSize ( mdlsub.uiVertexFmt ) ) ;
 			}
 			subset.sMatName = mdlsub.sMatName ;
 			subset.uiVertexFmt = mdlsub.uiVertexFmt ;
@@ -137,7 +138,7 @@ bool CD3DModelUtils::RenderD3DModel ( IDirect3DDevice9* pDevice, D3D_MODEL& d3dM
 				d3dMtl.pShader->BeginPass ( iPass ) ;
 
 				pDevice->DrawPrimitiveUP ( D3DPT_TRIANGLELIST,
-					subset.iTriCount,
+					subset.uiTriCount,
 					subset.pVB,
 					C3DScanFileUtils::GetVertexSize (subset.uiVertexFmt) ) ;
 
@@ -206,7 +207,7 @@ bool CD3DModelUtils::IntersectRay ( float3 ptStart, float3 vDir, D3D_MODEL& mode
 
 			float* pVB = (float*)mdlsub.pVB ;
 			uint32_t iVertSize = C3DScanFileUtils::GetVertexSize ( mdlsub.uiVertexFmt ) / sizeof ( float ) ;
-			for ( uint32_t iTri = 0 ; iTri < mdlsub.iTriCount ; iTri++ ) {
+			for ( uint32_t iTri = 0 ; iTri < mdlsub.uiTriCount ; iTri++ ) {
 				D3DXVECTOR3 p1 = *( (D3DXVECTOR3*)pVB ) ;
 				pVB += iVertSize ;
 				D3DXVECTOR3 p2 = *( (D3DXVECTOR3*)pVB ) ;

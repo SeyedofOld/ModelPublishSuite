@@ -22,7 +22,6 @@
 // CModelViewerDlg dialog
 
 
-
 CModelViewerDlg::CModelViewerDlg(CWnd* pParent /*=NULL*/)
 	: CRenderDialog(IDD_MODELEDITOR_DIALOG, pParent) 
 {
@@ -52,66 +51,6 @@ END_MESSAGE_MAP()
 
 
 // CModelViewerDlg message handlers
-/*class CMyEffectInclude2 : public ID3DXInclude
-{
-public:
-
-	CMyEffectInclude2 () : ID3DXInclude ()
-	{
-		//assert ( pResMan ) ;
-		//m_pResMan = pResMan ;
-		m_szIncludePath [ 0 ] = 0 ;
-	}
-	~CMyEffectInclude2 ()
-	{
-	}
-	STDMETHOD ( Open )( THIS_ D3DXINCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID *ppData, UINT *pBytes )
-	{
-		char szFile [ MAX_PATH ] ;
-		sprintf_s ( szFile, MAX_PATH, "%s%s", m_szIncludePath, pFileName ) ;
-
-		FILE* pFile ;
-		fopen_s ( &pFile, szFile, "rb" ) ;
-		fseek ( pFile, 0, SEEK_END ) ;
-		*pBytes = ftell ( pFile ) ;
-
-		*ppData = new BYTE [ *pBytes ] ;
-
-		fseek ( pFile, 0, SEEK_SET ) ;
-		fread ( (void*)*ppData, 1, *pBytes, pFile ) ;
-
-		fclose ( pFile ) ;
-
-		// 		DWORD dwSize ;
-		// 
-		// 		BYTE* pData = m_pResMan->LoadDataFile ( szFile , &dwSize ) ;
-		// 		if ( !pData ) 
-		// 		{
-		// 			return E_FAIL ;
-		// 		}
-		// 		*ppData = pData ;
-		// 		*pBytes = dwSize ;
-		return S_OK ;
-	}
-	STDMETHOD ( Close )( THIS_ LPCVOID pData )
-	{
-		//Sm_pResMan->ReleaseDataFile ( (BYTE*)pData ) ;
-		if ( pData )
-			delete pData ;
-		pData = NULL ;
-		return S_OK ;
-	}
-	void SetIncludePath ( char* pszIncludePath )
-	{
-		if ( !pszIncludePath )
-			m_szIncludePath [ 0 ] = 0 ;
-		else
-			strcpy_s ( m_szIncludePath, MAX_PATH, pszIncludePath ) ;
-	}
-private:
-	char m_szIncludePath [ MAX_PATH ] ;
-};*/
-
 
 BOOL CModelViewerDlg::OnInitDialog()
 {
@@ -273,6 +212,8 @@ void CModelViewerDlg::ShowExampleMenuFile ()
 				delete m_pModel1 ;
 				m_pModel1 = NULL ;
 			}
+			else
+				m_bFileOpened = true ;
 		}
 
 
@@ -283,6 +224,18 @@ void CModelViewerDlg::ShowExampleMenuFile ()
 		CFileDialog dlg ( TRUE, "3dscan", "*.3dscan", OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, szFilters, AfxGetMainWnd () ) ;
 		if (dlg.DoModal() == IDOK) {
 			TD_SCAN_MODEL* pModel = C3DScanFile::Load3DScanModel ( dlg.GetPathName().GetBuffer() ) ;
+			if ( pModel ) {
+				m_pModel1 = pModel ;
+				m_pd3dModel1 = new D3D_MODEL ;
+				if ( ! CD3DModelUtils::CreateFromTDModel ( C3DGfx::GetInstance ()->GetDevice (), C3DGfx::GetInstance ()->GetEffectPool (), *m_pModel1, *m_pd3dModel1 ) ) {
+					delete m_pd3dModel1 ;
+					m_pd3dModel1 = NULL ;
+					delete m_pModel1 ;
+					m_pModel1 = NULL ;
+				}
+				else
+					m_bFileOpened = true ;
+			}
 		}
 	}
 	
@@ -293,7 +246,15 @@ void CModelViewerDlg::ShowExampleMenuFile ()
 		ImGui::EndMenu ();
 	}
 	
-	if ( ImGui::MenuItem ( "Save", "Ctrl+S", false, m_bFileOpened ) ) {
+	if ( ImGui::MenuItem ( "Save 3D Scan File", "Ctrl+S", false, m_bFileOpened ) ) {
+		if ( m_bFileOpened && m_pModel1 ) {
+			char szFilters[] = "3D Scan Files (*.3dscan)|*.3dscan||";
+			CFileDialog dlg ( FALSE, "3dscan", "*.3dscan", OFN_HIDEREADONLY, szFilters, AfxGetMainWnd () ) ;
+			if ( dlg.DoModal () == IDOK ) {
+				C3DScanFile::Save3DScanModel ( dlg.GetPathName ().GetBuffer (), m_pModel1 ) ;
+			}
+
+		}
 	}
 	
 	if ( ImGui::MenuItem ( "Save As..", NULL, false, m_bFileOpened) ) {

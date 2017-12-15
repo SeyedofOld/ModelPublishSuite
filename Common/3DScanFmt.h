@@ -43,7 +43,7 @@ enum VERTEX_FORMAT {
 
 struct TDSCAN_FILE_HEADER {
 	uint8_t		szSign [ 17 ] ; // = SEYEDOF 3D FORMAT
-	uint16_t	uiVersion ;
+	uint32_t	uiVersion ;
 	uint32_t	uiTotalTriCount ;
 	int32_t		iFirstPartOfs ;
 	int32_t		iMaterialLibOfs ;
@@ -82,7 +82,6 @@ struct TDSCAN_FILE_TEXTURE {
 	uint8_t			szSign [ 3 ] ; // = TEX
 	int8_t			szName [ 32 ] ;
 	int32_t			iNextTexOfs ;
-	uint32_t		iSize ;
 	TEXTURE_FORMAT	eTexFormat ;
 	uint32_t		uiDataSize ;
 	uint32_t		uiCompressedSize ;
@@ -94,9 +93,9 @@ struct TDSCAN_FILE_TEXTURE {
 struct TDSCAN_FILE_SUBSET {
 	uint8_t		szSign [ 6 ] ; // = SUBSET
 	int32_t		iNextSubsetOfs ;
-	//uint32_t	iMaterialIndex ;
-	uint32_t	iVertexCount ;
-	uint32_t	iFaceCount ;
+	int8_t		szMatName [ 32 ] ;
+	uint32_t	uiVertexCount ;
+	uint32_t	uiTriCount ;
 	uint32_t	uiVertexFormat ;
 	uint32_t	uiDataSize ;
 	uint32_t	uiCompressedSize ;

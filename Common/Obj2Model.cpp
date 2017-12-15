@@ -85,13 +85,14 @@ bool ConvertObjTo3DModel ( MY_OBJ& obj, TD_SCAN_MODEL& model )
 			subset.sMatName = objsub.sMatName ;
 
 			for ( uint32_t iFace = 0 ; iFace < objsub.Faces.size () ; iFace++ )
-				subset.iTriCount += objsub.Faces [ iFace ].VertIndex.size () - 2 ;
+				subset.uiTriCount += objsub.Faces [ iFace ].VertIndex.size () - 2 ;
+
+			subset.uiVertCount = subset.uiTriCount * 3 ;
 
 			uint32_t uiVertSize = C3DScanFileUtils::GetVertexSize ( subset.uiVertexFmt ) ;
 
-			subset.pVB = new uint8_t [ subset.iTriCount * 3 * uiVertSize ];
-			memset ( subset.pVB, 0, subset.iTriCount * 3 * uiVertSize );
-
+			subset.pVB = new uint8_t [ subset.uiTriCount * 3 * uiVertSize ];
+			memset ( subset.pVB, 0, subset.uiTriCount * 3 * uiVertSize );
 
 			float* pVB = (float*)subset.pVB ;
 
@@ -158,6 +159,11 @@ bool ConvertObjTo3DModel ( MY_OBJ& obj, TD_SCAN_MODEL& model )
 
 				} // Vert
 			} // Poly
+
+			subset.pIB = new uint32_t [ subset.uiTriCount * 3 ];
+			for ( uint32_t iIndex = 0 ; iIndex < subset.uiTriCount ; iIndex++ )
+				subset.pIB [ iIndex ] = iIndex ;
+
 
 			part.Subsets.push_back ( subset ) ;
 		}

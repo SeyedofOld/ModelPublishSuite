@@ -26,7 +26,7 @@ void FreeModel ( TD_SCAN_MODEL& model )
 
 			subset.sMatName = "" ;
 			subset.uiVertexFmt = 0 ;
-			subset.iTriCount = 0 ;
+			subset.uiTriCount = 0 ;
 		}
 		part.sName = "" ;
 		part.Subsets.clear() ;
