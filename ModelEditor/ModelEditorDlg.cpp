@@ -27,12 +27,16 @@ CModelViewerDlg::CModelViewerDlg(CWnd* pParent /*=NULL*/)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_bFileOpened = false ;
+	m_bHasFilename = false ;
 	m_pd3dModel1 = NULL ;
 	m_pModel1 = NULL ;
 	D3DXMatrixIdentity ( &m_matWorld ) ;
 	m_fYaw = 0.0f ;
 	m_fPitch = 0.0f ;
 	m_ptPos = vector3 ( 0, 0, 0 ) ;
+
+	m_clrClear = float4_rgba{ 0.2f, 0.2f, 0.2f, 0.0f } ;
+	m_clrLight = float4_rgba { 1.0f, 1.0f, 1.0f, 1.0f } ;
 }
 
 void CModelViewerDlg::DoDataExchange(CDataExchange* pDX)
@@ -200,11 +204,16 @@ void CModelViewerDlg::ShowExampleMenuFile ()
 		char szFilters[] = "3D Scan Files (*.obj)|*.iobj||";
 		CFileDialog dlg(TRUE, "obj", "*.obj", OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, szFilters, AfxGetMainWnd());
 		if (dlg.DoModal() == IDOK) {
+
+			char szOldPath [ MAX_PATH ] ;
+			GetCurrentDirectory ( MAX_PATH, szOldPath ) ;
+			SetCurrentDirectory ( dlg.GetFolderPath() ) ;
 			MY_OBJ obj ;
 			LoadObj2 ( dlg.GetPathName(), &obj ) ;
 			m_pModel1 = new TD_SCAN_MODEL ;
 			ConvertObjTo3DModel ( obj, *m_pModel1 ) ;
-			
+			SetCurrentDirectory ( szOldPath ) ;
+
 			m_pd3dModel1 = new D3D_MODEL ;
 			if ( ! CD3DModelUtils::CreateFromTDModel ( C3DGfx::GetInstance ()->GetDevice (), C3DGfx::GetInstance ()->GetEffectPool (), *m_pModel1, *m_pd3dModel1 ) ) {
 				delete m_pd3dModel1 ;
@@ -212,8 +221,10 @@ void CModelViewerDlg::ShowExampleMenuFile ()
 				delete m_pModel1 ;
 				m_pModel1 = NULL ;
 			}
-			else
+			else {
 				m_bFileOpened = true ;
+				m_bHasFilename = false ;
+			}
 		}
 
 
@@ -233,8 +244,11 @@ void CModelViewerDlg::ShowExampleMenuFile ()
 					delete m_pModel1 ;
 					m_pModel1 = NULL ;
 				}
-				else
+				else {
+					m_strFilename = dlg.GetPathName () ;
 					m_bFileOpened = true ;
+					m_bHasFilename = true ;
+				}
 			}
 		}
 	}
@@ -248,21 +262,36 @@ void CModelViewerDlg::ShowExampleMenuFile ()
 	
 	if ( ImGui::MenuItem ( "Save 3D Scan File", "Ctrl+S", false, m_bFileOpened ) ) {
 		if ( m_bFileOpened && m_pModel1 ) {
-			char szFilters[] = "3D Scan Files (*.3dscan)|*.3dscan||";
-			CFileDialog dlg ( FALSE, "3dscan", "*.3dscan", OFN_HIDEREADONLY, szFilters, AfxGetMainWnd () ) ;
-			if ( dlg.DoModal () == IDOK ) {
-				C3DScanFile::Save3DScanModel ( dlg.GetPathName ().GetBuffer (), m_pModel1 ) ;
+			if ( ! m_bHasFilename ) {
+				char szFilters[] = "3D Scan Files (*.3dscan)|*.3dscan||";
+				CFileDialog dlg ( FALSE, "3dscan", "*.3dscan", OFN_HIDEREADONLY, szFilters, AfxGetMainWnd () ) ;
+				if ( dlg.DoModal () == IDOK ) {
+					m_bHasFilename = true ;
+					m_strFilename = dlg.GetPathName() ;
+					C3DScanFile::Save3DScanModel ( m_strFilename.GetBuffer(), m_pModel1 ) ;
+				}
+			} 
+			else { // No need to ask for filename
+				C3DScanFile::Save3DScanModel ( m_strFilename.GetBuffer (), m_pModel1 ) ;
 			}
-
 		}
 	}
 	
-	if ( ImGui::MenuItem ( "Save As..", NULL, false, m_bFileOpened) ) {
+	if ( ImGui::MenuItem ( "Save 3D Scan File As...", "", false, m_bFileOpened ) ) {
+		if ( m_bFileOpened && m_pModel1 ) {
+			char szFilters[] = "3D Scan Files (*.3dscan)|*.3dscan||";
+			CFileDialog dlg ( FALSE, "3dscan", "*.3dscan", OFN_HIDEREADONLY, szFilters, AfxGetMainWnd () ) ;
+			if ( dlg.DoModal () == IDOK ) {
+				m_bHasFilename = true ;
+				m_strFilename = dlg.GetPathName () ;
+				C3DScanFile::Save3DScanModel ( m_strFilename.GetBuffer (), m_pModel1 ) ;
+			}
+		}
 	}
 
 	ImGui::Separator ();
 
-	if ( ImGui::BeginMenu ( "Options" ) ) {
+/*	if ( ImGui::BeginMenu ( "Options" ) ) {
 		static bool enabled = true;
 		ImGui::MenuItem ( "Enabled", "", &enabled );
 		ImGui::BeginChild ( "child", ImVec2 ( 0, 60 ), true );
@@ -296,7 +325,7 @@ void CModelViewerDlg::ShowExampleMenuFile ()
 	{
 		IM_ASSERT ( 0 );
 	}
-	if ( ImGui::MenuItem ( "Checked", NULL, true ) ) {}
+	if ( ImGui::MenuItem ( "Checked", NULL, true ) ) {}*/
 	if ( ImGui::MenuItem ( "Quit", "Alt+F4" ) ) {
 		PostQuitMessage ( 0 ) ;
 	}
@@ -308,7 +337,9 @@ void CModelViewerDlg::Render()
 	bool bSingleView = true ;
 
 	C3DGfx::GetInstance ()->BeginFrame ();
-	C3DGfx::GetInstance ()->Clear ( 0xff200040 ) ;
+
+	D3DXCOLOR clrClear ( m_clrClear.r, m_clrClear.g, m_clrClear.b, 0.0f ) ;
+	C3DGfx::GetInstance ()->Clear ( clrClear ) ;
 
 	m_pView->SelectView() ;
 
@@ -362,8 +393,8 @@ void CModelViewerDlg::Render()
 	D3DXVec4Normalize ( &vLightDir, &vLightDir ) ;
 	CopyMemory ( &matLight [ 0 ], &vLightDir, 4 * sizeof ( float ) ) ;
 
-	vector4 vLightColor ( 1.0f, 1.0f, 1.0f, 0.0f ) ;
-	CopyMemory ( &matLight [ 4 ], &vLightColor, 4 * sizeof ( float ) ) ;
+	//vector4 vLightColor ( 1.0f, 1.0f, 1.0f, 0.0f ) ;
+	CopyMemory ( &matLight [ 4 ], &m_clrLight, 4 * sizeof ( float ) ) ;
 
 	vector4 vAmbLight ( 0.5f, 0.5f, 0.5f, 0.0f ) ;
 	CopyMemory ( &matLight [ 8 ], &vAmbLight, 4 * sizeof ( float ) ) ;
@@ -536,14 +567,10 @@ void CModelViewerDlg::UpdateGui ()
 		}
 
 		if ( ImGui::BeginMenu ( "Options" ) ) {
-			if ( ImGui::MenuItem ( "Undo", "CTRL+Z" ) ) {}
-			if ( ImGui::MenuItem ( "Redo", "CTRL+Y", false, false ) ) {}  // Disabled item
-			ImGui::Separator ();
-			if ( ImGui::MenuItem ( "Cut", "CTRL+X" ) ) {}
-			if ( ImGui::MenuItem ( "Copy", "CTRL+C" ) ) {}
-			if ( ImGui::MenuItem ( "Paste", "CTRL+V" ) ) {}
-			static bool s_b = true;
-			ImGui::Checkbox ( "Wire-frame", &s_b );
+
+			ImGui::ColorEdit3 ( "Background Color", (float*)&m_clrClear ) ;
+			ImGui::ColorEdit3 ( "Light Color", (float*)&m_clrLight ) ;
+
 			ImGui::EndMenu ();
 		}
 
@@ -587,7 +614,7 @@ void CModelViewerDlg::UpdateGui ()
 			D3D_MODEL& model = *m_pd3dModel1 ;
 
 			D3DMODEL_PART& part = model.Parts [ iPart ] ;
-			ImGui::Checkbox( part.sName.c_str(), &part.bVisible );
+			ImGui::Checkbox( part.pBase->sName.c_str(), &part.bVisible );
 
 			ImGui::Indent ( 20.0f ) ;
 			for ( uint32_t iSubset = 0 ; iSubset < model.Parts [ iPart ].Subsets.size () ; iSubset++ ) {
@@ -606,12 +633,12 @@ void CModelViewerDlg::UpdateGui ()
 				ImGui::Indent ( 20.0f ) ;
 				ImGui::Text ( "Material" );
 				ImGui::Indent ( 5.0f ) ;
-				ImGui::ColorEdit3 ( "Diffuse Color", (float*)&subset.Material.clrDiffuse ) ;
+				ImGui::ColorEdit3 ( "Diffuse Color", (float*)&subset.Material.pBase->clrDiffuse ) ;
 				char ss [ 1000 ] ;
 				ImGui::GetID ( ss ) ;
-				ImGui::ColorEdit3 ( "Ambient Color", (float*)&subset.Material.clrAmbient ) ;
-				ImGui::SliderFloat ( "Specular Intensity", &subset.Material.fSpecIntensity, 0.0f, 2.0f ) ;
-				ImGui::SliderFloat ( "Glossiness", &subset.Material.fGlossiness, 0.0f, 1000.0f ) ;
+				ImGui::ColorEdit3 ( "Ambient Color", (float*)&subset.Material.pBase->clrAmbient ) ;
+				ImGui::SliderFloat ( "Specular Intensity", &subset.Material.pBase->fSpecIntensity, 0.0f, 2.0f ) ;
+				ImGui::SliderFloat ( "Glossiness", &subset.Material.pBase->fGlossiness, 0.0f, 1000.0f ) ;
 				ImGui::Unindent ( 5.0f ) ;
 
 				ImGui::Unindent ( 20.0f ) ;

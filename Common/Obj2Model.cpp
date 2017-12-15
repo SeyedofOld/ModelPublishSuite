@@ -79,7 +79,7 @@ bool ConvertObjTo3DModel ( MY_OBJ& obj, TD_SCAN_MODEL& model )
 			subset.uiVertexFmt |= VF_POSITIION ;
 			if ( objsub.bHasNormal )
 				subset.uiVertexFmt |= VF_NORMAL ;
-			if ( objsub.bHasNormal )
+			if ( objsub.bHasUv )
 				subset.uiVertexFmt |= VF_UV ;
 
 			subset.sMatName = objsub.sMatName ;

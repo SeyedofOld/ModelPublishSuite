@@ -18,19 +18,19 @@ bool CD3DModelUtils::CreateFromTDModel ( IDirect3DDevice9* pDevice, ID3DXEffectP
 		TD_MODEL_MATERIAL& mdlmtrl = i->second ;
 		D3DMODEL_MATERIAL mtrl ;
 
-		mtrl.sName = mdlmtrl.sName ;
-		mtrl.clrAmbient = mdlmtrl.clrAmbient ;
-		mtrl.clrDiffuse = mdlmtrl.clrDiffuse ;
-		mtrl.fSpecIntensity = mdlmtrl.fSpecIntensity ;
-		mtrl.fGlossiness = mdlmtrl.fGlossiness ;
-		mtrl.fTransparency = mdlmtrl.fTransparency ;
-		mtrl.fReflectionFactor = mdlmtrl.fReflectionFactor ;
-
-		mtrl.sDiffuseTextureName = mdlmtrl.sDiffuseTextureName ;
-		mtrl.sAlphaTextureName = mdlmtrl.sAlphaTextureName ;
-		mtrl.sNormalTextureName = mdlmtrl.sNormalTextureName ;
-		mtrl.sSpecularTextureName = mdlmtrl.sSpecularTextureName ;
-		mtrl.sReflectionTextureName = mdlmtrl.sReflectionTextureName ;
+// 		mtrl.sName = mdlmtrl.sName ;
+// 		mtrl.clrAmbient = mdlmtrl.clrAmbient ;
+// 		mtrl.clrDiffuse = mdlmtrl.clrDiffuse ;
+// 		mtrl.fSpecIntensity = mdlmtrl.fSpecIntensity ;
+// 		mtrl.fGlossiness = mdlmtrl.fGlossiness ;
+// 		mtrl.fTransparency = mdlmtrl.fTransparency ;
+// 		mtrl.fReflectionFactor = mdlmtrl.fReflectionFactor ;
+// 
+// 		mtrl.sDiffuseTextureName = mdlmtrl.sDiffuseTextureName ;
+// 		mtrl.sAlphaTextureName = mdlmtrl.sAlphaTextureName ;
+// 		mtrl.sNormalTextureName = mdlmtrl.sNormalTextureName ;
+// 		mtrl.sSpecularTextureName = mdlmtrl.sSpecularTextureName ;
+// 		mtrl.sReflectionTextureName = mdlmtrl.sReflectionTextureName ;
 
 		hr = D3DXCreateEffectFromFileA ( pDevice,
 			"DiffuseMapSpec_trans.fx",
@@ -40,8 +40,10 @@ bool CD3DModelUtils::CreateFromTDModel ( IDirect3DDevice9* pDevice, ID3DXEffectP
 			pEffectPool,
 			&mtrl.pShader,
 			NULL ) ;
+		mtrl.pBase = &mdlmtrl ;
 
-		d3dModel.Materials [ mtrl.sName ] = mtrl ;
+		d3dModel.Materials [ mdlmtrl.sName ] = mtrl ;
+		//d3dModel.Materials [ mdlmtrl.sName ].pBase = &mdlmtrl ;
 	}
 
 	for ( uint32_t iTex = 0 ; iTex < model.Textures.size () ; iTex++ ) {
@@ -49,39 +51,42 @@ bool CD3DModelUtils::CreateFromTDModel ( IDirect3DDevice9* pDevice, ID3DXEffectP
 		advance ( i, iTex ) ;
 
 		D3DMODEL_TEXTURE_SLOT slot ;
-		slot.sName = i->second.sName ;
-		slot.eFormat = i->second.eFormat ;
-		slot.uiSize = i->second.uiSize ;
-		slot.pData = new uint8_t [ slot.uiSize ] ;
-		memcpy ( slot.pData, i->second.pData, slot.uiSize ) ;
+		slot.pBase = &i->second ;
+// 		slot.sName = i->second.sName ;
+// 		slot.eFormat = i->second.eFormat ;
+// 		slot.uiSize = i->second.uiSize ;
+// 		slot.pData = new uint8_t [ slot.uiSize ] ;
+// 		memcpy ( slot.pData, i->second.pData, slot.uiSize ) ;
 
-		D3DXCreateTextureFromFileInMemory ( pDevice, slot.pData, slot.uiSize, &slot.pTexture ) ;
+		D3DXCreateTextureFromFileInMemory ( pDevice, slot.pBase->pData, slot.pBase->uiSize, &slot.pTexture ) ;
 
-		d3dModel.Textures [ slot.sName ] = slot ;
+		d3dModel.Textures [ i->second.sName ] = slot ;
 	}
 
 	for ( uint32_t iPart = 0 ; iPart < model.Parts.size() ; iPart++ ) {
 
 		D3DMODEL_PART part ;
-		part.sName = model.Parts [ iPart ].sName ;
+		part.pBase = &model.Parts [ iPart ] ;
+		//part.sName = model.Parts [ iPart ].sName ;
 
 		for ( uint32_t iSubset = 0 ; iSubset < model.Parts [ iPart ].Subsets.size() ; iSubset++ ) {
 			TD_MODEL_SUBSET& mdlsub = model.Parts [ iPart ].Subsets [ iSubset ] ;
 			D3DMODEL_SUBSET subset ;
-			subset.uiTriCount = mdlsub.uiTriCount ;
-			if ( mdlsub.pIB ) {
-				subset.pIB = new uint32_t [ mdlsub.uiTriCount * 3 ] ;
-				memcpy ( subset.pIB, mdlsub.pIB, mdlsub.uiTriCount * 3 * sizeof ( uint32_t ) ) ;
-			}
-			if ( mdlsub.pVB ) {
-				subset.pVB = new uint8_t [ mdlsub.uiTriCount * 3 * C3DScanFileUtils::GetVertexSize ( mdlsub.uiVertexFmt ) ] ;
-				memcpy ( subset.pVB, mdlsub.pVB, mdlsub.uiTriCount * 3 * C3DScanFileUtils::GetVertexSize ( mdlsub.uiVertexFmt ) ) ;
-			}
-			subset.sMatName = mdlsub.sMatName ;
-			subset.uiVertexFmt = mdlsub.uiVertexFmt ;
-			subset.uiFVF = VertexFormatToFvf ( subset.uiVertexFmt ) ;
+			subset.pBase = &mdlsub ;
+			//subset.uiTriCount = mdlsub.uiTriCount ;
+// 			if ( mdlsub.pIB ) {
+// 				subset.pIB = new uint32_t [ mdlsub.uiTriCount * 3 ] ;
+// 				memcpy ( subset.pIB, mdlsub.pIB, mdlsub.uiTriCount * 3 * sizeof ( uint32_t ) ) ;
+// 			}
+// 			if ( mdlsub.pVB ) {
+// 				subset.pVB = new uint8_t [ mdlsub.uiTriCount * 3 * C3DScanFileUtils::GetVertexSize ( mdlsub.uiVertexFmt ) ] ;
+// 				memcpy ( subset.pVB, mdlsub.pVB, mdlsub.uiTriCount * 3 * C3DScanFileUtils::GetVertexSize ( mdlsub.uiVertexFmt ) ) ;
+// 			}
+// 			subset.sMatName = mdlsub.sMatName ;
+// 			subset.uiVertexFmt = mdlsub.uiVertexFmt ;
+			subset.uiFVF = VertexFormatToFvf ( subset.pBase->uiVertexFmt ) ;
 
-			subset.Material = d3dModel.Materials [ subset.sMatName ] ;
+			subset.Material = d3dModel.Materials [ subset.pBase->sMatName ] ;
 
 			part.Subsets.push_back ( subset ) ;
 		}
@@ -113,22 +118,22 @@ bool CD3DModelUtils::RenderD3DModel ( IDirect3DDevice9* pDevice, D3D_MODEL& d3dM
 			
 			pDevice->SetFVF ( subset.uiFVF ) ;
 
-			d3dMtl.pShader->SetFloatArray ( "g_f4AmbientColor", (float*)&d3dMtl.clrAmbient, 4 ) ;
-			d3dMtl.pShader->SetFloatArray ( "g_f4DiffuseColor", (float*)&d3dMtl.clrDiffuse, 4 ) ;
+			d3dMtl.pShader->SetFloatArray ( "g_f4AmbientColor", (float*)&d3dMtl.pBase->clrAmbient, 4 ) ;
+			d3dMtl.pShader->SetFloatArray ( "g_f4DiffuseColor", (float*)&d3dMtl.pBase->clrDiffuse, 4 ) ;
 			if ( subset.bSelected ) {
-				float4_rgba f4 = d3dMtl.clrDiffuse ;
+				float4_rgba f4 = d3dMtl.pBase->clrDiffuse ;
 				f4.r *= 2.0f ;
 				f4.g *= 2.0f ;
 				f4.b *= 2.0f ;
 				f4.a = 1.0f ;
 				d3dMtl.pShader->SetFloatArray ( "g_f4DiffuseColor", (float*)&f4, 4 ) ;
 			}
-			d3dMtl.pShader->SetFloat ( "g_fTransparency", d3dMtl.fTransparency ) ;
-			d3dMtl.pShader->SetFloat ( "g_fGlossiness", d3dMtl.fGlossiness ) ;
-			d3dMtl.pShader->SetFloat ( "g_fSpecularIntensity", d3dMtl.fSpecIntensity ) ;
+			d3dMtl.pShader->SetFloat ( "g_fTransparency", d3dMtl.pBase->fTransparency ) ;
+			d3dMtl.pShader->SetFloat ( "g_fGlossiness", d3dMtl.pBase->fGlossiness ) ;
+			d3dMtl.pShader->SetFloat ( "g_fSpecularIntensity", d3dMtl.pBase->fSpecIntensity ) ;
 
-			if ( d3dModel.Textures.find ( d3dMtl.sDiffuseTextureName  ) != d3dModel.Textures.end() )
-				d3dMtl.pShader->SetTexture ( "g_txDiffuse", d3dModel.Textures [ d3dMtl.sDiffuseTextureName ].pTexture ) ;
+			if ( d3dModel.Textures.find ( d3dMtl.pBase->sDiffuseTextureName  ) != d3dModel.Textures.end() )
+				d3dMtl.pShader->SetTexture ( "g_txDiffuse", d3dModel.Textures [ d3dMtl.pBase->sDiffuseTextureName ].pTexture ) ;
 			
 			UINT uiPassCount = 0 ;
 			d3dMtl.pShader->Begin ( &uiPassCount, 0 ) ;
@@ -136,9 +141,9 @@ bool CD3DModelUtils::RenderD3DModel ( IDirect3DDevice9* pDevice, D3D_MODEL& d3dM
 				d3dMtl.pShader->BeginPass ( iPass ) ;
 
 				pDevice->DrawPrimitiveUP ( D3DPT_TRIANGLELIST,
-					subset.uiTriCount,
-					subset.pVB,
-					C3DScanFileUtils::GetVertexSize (subset.uiVertexFmt) ) ;
+					subset.pBase->uiTriCount,
+					subset.pBase->pVB,
+					C3DScanFileUtils::GetVertexSize (subset.pBase->uiVertexFmt) ) ;
 
 				d3dMtl.pShader->EndPass() ;
 			}
@@ -203,9 +208,9 @@ bool CD3DModelUtils::IntersectRay ( float3 ptStart, float3 vDir, D3D_MODEL& mode
 		for ( uint32_t iSubset = 0 ; iSubset < model.Parts [ iPart ].Subsets.size () ; iSubset++ ) {
 			D3DMODEL_SUBSET& mdlsub = model.Parts [ iPart ].Subsets [ iSubset ] ;
 
-			float* pVB = (float*)mdlsub.pVB ;
-			uint32_t iVertSize = C3DScanFileUtils::GetVertexSize ( mdlsub.uiVertexFmt ) / sizeof ( float ) ;
-			for ( uint32_t iTri = 0 ; iTri < mdlsub.uiTriCount ; iTri++ ) {
+			float* pVB = (float*)mdlsub.pBase->pVB ;
+			uint32_t iVertSize = C3DScanFileUtils::GetVertexSize ( mdlsub.pBase->uiVertexFmt ) / sizeof ( float ) ;
+			for ( uint32_t iTri = 0 ; iTri < mdlsub.pBase->uiTriCount ; iTri++ ) {
 				D3DXVECTOR3 p1 = *( (D3DXVECTOR3*)pVB ) ;
 				pVB += iVertSize ;
 				D3DXVECTOR3 p2 = *( (D3DXVECTOR3*)pVB ) ;

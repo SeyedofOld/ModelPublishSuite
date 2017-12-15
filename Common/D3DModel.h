@@ -39,8 +39,9 @@ struct D3D_VERTEX {
 	float2 vUv ;
 } ;
 
-struct D3DMODEL_MATERIAL : public TD_MODEL_MATERIAL {
-	ID3DXEffect*	pShader ;
+struct D3DMODEL_MATERIAL  {
+	TD_MODEL_MATERIAL*	pBase ;
+	ID3DXEffect*		pShader ;
 // 	IDirect3DTexture9* pTexDiffuse ;
 // 	IDirect3DTexture9* pTexSpec;
 // 	IDirect3DTexture9* pTexAlpha;
@@ -48,6 +49,7 @@ struct D3DMODEL_MATERIAL : public TD_MODEL_MATERIAL {
 // 	IDirect3DTexture9* pTexReflection ;
 
 	D3DMODEL_MATERIAL() {
+		pBase = NULL ;
 		pShader = NULL ;
 // 		pTexDiffuse = NULL ;
 // 		pTexAlpha = NULL ;
@@ -57,11 +59,18 @@ struct D3DMODEL_MATERIAL : public TD_MODEL_MATERIAL {
 	}
 };
 
-struct D3DMODEL_TEXTURE_SLOT : public TD_MODEL_TEXTURE_SLOT {
+struct D3DMODEL_TEXTURE_SLOT {
+	TD_MODEL_TEXTURE_SLOT* pBase ;
 	IDirect3DTexture9* pTexture;
+
+	D3DMODEL_TEXTURE_SLOT () {
+		pBase = NULL ;
+		pTexture = NULL ;
+	}
 };
 
-struct D3DMODEL_SUBSET : public TD_MODEL_SUBSET {
+struct D3DMODEL_SUBSET {
+	TD_MODEL_SUBSET* pBase ;
 	uint32_t	uiFVF ;
 	//int32_t		iMatIndex ;
 	bool		bOwnMaterial ;
@@ -70,6 +79,7 @@ struct D3DMODEL_SUBSET : public TD_MODEL_SUBSET {
 	bool		bSelected ;
 
 	D3DMODEL_SUBSET () {
+		pBase = NULL ;
 		uiFVF = 0 ;
 		//iMatIndex = -1 ;
 		bOwnMaterial = false ;
@@ -78,11 +88,13 @@ struct D3DMODEL_SUBSET : public TD_MODEL_SUBSET {
 	}
 };
 
-struct D3DMODEL_PART : public TD_MODEL_PART {
+struct D3DMODEL_PART {
+	TD_MODEL_PART* pBase ;
 	bool bVisible ;
 	bool bSelected ;
 	vector<D3DMODEL_SUBSET> Subsets ;
 	D3DMODEL_PART () {
+		pBase = NULL ;
 		bVisible = true ;
 		bSelected = false ;
 	}

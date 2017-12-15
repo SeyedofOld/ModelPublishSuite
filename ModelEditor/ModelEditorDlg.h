@@ -44,7 +44,11 @@ public:
 	CGuiRenderer	m_GuiRenderer ;
 	CSettingsGui	m_SettingsGui ;
 	C3DViewContext*  m_pView ;
+	
 	bool			m_bFileOpened ;
+	bool			m_bHasFilename ;
+	CString			m_strFilename ;
+
 	D3D_MODEL*		m_pd3dModel1 ;
 	TD_SCAN_MODEL*	m_pModel1 ;
 	D3DXMATRIX		m_matWorld ;
@@ -52,6 +56,9 @@ public:
 	vector3			m_ptPos ;
 	float			m_fYaw ;
 	float			m_fPitch ;
+
+	float4_rgba		m_clrClear ;
+	float4_rgba		m_clrLight ; 
 
 public:
 	void Update() ;
