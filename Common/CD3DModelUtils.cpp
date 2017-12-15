@@ -124,7 +124,6 @@ bool CD3DModelUtils::RenderD3DModel ( IDirect3DDevice9* pDevice, D3D_MODEL& d3dM
 				f4.a = 1.0f ;
 				d3dMtl.pShader->SetFloatArray ( "g_f4DiffuseColor", (float*)&f4, 4 ) ;
 			}
-			//d3dMtl.pShader->SetFloatArray ( "g_f4SpecularColor", (float*)&d3dMtl.clrSpecular, 4 ) ;
 			d3dMtl.pShader->SetFloat ( "g_fTransparency", d3dMtl.fTransparency ) ;
 			d3dMtl.pShader->SetFloat ( "g_fGlossiness", d3dMtl.fGlossiness ) ;
 			d3dMtl.pShader->SetFloat ( "g_fSpecularIntensity", d3dMtl.fSpecIntensity ) ;

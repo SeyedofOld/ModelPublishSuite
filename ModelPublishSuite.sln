@@ -5,7 +5,7 @@ VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "3DModelViewer", "3DModelViewer\3DModelViewer.vcxproj", "{46C139BC-6D74-48C2-B1C2-CF464F6C0D94}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ModelViewer", "ModelViewer\ModelViewer.vcxproj", "{9BE0EC04-AE90-46F4-B78F-F96AA8707036}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ModelEditor", "ModelEditor\ModelEditor.vcxproj", "{9BE0EC04-AE90-46F4-B78F-F96AA8707036}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -48,8 +48,8 @@ void C3DViewContext::CleanUp()
 
 bool C3DViewContext::CreateRenderTarget ( int nWidth, int nHeight, bool bRenderToTexture /*= false*/ )
 {
-	if ( ! m_Desc.bOffScreen && bRenderToTexture )
-		assert(0);
+	if ( !m_Desc.bOffScreen && bRenderToTexture )
+		return false ;
 
 	HRESULT hr ;
 	

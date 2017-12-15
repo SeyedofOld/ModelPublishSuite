@@ -22,7 +22,7 @@ using namespace std ;
 
 // A structure containing information about a material loaded from an .mtl file.
 // TODO: Use dynamically allocated strings for map names.
-struct TObjMaterial
+/*struct TObjMaterial
 {
 	char name[MAX_PATH]; // Material name.
 	float Ka[3];	// Ambient.
@@ -52,7 +52,7 @@ struct TObjMaterial
 		//Ks[0] = 1.0f; Ks[1] = 1.0f; Ks[2] = 1.0f;
 		Ks[0] = 0.f; Ks[1] = 0.f; Ks[2] = 0.f;
 		Tf[0] = 1.0f; Tf[1] = 1.0f; Tf[2] = 1.0f;
-		Tr = 1.f; // Fully opaque.
+		Tr = -1.f; // Fully opaque.
 		//Ns = 0.f;
 		Ns = 32.f;
 		Ni = 1.f;
@@ -66,7 +66,7 @@ struct TObjMaterial
 		map_Bump[0] = 0;
 		map_Refl[0] = 0;
 	}
-};
+};*/
 
 
 
@@ -103,7 +103,7 @@ struct MY_MTL {
 		Ks[0] = 1.0f; Ks[1] = 1.0f; Ks[2] = 1.0f;
 		//Ks [ 0 ] = 0.0f; Ks [ 1 ] = 0.0f; Ks [ 2 ] = 0.0f;
 		Tf[0] = 1.0f; Tf[1] = 1.0f; Tf[2] = 1.0f;
-		fTr = 0.0f; // Fully opaque.
+		fTr = -1.0f; // Fully opaque.
 					//Ns = 0.f;
 		fNs = 32.f;
 		fNi = 1.f;
@@ -112,7 +112,6 @@ struct MY_MTL {
 					// 		Ks = 1.0f ;
 					// 		Kd = 1.0f ;
 					// 		Tf = 1.0f ;
-		fTr = 1.0f;
 		fD = 1.0f;
 		fNs = 1.0f;
 		fNi = 1.0f;
@@ -191,7 +190,7 @@ struct MY_OBJ {
 
 
 
-struct CObjMesh
+/*struct CObjMesh
 {
 # ifdef __D3DX9_H__
 	typedef D3DXVECTOR3 TFloat3;
@@ -254,7 +253,7 @@ struct CObjMesh
 			delete materials[i];
 		materials.clear();
 	}
-};
+};*/
 
 
 

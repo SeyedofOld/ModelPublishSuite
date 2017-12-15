@@ -428,7 +428,7 @@ INT LoadMtlLib2 ( LPCTSTR sFileName, vector<MY_MTL>& materials )
 		else if ( 0 == _strnicmp ( "tr ", buffer, 3 ) )
 			pMat->fTr = (float)atof ( buffer + 3 );
 		else if ( 0 == _strnicmp ( "d ", buffer, 2 ) )
-			pMat->fTr = (float)atof ( buffer + 2 );
+			pMat->fTr = 1.0f - (float)atof ( buffer + 2 );
 		else if ( 0 == _strnicmp ( "ns ", buffer, 3 ) )
 			pMat->fNs = (float)atof ( buffer + 3 );
 		else if ( 0 == _strnicmp ( "Ni ", buffer, 3 ) )
@@ -475,6 +475,9 @@ INT LoadMtlLib2 ( LPCTSTR sFileName, vector<MY_MTL>& materials )
 			sscanf ( buffer + 7, "%s", szMap );
 			pMat->sMapRefl = szMap ;
 		}
+
+		if ( pMat->fTr == -1.0f )
+			pMat->fTr = 0.0f ;
 	}
 	fclose ( pFile );
 	return 1;
