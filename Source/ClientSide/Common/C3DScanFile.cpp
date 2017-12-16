@@ -8,6 +8,7 @@
 
 #include "C3DScanFile.h"
 #include "C3DScanFileUtils.h"
+#include "lz4hc.h"
 
 TD_SCAN_MODEL* C3DScanFile::Load3DScanModel ( char* pszFilename )
 {
@@ -85,8 +86,20 @@ TD_SCAN_MODEL* C3DScanFile::Load3DScanModel ( char* pszFilename )
 			subset.uiTriCount = sub_hdr.uiTriCount ;
 			subset.uiVertCount = sub_hdr.uiVertexCount ;
 
-			fread ( subset.pVB, uiVertexSize, sub_hdr.uiVertexCount, pFile ) ;
-			fread ( subset.pIB, sizeof(uint32_t), sub_hdr.uiTriCount * 3, pFile ) ;
+			if ( sub_hdr.uiFlags & TDS_FLAG_COMPRESSED ) {
+				char* pDest = new char [ sub_hdr.uiDataSize ] ;
+				char* pSrc = new char [ sub_hdr.uiCompressedSize ] ;
+				fread ( pSrc, sub_hdr.uiCompressedSize, 1, pFile ) ;
+				LZ4_decompress_fast ( pSrc, pDest, sub_hdr.uiDataSize ) ;
+				memcpy ( subset.pVB, pDest, uiVertexSize * sub_hdr.uiVertexCount ) ;
+				memcpy ( subset.pIB, pDest + uiVertexSize * sub_hdr.uiVertexCount, sizeof ( uint32_t ) * sub_hdr.uiTriCount * 3 ) ;
+				delete pDest ;
+				delete pSrc ;
+			}
+			else {
+				fread ( subset.pVB, uiVertexSize, sub_hdr.uiVertexCount, pFile ) ;
+				fread ( subset.pIB, sizeof ( uint32_t ), sub_hdr.uiTriCount * 3, pFile ) ;
+			}
 
 			subset.sMatName = (char*)sub_hdr.szMatName ;
 
@@ -156,10 +169,11 @@ TD_SCAN_MODEL* C3DScanFile::Load3DScanModel ( char* pszFilename )
 		tex.pData = new int8_t [ tex_hdr.uiDataSize ] ;
 
 		if ( tex_hdr.uiFlags == TDS_FLAG_COMPRESSED ) {
-			int8_t* pData = new int8_t [ tex_hdr.uiCompressedSize ] ;
-			fread ( pData, 1, tex_hdr.uiCompressedSize, pFile ) ;
+			char* pSrc = new char [ tex_hdr.uiCompressedSize ] ;
+			fread ( pSrc, 1, tex_hdr.uiCompressedSize, pFile ) ;
 
-			// TODO: Decompression code 
+			LZ4_decompress_fast ( pSrc, (char*)tex.pData, (int)tex_hdr.uiDataSize ) ;
+			delete pSrc ;
 		} 
 		else {
 			fread ( tex.pData, 1, tex_hdr.uiDataSize, pFile ) ;
@@ -181,7 +195,7 @@ load_error:
 	return NULL ;
 }
 
-bool C3DScanFile::Save3DScanModel ( char* pszFilename, TD_SCAN_MODEL* pModel )
+bool C3DScanFile::Save3DScanModel ( char* pszFilename, TD_SCAN_MODEL* pModel, uint32_t uiFlags /*= 0 */)
 {
 	if ( ! pszFilename || ! pModel )
 		return false ;
@@ -232,7 +246,26 @@ bool C3DScanFile::Save3DScanModel ( char* pszFilename, TD_SCAN_MODEL* pModel )
 			sub_hdr.uiDataSize = subset.uiVertCount * uiVertexSize + subset.uiTriCount * 3 * sizeof(uint32_t) ;
 
 			// TODO: Compress Data
-			sub_hdr.uiCompressedSize = sub_hdr.uiDataSize ;
+			int32_t iVbIbSize = uiVertexSize * subset.uiVertCount + sizeof ( uint32_t ) * subset.uiTriCount * 3 ;
+			uint8_t* pSrc = new uint8_t [ iVbIbSize ] ;
+			memcpy ( pSrc, subset.pVB, uiVertexSize * subset.uiVertCount ) ;
+			memcpy ( pSrc + uiVertexSize * subset.uiVertCount, subset.pIB, sizeof ( uint32_t ) * subset.uiTriCount * 3 ) ;
+			int32_t iDestSize = LZ4_compressBound ( iVbIbSize ) ;
+			uint8_t* pDest = new uint8_t [ iDestSize ] ;
+			int32_t iCompressedSize = 0 ;
+			if ( (uiFlags & TD_SAVE_FLAG_NO_COMPRESSION) == 0 )
+				iCompressedSize = LZ4_compress_HC ( (char*)pSrc, (char*)pDest, iVbIbSize, iDestSize, LZ4HC_CLEVEL_MAX ) ;
+
+			bool bUseCompressed = ( iCompressedSize < iVbIbSize * 8 / 10 ) ;
+			if ( ( uiFlags & TD_SAVE_FLAG_NO_COMPRESSION ) )
+				bUseCompressed = false ;
+
+			if ( bUseCompressed ) {
+				sub_hdr.uiCompressedSize = iCompressedSize ;
+				sub_hdr.uiFlags |= TDS_FLAG_COMPRESSED ;
+			}
+			else
+				sub_hdr.uiCompressedSize = sub_hdr.uiDataSize ;
 
 			if ( iSubset < part.Subsets.size() - 1 )
 				sub_hdr.iNextSubsetOfs = uiFileOfs + sub_hdr.uiCompressedSize + sizeof ( TDSCAN_FILE_SUBSET ) ;
@@ -241,8 +274,15 @@ bool C3DScanFile::Save3DScanModel ( char* pszFilename, TD_SCAN_MODEL* pModel )
 
 			fwrite ( &sub_hdr, sizeof ( TDSCAN_FILE_SUBSET ), 1, pFile ) ;
 
-			fwrite ( subset.pVB, uiVertexSize, subset.uiVertCount, pFile ) ;
-			fwrite ( subset.pIB, sizeof(uint32_t), subset.uiTriCount * 3, pFile ) ;
+			if ( bUseCompressed ) {
+				fwrite ( pDest, iCompressedSize, 1, pFile ) ;
+				delete pDest ;
+				delete pSrc ;
+			}
+			else {
+				fwrite ( subset.pVB, uiVertexSize, subset.uiVertCount, pFile ) ;
+				fwrite ( subset.pIB, sizeof ( uint32_t ), subset.uiTriCount * 3, pFile ) ;
+			}
 
 			uiFileOfs += sub_hdr.uiCompressedSize + sizeof(TDSCAN_FILE_SUBSET) ;
 
@@ -315,7 +355,24 @@ bool C3DScanFile::Save3DScanModel ( char* pszFilename, TD_SCAN_MODEL* pModel )
 		tex_hdr.uiDataSize = tex.uiSize ;
 
 		// TODO: Handle Compression
-		tex_hdr.uiCompressedSize = tex.uiSize ;
+		int32_t iTexSize = tex.uiSize ;
+		int32_t iDestSize = LZ4_compressBound ( iTexSize ) ;
+		uint8_t* pDest = new uint8_t [ iDestSize ] ;
+		int32_t iCompressedSize = 0 ;
+		
+		if ( ( uiFlags & TD_SAVE_FLAG_NO_COMPRESSION ) == 0 )
+			iCompressedSize = LZ4_compress_HC ( (char*)tex.pData, (char*)pDest, iTexSize, iDestSize, LZ4HC_CLEVEL_MAX ) ;
+
+		bool bUseCompressed = ( iCompressedSize < iTexSize * 8 / 10 ) ;
+		if ( ( uiFlags & TD_SAVE_FLAG_NO_COMPRESSION ) )
+			bUseCompressed = false ;
+
+		if ( bUseCompressed ) {
+			tex_hdr.uiCompressedSize = iCompressedSize ;
+			tex_hdr.uiFlags |= TDS_FLAG_COMPRESSED ;
+		}
+		else
+			tex_hdr.uiCompressedSize = tex_hdr.uiDataSize ;
 
 		if ( iTex < pModel->Textures.size () - 1 )
 			tex_hdr.iNextTexOfs = uiFileOfs + sizeof ( TDSCAN_FILE_TEXTURE ) + tex_hdr.uiCompressedSize ;
@@ -325,7 +382,14 @@ bool C3DScanFile::Save3DScanModel ( char* pszFilename, TD_SCAN_MODEL* pModel )
 		fwrite ( &tex_hdr, sizeof ( TDSCAN_FILE_TEXTURE ), 1, pFile ) ;
 		uiFileOfs += sizeof ( TDSCAN_FILE_TEXTURE ) ;
 		
-		fwrite ( tex.pData, tex_hdr.uiCompressedSize, 1, pFile ) ;
+		if ( bUseCompressed ) {
+			fwrite ( pDest, iCompressedSize, 1, pFile ) ;
+			delete pDest ;
+		}
+		else {
+			fwrite ( tex.pData, tex_hdr.uiCompressedSize, 1, pFile ) ;
+		}
+
 		uiFileOfs += tex_hdr.uiCompressedSize ;
 	}
 
@@ -336,7 +400,7 @@ bool C3DScanFile::Save3DScanModel ( char* pszFilename, TD_SCAN_MODEL* pModel )
 
 	return true  ;
 
-load_error:
+//load_error:
 	if ( pFile )
 		fclose ( pFile ) ;
 	// 	if ( pModel )

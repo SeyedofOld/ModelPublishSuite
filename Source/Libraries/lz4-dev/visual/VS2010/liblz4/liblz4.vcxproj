@@ -22,7 +22,7 @@
     <ProjectGuid>{9092C5CC-3E71-41B3-BF68-4A7BDD8A5476}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>liblz4</RootNamespace>
-    <OutDir>$(SolutionDir)Source\Libraries\$(Platform)_$(Configuration)\</OutDir>
+    <OutDir>$(SolutionDir)Source\Libraries\lz4-dev\lib\$(Platform)_$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)bin\obj\$(RootNamespace)_$(Platform)_$(Configuration)\</IntDir>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
