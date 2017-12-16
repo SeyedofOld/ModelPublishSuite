@@ -3,9 +3,23 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "3DModelViewer", "3DModelViewer\3DModelViewer.vcxproj", "{46C139BC-6D74-48C2-B1C2-CF464F6C0D94}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ClientSide", "ClientSide", "{AA89C0DC-E698-43FC-BFEF-20B007A48AAE}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ModelEditor", "ModelEditor\ModelEditor.vcxproj", "{9BE0EC04-AE90-46F4-B78F-F96AA8707036}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ServerSide", "ServerSide", "{E8DA11C4-89DA-4262-A925-CD820E2EA94B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Database", "Database", "{20BB3785-1CE7-413E-94B3-5E54D92A1B2E}"
+	ProjectSection(SolutionItems) = preProject
+		Source\SerrverSide\Database\dbCreateDatabase.sql = Source\SerrverSide\Database\dbCreateDatabase.sql
+		Source\SerrverSide\Database\dbCreateTables.sql = Source\SerrverSide\Database\dbCreateTables.sql
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Server", "Server", "{705648AD-D45F-461C-A5CE-85DA6884CA65}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libraries", "Libraries", "{3B7C6144-0B99-42A4-BC28-296E53BB2133}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "3DModelViewer", "Source\ClientSide\3DModelViewer\3DModelViewer.vcxproj", "{46C139BC-6D74-48C2-B1C2-CF464F6C0D94}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ModelEditor", "Source\ClientSide\ModelEditor\ModelEditor.vcxproj", "{9BE0EC04-AE90-46F4-B78F-F96AA8707036}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -34,5 +48,11 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{20BB3785-1CE7-413E-94B3-5E54D92A1B2E} = {E8DA11C4-89DA-4262-A925-CD820E2EA94B}
+		{705648AD-D45F-461C-A5CE-85DA6884CA65} = {E8DA11C4-89DA-4262-A925-CD820E2EA94B}
+		{46C139BC-6D74-48C2-B1C2-CF464F6C0D94} = {AA89C0DC-E698-43FC-BFEF-20B007A48AAE}
+		{9BE0EC04-AE90-46F4-B78F-F96AA8707036} = {AA89C0DC-E698-43FC-BFEF-20B007A48AAE}
 	EndGlobalSection
 EndGlobal
