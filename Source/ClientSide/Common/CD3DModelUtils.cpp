@@ -32,15 +32,16 @@ bool CD3DModelUtils::CreateFromTDModel ( IDirect3DDevice9* pDevice, ID3DXEffectP
 		mtrl.sSpecularTextureName = mdlmtrl.sSpecularTextureName ;
 		mtrl.sReflectionTextureName = mdlmtrl.sReflectionTextureName ;
 
+		mtrl.pBase = &mdlmtrl ;
+
 		hr = D3DXCreateEffectFromFileA ( pDevice,
-			"DiffuseMapSpec_trans.fx",
+			"UberShader.fx",
 			NULL,
 			&EffectInclude,
 			0,
 			pEffectPool,
 			&mtrl.pShader,
 			NULL ) ;
-		mtrl.pBase = &mdlmtrl ;
 
 		d3dModel.Materials [ mdlmtrl.sName ] = mtrl ;
 		//d3dModel.Materials [ mdlmtrl.sName ].pBase = &mdlmtrl ;
@@ -52,11 +53,6 @@ bool CD3DModelUtils::CreateFromTDModel ( IDirect3DDevice9* pDevice, ID3DXEffectP
 
 		D3DMODEL_TEXTURE_SLOT slot ;
 		slot.pBase = &i->second ;
-// 		slot.sName = i->second.sName ;
-// 		slot.eFormat = i->second.eFormat ;
-// 		slot.uiSize = i->second.uiSize ;
-// 		slot.pData = new uint8_t [ slot.uiSize ] ;
-// 		memcpy ( slot.pData, i->second.pData, slot.uiSize ) ;
 
 		D3DXCreateTextureFromFileInMemory ( pDevice, slot.pBase->pData, slot.pBase->uiSize, &slot.pTexture ) ;
 
@@ -73,17 +69,6 @@ bool CD3DModelUtils::CreateFromTDModel ( IDirect3DDevice9* pDevice, ID3DXEffectP
 			TD_MODEL_SUBSET& mdlsub = model.Parts [ iPart ].Subsets [ iSubset ] ;
 			D3DMODEL_SUBSET subset ;
 			subset.pBase = &mdlsub ;
-			//subset.uiTriCount = mdlsub.uiTriCount ;
-// 			if ( mdlsub.pIB ) {
-// 				subset.pIB = new uint32_t [ mdlsub.uiTriCount * 3 ] ;
-// 				memcpy ( subset.pIB, mdlsub.pIB, mdlsub.uiTriCount * 3 * sizeof ( uint32_t ) ) ;
-// 			}
-// 			if ( mdlsub.pVB ) {
-// 				subset.pVB = new uint8_t [ mdlsub.uiTriCount * 3 * C3DScanFileUtils::GetVertexSize ( mdlsub.uiVertexFmt ) ] ;
-// 				memcpy ( subset.pVB, mdlsub.pVB, mdlsub.uiTriCount * 3 * C3DScanFileUtils::GetVertexSize ( mdlsub.uiVertexFmt ) ) ;
-// 			}
-// 			subset.sMatName = mdlsub.sMatName ;
-// 			subset.uiVertexFmt = mdlsub.uiVertexFmt ;
 
 			subset.uiFVF = VertexFormatToFvf ( subset.pBase->uiVertexFmt ) ;
 
@@ -139,9 +124,49 @@ bool CD3DModelUtils::RenderD3DModel ( IDirect3DDevice9* pDevice, D3D_MODEL& d3dM
 			d3dMtl.pShader->SetFloat ( "g_fGlossiness", d3dMtl.fGlossiness ) ;
 			d3dMtl.pShader->SetFloat ( "g_fSpecularIntensity", d3dMtl.fSpecIntensity ) ;
 
-			if ( d3dModel.Textures.find ( d3dMtl.sDiffuseTextureName ) != d3dModel.Textures.end() )
+			d3dMtl.pShader->SetBool ( "g_bHasNormal", ( subset.pBase->uiVertexFmt & VF_NORMAL ) != 0 ) ;
+			d3dMtl.pShader->SetBool ( "g_bHasUv", (subset.pBase->uiVertexFmt & VF_UV) != 0 ) ;
+
+			if ( d3dModel.Textures.find ( d3dMtl.sDiffuseTextureName ) != d3dModel.Textures.end () ) {
 				d3dMtl.pShader->SetTexture ( "g_txDiffuse", d3dModel.Textures [ d3dMtl.sDiffuseTextureName ].pTexture ) ;
-			
+				d3dMtl.pShader->SetBool ( "g_bHasDiffTex", true ) ;
+			}
+			else {
+				d3dMtl.pShader->SetBool ( "g_bHasDiffTex", false ) ;
+			}
+
+			if ( d3dModel.Textures.find ( d3dMtl.sAlphaTextureName ) != d3dModel.Textures.end () ) {
+				d3dMtl.pShader->SetTexture ( "g_txAlpha", d3dModel.Textures [ d3dMtl.sAlphaTextureName ].pTexture ) ;
+				d3dMtl.pShader->SetBool ( "g_bHasAlphaTex", true ) ;
+			}
+			else {
+				d3dMtl.pShader->SetBool ( "g_bHasAlphaTex", false ) ;
+			}
+
+			if ( d3dModel.Textures.find ( d3dMtl.sNormalTextureName ) != d3dModel.Textures.end () ) {
+				d3dMtl.pShader->SetTexture ( "g_txNormal", d3dModel.Textures [ d3dMtl.sNormalTextureName ].pTexture ) ;
+				d3dMtl.pShader->SetBool ( "g_bHasNormTex", true ) ;
+			}
+			else {
+				d3dMtl.pShader->SetBool ( "g_bHasNormTex", false ) ;
+			}
+
+			if ( d3dModel.Textures.find ( d3dMtl.sSpecularTextureName ) != d3dModel.Textures.end () ) {
+				d3dMtl.pShader->SetTexture ( "g_txSpecular", d3dModel.Textures [ d3dMtl.sSpecularTextureName ].pTexture ) ;
+				d3dMtl.pShader->SetBool ( "g_bHasSpecTex", true ) ;
+			}
+			else {
+				d3dMtl.pShader->SetBool ( "g_bHasSpecTex", false ) ;
+			}
+
+			if ( d3dModel.Textures.find ( d3dMtl.sReflectionTextureName ) != d3dModel.Textures.end () ) {
+				d3dMtl.pShader->SetTexture ( "g_txReflection", d3dModel.Textures [ d3dMtl.sReflectionTextureName ].pTexture ) ;
+				d3dMtl.pShader->SetBool ( "g_bHasReflTex", true ) ;
+			}
+			else {
+				d3dMtl.pShader->SetBool ( "g_bHasReflTex", false ) ;
+			}
+
 			UINT uiPassCount = 0 ;
 			d3dMtl.pShader->Begin ( &uiPassCount, 0 ) ;
 			for ( UINT iPass = 0 ; iPass < uiPassCount ; iPass++ ) {

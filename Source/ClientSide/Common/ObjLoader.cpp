@@ -396,6 +396,10 @@ INT LoadMtlLib2 ( LPCTSTR sFileName, vector<MY_MTL>& materials )
 	while ( !feof ( pFile ) ) {
 		buffer [ 0 ] = 0;
 		fgets ( buffer, LINE_BUFF_SIZE, pFile );
+		while ( buffer [ 0 ] != 0 && ( buffer [ 0 ] == ' ' || buffer [ 0 ] == '\t' ) ) {
+			strcpy ( buffer, buffer + 1 ) ;
+		}
+
 		if ( 0 == strncmp ( "newmtl ", buffer, 7 ) ) {
 			//pMat = new TObjMaterial;
 
@@ -443,37 +447,37 @@ INT LoadMtlLib2 ( LPCTSTR sFileName, vector<MY_MTL>& materials )
 		else if ( 0 == _strnicmp ( "map_Kd ", buffer, 7 ) ) {
 			char szMap [ MAX_PATH ] ;
 			sscanf ( buffer + 7, "%s", szMap );
-			pMat->sMapKd = szMap ;
+			pMat->sMapKd = buffer + 7 ;
 		}
 		else if ( 0 == _strnicmp ( "map_Ks ", buffer, 7 ) ) {
 			char szMap [ MAX_PATH ] ;
 			sscanf ( buffer + 7, "%s", szMap );
-			pMat->sMapKs = szMap ;
+			pMat->sMapKs = buffer + 7 ;
 		}
 		else if ( 0 == _strnicmp ( "map_Ns ", buffer, 7 ) ) {
 			char szMap [ MAX_PATH ] ;
 			sscanf ( buffer + 7, "%s", szMap );
-			pMat->sMapNs = szMap ;
+			pMat->sMapNs = buffer + 7 ;
 		}
 		else if ( 0 == _strnicmp ( "map_Tr ", buffer, 7 ) ) {
 			char szMap [ MAX_PATH ] ;
 			sscanf ( buffer + 7, "%s", szMap );
-			pMat->sMapTr = szMap ;
+			pMat->sMapTr = buffer + 7 ;
 		}
 		else if ( 0 == _strnicmp ( "map_Disp ", buffer, 7 ) ) {
 			char szMap [ MAX_PATH ] ;
 			sscanf ( buffer + 7, "%s", szMap );
-			pMat->sMapDisp = szMap ;
+			pMat->sMapDisp = buffer + 9 ;
 		}
 		else if ( 0 == _strnicmp ( "map_Bump ", buffer, 7 ) ) {
 			char szMap [ MAX_PATH ] ;
 			sscanf ( buffer + 7, "%s", szMap );
-			pMat->sMapBump = szMap ;
+			pMat->sMapBump = buffer + 9 ;
 		}
 		else if ( 0 == _strnicmp ( "map_Refl ", buffer, 7 ) ) {
 			char szMap [ MAX_PATH ] ;
 			sscanf ( buffer + 7, "%s", szMap );
-			pMat->sMapRefl = szMap ;
+			pMat->sMapRefl = buffer + 9 ;
 		}
 
 		if ( pMat->fTr == -1.0f )

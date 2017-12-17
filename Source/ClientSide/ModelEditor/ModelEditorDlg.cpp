@@ -13,6 +13,7 @@
 #include "Obj2Model.h"
 #include "CD3DModelUtils.h"
 #include "C3DModelUtils.h"
+#include "FreeImage.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -83,7 +84,7 @@ BOOL CModelViewerDlg::OnInitDialog()
 	CMyEffectInclude EffectInclude ;
 
 	HRESULT hr = D3DXCreateEffectFromFileA ( C3DGfx::GetInstance ()->GetDevice (),
-		"DiffuseMapSpec_trans.fx",
+		"UberShader.fx",
 		NULL,
 		&EffectInclude,
 		0,
@@ -111,10 +112,6 @@ BOOL CModelViewerDlg::OnInitDialog()
 		false,
 		false,
 		true ) ;
-
-// 	CMyEffectInclude EffectInclude ;
-// 
-// 	D3DXCreateEffectFromFileA ( C3DGfx::GetInstance ()->GetDevice (), "DiffuseMapSpec_trans.fx", NULL, &EffectInclude, 0, NULL, &m_pShader, NULL ) ;
 
 	//SetWindowPos ( NULL, 0, 0, 1200, 675, SWP_NOMOVE ) ;
 
@@ -270,6 +267,7 @@ void CModelViewerDlg::ShowExampleMenuFile ()
 				char szFilters[] = "3D Scan Files (*.3dscan)|*.3dscan||";
 				CFileDialog dlg ( FALSE, "3dscan", "*.3dscan", OFN_HIDEREADONLY, szFilters, AfxGetMainWnd () ) ;
 				if ( dlg.DoModal () == IDOK ) {
+					CalcTextureAverages() ;
 					m_bHasFilename = true ;
 					m_strFilename = dlg.GetPathName() ;
 					C3DScanFile::Save3DScanModel ( m_strFilename.GetBuffer(), m_pModel1 ) ;
@@ -286,6 +284,7 @@ void CModelViewerDlg::ShowExampleMenuFile ()
 			char szFilters[] = "3D Scan Files (*.3dscan)|*.3dscan||";
 			CFileDialog dlg ( FALSE, "3dscan", "*.3dscan", OFN_HIDEREADONLY, szFilters, AfxGetMainWnd () ) ;
 			if ( dlg.DoModal () == IDOK ) {
+				CalcTextureAverages () ;
 				m_bHasFilename = true ;
 				m_strFilename = dlg.GetPathName () ;
 				C3DScanFile::Save3DScanModel ( m_strFilename.GetBuffer (), m_pModel1 ) ;
@@ -391,19 +390,13 @@ void CModelViewerDlg::Render()
 	m_pShader->SetMatrix ( "g_matProj", &m_Camera.GetProjectionMatrix () ) ;
 	m_pShader->SetMatrix ( "g_matWorld", &m_matWorld ) ;
 
-	matrix matLight ;
-
 	vector4 vLightDir ( 0.0f, 0.0f, 1.0f, 0.0f ) ;
 	D3DXVec4Normalize ( &vLightDir, &vLightDir ) ;
-	CopyMemory ( &matLight [ 0 ], &vLightDir, 4 * sizeof ( float ) ) ;
-
-	//vector4 vLightColor ( 1.0f, 1.0f, 1.0f, 0.0f ) ;
-	CopyMemory ( &matLight [ 4 ], &m_clrLight, 4 * sizeof ( float ) ) ;
-
 	vector4 vAmbLight ( 0.5f, 0.5f, 0.5f, 0.0f ) ;
-	CopyMemory ( &matLight [ 8 ], &vAmbLight, 4 * sizeof ( float ) ) ;
 
-	m_pShader->SetMatrix ( "g_matSunLight", &matLight ) ;
+	m_pShader->SetVector ( "g_vSunLightDir", &vLightDir ) ;
+	m_pShader->SetVector ( "g_f4SunLightDiffuse", (D3DXVECTOR4*)&m_clrLight ) ;
+	m_pShader->SetVector ( "g_vSunLightAmbient", &vAmbLight ) ;
 
 	if ( m_pd3dModel1 ) {
 		CD3DModelUtils::RenderD3DModel ( pDevice, *m_pd3dModel1 ) ;
@@ -496,6 +489,7 @@ LRESULT CModelViewerDlg::WindowProc ( UINT message, WPARAM wParam, LPARAM lParam
 
 		}
 		else if ( imd.eEvent == MOUSE_LBDOWN ) {
+			if ( ! ImGui::IsAnyWindowHovered () )
 			if ( m_pModel1 ) {
 				CPoint ptScreen = RenderPortToScreenPixel ( imd.ptCursor ) ;
 				D3DXVECTOR3 vDir, ptPos ;
@@ -726,6 +720,55 @@ void CModelViewerDlg::FillTextureList ()
 		m_ppszTextureNames [ m_iTextureCount - 1 ] = new char [ 3 ] ;
 		strncpy ( m_ppszTextureNames [ m_iTextureCount - 1 ], "", 1 ) ;
 	}
+}
+
+void CModelViewerDlg::CalcTextureAverages()
+{
+	if ( ! m_pd3dModel1 )
+		return ;
+
+	for ( uint32_t iTex = 0 ; iTex < m_pd3dModel1->Textures.size () ; iTex++ ) {
+		auto i = m_pd3dModel1->Textures.begin () ;
+		advance ( i, iTex ) ;
+
+		FIMEMORY* pMem = FreeImage_OpenMemory ( (BYTE*)i->second.pBase->pData, i->second.pBase->uiSize )	;
+		FREE_IMAGE_FORMAT fmt = FreeImage_GetFileTypeFromMemory ( pMem ) ;
+		FIBITMAP* pBmp = FreeImage_LoadFromMemory ( fmt, pMem ) ;
+		FreeImage_CloseMemory ( pMem ) ;
+
+		if ( pBmp ) {
+
+			uint64_t R = 0 ;
+			uint64_t G = 0 ;
+			uint64_t B = 0 ;
+			uint64_t A = 0 ;
+
+			int w = FreeImage_GetWidth ( pBmp ) ;
+			int h = FreeImage_GetHeight ( pBmp ) ;
+
+			for ( int y = 0 ; y < h ; y++ ) {
+				for ( int x = 0 ; x < w ; x++ ) {
+					RGBQUAD c ;
+					FreeImage_GetPixelColor ( pBmp, x, y, &c ) ;
+
+					R += c.rgbRed ;
+					G += c.rgbGreen ;
+					B += c.rgbBlue ;
+					A += c.rgbReserved ;
+				}
+			}
+
+			R /= ( w * h ) ;
+			G /= ( w * h ) ;
+			B /= ( w * h ) ;
+			A /= ( w * h ) ;
+
+			i->second.pBase->clrAvgColor = float4_rgba{ (float)R / 255.0f, (float)G / 255.0f, (float)B / 255.0f, (float)A / 255.0f } ;
+			int mm = 1 ;
+		}
+
+	}
+
 }
 
 static bool IsAnyMouseButtonDown ()

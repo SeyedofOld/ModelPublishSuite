@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\Shader">
+      <UniqueIdentifier>{a199cd07-5f1f-42ef-9870-71927b8d9c96}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -177,10 +180,21 @@
     <None Include="res\ModelEditor.rc2">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="..\..\..\Bin\common.fxh">
+      <Filter>Source Files\Shader</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\ModelEditor.ico">
       <Filter>Resource Files</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\..\..\Bin\DiffuseMapSpec_trans.fx">
+      <Filter>Source Files\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\..\Bin\UberShader.fx">
+      <Filter>Source Files\Shader</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

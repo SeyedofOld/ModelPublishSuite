@@ -18,9 +18,15 @@ void ToLower ( string& str )
 
 void RemovePath ( string& str )
 {
+	while ( str.find ( '\n' ) != string::npos )
+		str.erase ( str.find ( '\n' ) ) ;
+	while ( str.find ( '\r' ) != string::npos )
+		str.erase ( str.find ( '\r' ) ) ;
+
 	char szName [ MAX_PATH ] ;
 	char szExt [ MAX_PATH ] ;
 	_splitpath ( str.c_str (), NULL, NULL, szName, szExt ) ;
+
 
 	str = szName ;
 	str += szExt ;
@@ -188,6 +194,12 @@ bool ConvertObjTo3DModel ( MY_OBJ& obj, TD_SCAN_MODEL& model )
 		mtrl.fGlossiness	= objmtl.fNs ;
 		mtrl.fTransparency	= 1.0f - objmtl.fTr ;
 
+		RemovePath ( objmtl.sMapKd ) ;
+		RemovePath ( objmtl.sMapBump ) ;
+		RemovePath ( objmtl.sMapNs ) ;
+		RemovePath ( objmtl.sMapTr ) ;
+		RemovePath ( objmtl.sMapRefl ) ;
+
 		mtrl.sDiffuseTextureName	= objmtl.sMapKd ;
 		mtrl.sNormalTextureName		= objmtl.sMapBump ;
 		mtrl.sSpecularTextureName	= objmtl.sMapNs ;
@@ -199,12 +211,6 @@ bool ConvertObjTo3DModel ( MY_OBJ& obj, TD_SCAN_MODEL& model )
 		ToLower ( mtrl.sSpecularTextureName ) ;
 		ToLower ( mtrl.sAlphaTextureName ) ;
 		ToLower ( mtrl.sReflectionTextureName ) ;
-
-		RemovePath ( mtrl.sDiffuseTextureName ) ;
-		RemovePath ( mtrl.sNormalTextureName ) ;
-		RemovePath ( mtrl.sSpecularTextureName ) ;
-		RemovePath ( mtrl.sAlphaTextureName ) ;
-		RemovePath ( mtrl.sReflectionTextureName ) ;
 
 		bool bFound = false ;
 		for ( uint32_t iPart = 0 ; iPart < model.Parts.size () ; iPart++ ) {

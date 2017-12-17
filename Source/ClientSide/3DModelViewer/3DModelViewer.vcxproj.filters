@@ -134,7 +134,6 @@
     <None Include="res\My3DModelViewer.rc2">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="..\Bin\common.fxh" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="3DModelViewer.rc">
@@ -157,8 +156,5 @@
     <Image Include="res\Toolbar256.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="..\Bin\DiffuseMapSpec_trans.fx" />
   </ItemGroup>
 </Project>

@@ -66,6 +66,7 @@ public:
 	void Render();
 	void UpdateWorldMatrix() ;
 	void FillTextureList() ;
+	void CalcTextureAverages() ;
 
 	char**			m_ppszTextureNames ;
 	int				m_iTextureCount ;
