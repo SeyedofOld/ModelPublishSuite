@@ -12,45 +12,55 @@
 USE dbModelPublish ;
 
 
--- This table holds product (game) purchase keys
-CREATE TABLE tblPurchaseKeys
+-- This table holds file path
+CREATE TABLE tblFileAddress
 	(
-		id int NOT NULL PRIMARY KEY AUTO_INCREMENT, -- id for each key
-		PurchaseId int NOT NULL UNIQUE,				-- Purchase id (to be used for integration with existing store back-end)
-		UserId int NOT NULL,						-- User id (int) who owns this purchase key
-		ProductId int NOT NULL,						-- Product (game) id (int) which has been purchased
-		PublicKey varchar(128),						-- Public key string assigned to this purchase
-		PrivateKey varchar(128),					-- Private key string assigned to this purchase
-		RegistrationKey	nvarchar(256),				-- Registration key to be represented/published/displayed in a human readable form
-		ScrambleKey	varchar(1024),					-- Scramble key used to generate CEG for this purchase
-		Flags int DEFAULT 0							-- Reserved bitfield for flags, to be used later (e.g. ban a purchage, purchase type,...)
+		id int NOT NULL PRIMARY KEY AUTO_INCREMENT, -- id for file
+		FilePathName varchar(128),					-- File path name on disk
+		Size int NOT NULL							-- File size in bytes
 	) ;
 
 
--- This is a dummy table to map session id strings to user id, for dev time only, remove in final deployment.
-CREATE TABLE tblDummySessionIds
+-- This table holds advertisemant
+CREATE TABLE tblAdvertisement
+	(
+		id int NOT NULL PRIMARY KEY AUTO_INCREMENT, -- id for ad
+		OwnerId int NOT NULL,						-- Ad owner id
+		FilePathName varchar(128),					-- File path name of ad image
+		AdUrl varchar(128)							-- Ad forwarding url
+	) ;
+
+
+-- This table holds model resource
+CREATE TABLE tblModelDesc
+	(
+		id int NOT NULL PRIMARY KEY AUTO_INCREMENT, -- id for model
+		PCFileAddressId int default -1,				-- File id for PC version
+		MobileFileAddressId int default -1,			-- File id for mobile version
+		ModelName varchar(32),						-- Model name
+		ModelDesc varchar(512)						-- Model description
+	) ;
+
+
+-- This table holds owners
+CREATE TABLE tblOwnerDesc
+	(
+		id int NOT NULL PRIMARY KEY AUTO_INCREMENT, -- id for owner
+		FullName varchar(64),						-- Full name of owner
+		Username varchar(64) NOT NULL,				-- Owner username
+		Password varchar(64)						-- Owner password
+	) ;
+
+
+-- This table holds subscriptions
+CREATE TABLE tblSubscription
 	(
 		id int NOT NULL PRIMARY KEY AUTO_INCREMENT, -- id for session entry
-		SessionId varchar(128),						-- Session id string
-		UserId int NOT NULL							-- User id (int) who owns this session
+		OwnerId int NOT NULL,						-- Owner id for this subscription
+		ModelId int NOT NULL,						-- Model id for this subscription
+		AdId int,									-- Advertisement logo id
+		Status int default -1						-- Subscription status (active, expired, banned, etc.)
 	) ;
-
--- This is a dummy table to map product token strings to product id, for dev time only, remove in final deployment.
-CREATE TABLE tblDummyProductIds
-	(
-		id int NOT NULL PRIMARY KEY AUTO_INCREMENT, -- id for product entry
-		PackageName varchar(128),					-- Package name string
-		ProductId int NOT NULL						-- Product id (int)
-	) ;
-
--- This is a dummy table to map purchase id to order id string, for dev time only, remove in final deployment.
-CREATE TABLE tblDummyOrderIds
-	(
-		id int NOT NULL PRIMARY KEY AUTO_INCREMENT, -- id for purchase entry
-		PurchaseId int NOT NULL,					-- Purchase id (int)
-		OrderId varchar(32)						-- Order id string(32)
-	) ;
-
 
 -- INSERT INTO tblDummySessionIds (SessionId, UserId) VALUES( 'Token aa12345654321bb', 1396 ) ;
 -- INSERT INTO tblDummyProductIds (PackageName, ProductId) VALUES( 'alakigame', 34 ) ;
