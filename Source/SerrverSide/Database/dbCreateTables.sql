@@ -13,7 +13,7 @@ USE dbModelPublish ;
 
 
 -- This table holds file path
-CREATE TABLE tblFileAddress
+CREATE TABLE tbl_file_address
 	(
 		id int NOT NULL PRIMARY KEY AUTO_INCREMENT, -- id for file
 		FilePathName varchar(128),					-- File path name on disk
@@ -22,7 +22,7 @@ CREATE TABLE tblFileAddress
 
 
 -- This table holds advertisemant
-CREATE TABLE tblAdvertisement
+CREATE TABLE tbl_advertisement
 	(
 		id int NOT NULL PRIMARY KEY AUTO_INCREMENT, -- id for ad
 		OwnerId int NOT NULL,						-- Ad owner id
@@ -32,18 +32,20 @@ CREATE TABLE tblAdvertisement
 
 
 -- This table holds model resource
-CREATE TABLE tblModelDesc
+CREATE TABLE tbl_model_desc
 	(
 		id int NOT NULL PRIMARY KEY AUTO_INCREMENT, -- id for model
-		PCFileAddressId int default -1,				-- File id for PC version
-		MobileFileAddressId int default -1,			-- File id for mobile version
+		PCFileId int default -1,					-- File id for PC version
+		MobileFileId int default -1,				-- File id for mobile version
 		ModelName varchar(32),						-- Model name
-		ModelDesc varchar(512)						-- Model description
+		ModelDesc varchar(512),						-- Model description
+		FOREIGN KEY (PCFileId) REFERENCES tbl_file_address(id),
+		FOREIGN KEY (MobileFileId) REFERENCES tbl_file_address(id)
 	) ;
 
 
 -- This table holds owners
-CREATE TABLE tblOwnerDesc
+CREATE TABLE tbl_owner_desc
 	(
 		id int NOT NULL PRIMARY KEY AUTO_INCREMENT, -- id for owner
 		FullName varchar(64),						-- Full name of owner
@@ -53,13 +55,16 @@ CREATE TABLE tblOwnerDesc
 
 
 -- This table holds subscriptions
-CREATE TABLE tblSubscription
+CREATE TABLE tbl_subscription
 	(
-		id int NOT NULL PRIMARY KEY AUTO_INCREMENT, -- id for session entry
-		OwnerId int NOT NULL,						-- Owner id for this subscription
-		ModelId int NOT NULL,						-- Model id for this subscription
-		AdId int,									-- Advertisement logo id
-		Status int default -1						-- Subscription status (active, expired, banned, etc.)
+		id int NOT NULL PRIMARY KEY AUTO_INCREMENT,			-- id for session entry
+		OwnerId int,										-- Owner id for this subscription
+		ModelId int,										-- Model id for this subscription
+		AdId int,											-- Advertisement logo id
+		Status int default -1,								-- Subscription status (active, expired, banned, etc.)
+		FOREIGN KEY (OwnerId) REFERENCES tbl_owner_desc(id),
+		FOREIGN KEY (ModelId) REFERENCES tbl_model_desc(id),
+		FOREIGN KEY (AdId) REFERENCES tbl_advertisement(id)
 	) ;
 
 -- INSERT INTO tblDummySessionIds (SessionId, UserId) VALUES( 'Token aa12345654321bb', 1396 ) ;
