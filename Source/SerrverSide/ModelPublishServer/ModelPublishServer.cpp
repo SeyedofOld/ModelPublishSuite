@@ -28,11 +28,6 @@ using namespace http::experimental::listener;
 #define STORE_API_GET_KEY			"key"
 #define STORE_API_ANALYTIC_DATA		"analyticdata"
 
-// Database defines
-#define MYSQL_SERVER		"tcp://127.0.0.1:3306"
-#define MYSQL_USER			"root"
-#define MYSQL_PASS			"1234"
-#define STORE_DATABASE_NAME	"dbModelPublish"
 
 #define HMAC_SECRET_KEY		"Everything" // the light touches is our kingdom"
 

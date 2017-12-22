@@ -5,10 +5,10 @@
 #include <conio.h>
 #include <windows.h>
 
-// #include <cppconn/driver.h>
-// #include <cppconn/exception.h>
-// #include <cppconn/resultset.h>
-// #include <cppconn/statement.h>
+#include <cppconn/driver.h>
+#include <cppconn/exception.h>
+#include <cppconn/resultset.h>
+#include <cppconn/statement.h>
 // 
 // #include "GlobalDefines.h"
 
@@ -25,7 +25,13 @@ using namespace utility;
 using namespace http;
 using namespace web::http::experimental::listener;
 
-//using namespace sql ;
+// Database defines
+#define MYSQL_SERVER		"tcp://127.0.0.1:3306"
+#define MYSQL_USER			"root"
+#define MYSQL_PASS			"1234"
+#define STORE_DATABASE_NAME	"dbModelPublish"
+
+using namespace sql ;
 
 #define TRACE(msg)            wcout << msg
 #define TRACE_ACTION(a, k, v) wcout << a << L" (" << k << L", " << v << L")\n"
@@ -69,7 +75,7 @@ public:
 	pplx::task<void> open() { return m_listener.open(); }
     pplx::task<void> close() { return m_listener.close(); }
 
-// 	static void OnValidatePurchase ( wstring& sessionId, json::value& params, json::value& answer, status_code& http_result ) ;
+ 	static void OnValidatePurchase ( wstring& sessionId, json::value& params, json::value& answer, status_code& http_result ) ;
 // 	static void OnRequestRegKey ( wstring& sessionId, json::value& params, json::value& answer, status_code& http_result ) ;
 // 	static void OnAnalyticsData ( wstring& sessionId, json::value& params, json::value& answer, status_code& http_result ) ;
 
@@ -86,7 +92,7 @@ CModelPublishServer::CModelPublishServer(utility::string_t url) : m_listener(url
 	m_listener.support ( methods::POST, std::bind(&CModelPublishServer::HandlePost, this, std::placeholders::_1) ) ;
 }
 
-/*void CStoreRegServer::OnValidatePurchase ( wstring& sessionId, json::value& params, json::value& answer, status_code& http_result )
+void CModelPublishServer::OnValidatePurchase ( wstring& sessionId, json::value& params, json::value& answer, status_code& http_result )
 {
 	int iUserId = -1 ;
 	int iProductId = -1 ;
@@ -297,7 +303,7 @@ CModelPublishServer::CModelPublishServer(utility::string_t url) : m_listener(url
 //  	  cout << ", SQLState: " << e.getSQLState() << " )" << endl;
 	//}
 	delete con ;
-}*/
+}
 
 /*void CStoreRegServer::OnRequestRegKey ( wstring& sessionId, json::value& params, json::value& answer, status_code& http_result )
 {
