@@ -9,7 +9,7 @@
 -- --------------------------------------------
 
 -- Change the database name to match your own pre-created database
-USE dbModelPublish ;
+USE db_model_publish ;
 
 
 -- This table holds file path

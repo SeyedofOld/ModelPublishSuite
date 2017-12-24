@@ -9,8 +9,8 @@
 #include <cppconn/exception.h>
 #include <cppconn/resultset.h>
 #include <cppconn/statement.h>
-// 
-// #include "GlobalDefines.h"
+ 
+#include "GlobalDefines.h"
 
 #include <map>
 #include <set>
@@ -25,11 +25,6 @@ using namespace utility;
 using namespace http;
 using namespace web::http::experimental::listener;
 
-// Database defines
-#define MYSQL_SERVER		"tcp://127.0.0.1:3306"
-#define MYSQL_USER			"root"
-#define MYSQL_PASS			"1234"
-#define STORE_DATABASE_NAME	"dbModelPublish"
 
 using namespace sql ;
 
@@ -75,8 +70,8 @@ public:
 	pplx::task<void> open() { return m_listener.open(); }
     pplx::task<void> close() { return m_listener.close(); }
 
- 	static void OnValidatePurchase ( wstring& sessionId, json::value& params, json::value& answer, status_code& http_result ) ;
-// 	static void OnRequestRegKey ( wstring& sessionId, json::value& params, json::value& answer, status_code& http_result ) ;
+ 	//static void OnValidatePurchase ( wstring& sessionId, json::value& params, json::value& answer, status_code& http_result ) ;
+ 	static void OnGetModel ( wstring& sessionId, json::value& params, json::value& answer, status_code& http_result ) ;
 // 	static void OnAnalyticsData ( wstring& sessionId, json::value& params, json::value& answer, status_code& http_result ) ;
 
 private:
@@ -92,7 +87,7 @@ CModelPublishServer::CModelPublishServer(utility::string_t url) : m_listener(url
 	m_listener.support ( methods::POST, std::bind(&CModelPublishServer::HandlePost, this, std::placeholders::_1) ) ;
 }
 
-void CModelPublishServer::OnValidatePurchase ( wstring& sessionId, json::value& params, json::value& answer, status_code& http_result )
+/*void CModelPublishServer::OnValidatePurchase ( wstring& sessionId, json::value& params, json::value& answer, status_code& http_result )
 {
 	int iUserId = -1 ;
 	int iProductId = -1 ;
@@ -303,9 +298,9 @@ void CModelPublishServer::OnValidatePurchase ( wstring& sessionId, json::value& 
 //  	  cout << ", SQLState: " << e.getSQLState() << " )" << endl;
 	//}
 	delete con ;
-}
+}*/
 
-/*void CStoreRegServer::OnRequestRegKey ( wstring& sessionId, json::value& params, json::value& answer, status_code& http_result )
+void CModelPublishServer::OnGetModel ( wstring& sessionId, json::value& params, json::value& answer, status_code& http_result )
 {
 	int iUserId = -1 ;
 	int iProductId = -1 ;
@@ -324,7 +319,7 @@ void CModelPublishServer::OnValidatePurchase ( wstring& sessionId, json::value& 
 		driver = get_driver_instance();
 		con = driver->connect ( MYSQL_SERVER, MYSQL_USER, MYSQL_PASS ) ;
 
-		// Connect to the MySQL test database 
+		// Connect to the MySQL test database
 		con->setSchema ( STORE_DATABASE_NAME ) ;
 	}
 	catch ( sql::SQLException &e ) {
@@ -479,7 +474,7 @@ void CModelPublishServer::OnValidatePurchase ( wstring& sessionId, json::value& 
 //  	  cout << ", SQLState: " << e.getSQLState() << " )" << endl;
 	//}
 	delete con ;
-}*/
+}
 
 
 
@@ -526,12 +521,12 @@ void CModelPublishServer::HandleGet ( http_request request )
 
 					wstring strMethod = path_comps [ path_comps.size() - 1 ] ;
 
-					if ( strMethod == L"key" ) {
+					if ( strMethod == U(MODEL_API_GET) ) {
 
 						if ( query_comps.find(L"package_name") != query_comps.end() )
 							jsonParams2 [ L"package_name" ] = json::value::string ( query_comps [ L"package_name" ] ) ;
 
-						//OnRequestRegKey ( strSessionId, jsonParams2, answer, http_result ) ;
+						OnGetModel ( strSessionId, jsonParams2, answer, http_result ) ;
 					}
 					else if ( strMethod == L"analyticdata" ) {
 

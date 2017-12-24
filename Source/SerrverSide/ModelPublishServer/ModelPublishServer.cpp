@@ -6,6 +6,7 @@
 #include "cpprest/http_listener.h"
 #include "cpprest/uri.h"
 #include "cpprest/asyncrt_utils.h"
+#include "GlobalDefines.h"
 
 using namespace std;
 using namespace web;
@@ -13,23 +14,6 @@ using namespace http;
 using namespace utility;
 using namespace http::experimental::listener;
 
-// Server defines
-#define STORE_URL					"localhost"
-//#define STORE_URL                   "testapi.ariogames.ir"
-#define STORE_PORT					5617
-//#define STORE_PORT					443
-//#define STORE_SCHEME				"https"
-#define STORE_SCHEME				"http"
-
-
-#define STORE_URI					"/model/"
-//#define STORE_URI                   "/sdk/windows"
-#define STORE_API_VALIDATE			"validate"
-#define STORE_API_GET_KEY			"key"
-#define STORE_API_ANALYTIC_DATA		"analyticdata"
-
-
-#define HMAC_SECRET_KEY		"Everything" // the light touches is our kingdom"
 
 class CModelPublishServer
 {

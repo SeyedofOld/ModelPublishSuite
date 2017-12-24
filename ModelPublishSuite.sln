@@ -14,6 +14,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Database", "Database", "{20
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Server", "Server", "{705648AD-D45F-461C-A5CE-85DA6884CA65}"
+	ProjectSection(SolutionItems) = preProject
+		Source\Common\GlobalDefines.h = Source\Common\GlobalDefines.h
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libraries", "Libraries", "{3B7C6144-0B99-42A4-BC28-296E53BB2133}"
 EndProject
@@ -30,10 +33,12 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ModelPublishServer", "Sourc
 		{79C9BBEC-D7C9-4BA3-B2B3-5C3A14A9F24A} = {79C9BBEC-D7C9-4BA3-B2B3-5C3A14A9F24A}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ModelViewer", "Source\ClientSide\ModelViewer\ModelViewer.vcxproj", "{F298E87B-19FD-47AF-9A96-51DBDFC163C2}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		Source\Libraries\cpprestsdk-master\Release\src\build\common.vcxitems*{79c9bbec-d7c9-4ba3-b2b3-5c3a14a9f24a}*SharedItemsImports = 4
 		Source\Libraries\cpprestsdk-master\Release\src\build\win32.vcxitems*{79c9bbec-d7c9-4ba3-b2b3-5c3a14a9f24a}*SharedItemsImports = 4
+		Source\Libraries\cpprestsdk-master\Release\src\build\common.vcxitems*{79c9bbec-d7c9-4ba3-b2b3-5c3a14a9f24a}*SharedItemsImports = 4
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
@@ -96,6 +101,16 @@ Global
 		{D4EB3545-C852-4669-9E7E-0C400856D1BF}.Release|x64.Build.0 = Release|x64
 		{D4EB3545-C852-4669-9E7E-0C400856D1BF}.Release|x86.ActiveCfg = Release|Win32
 		{D4EB3545-C852-4669-9E7E-0C400856D1BF}.Release|x86.Build.0 = Release|Win32
+		{F298E87B-19FD-47AF-9A96-51DBDFC163C2}.Debug|ARM.ActiveCfg = Debug|Win32
+		{F298E87B-19FD-47AF-9A96-51DBDFC163C2}.Debug|x64.ActiveCfg = Debug|x64
+		{F298E87B-19FD-47AF-9A96-51DBDFC163C2}.Debug|x64.Build.0 = Debug|x64
+		{F298E87B-19FD-47AF-9A96-51DBDFC163C2}.Debug|x86.ActiveCfg = Debug|Win32
+		{F298E87B-19FD-47AF-9A96-51DBDFC163C2}.Debug|x86.Build.0 = Debug|Win32
+		{F298E87B-19FD-47AF-9A96-51DBDFC163C2}.Release|ARM.ActiveCfg = Release|Win32
+		{F298E87B-19FD-47AF-9A96-51DBDFC163C2}.Release|x64.ActiveCfg = Release|x64
+		{F298E87B-19FD-47AF-9A96-51DBDFC163C2}.Release|x64.Build.0 = Release|x64
+		{F298E87B-19FD-47AF-9A96-51DBDFC163C2}.Release|x86.ActiveCfg = Release|Win32
+		{F298E87B-19FD-47AF-9A96-51DBDFC163C2}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -108,5 +123,6 @@ Global
 		{9092C5CC-3E71-41B3-BF68-4A7BDD8A5476} = {3B7C6144-0B99-42A4-BC28-296E53BB2133}
 		{79C9BBEC-D7C9-4BA3-B2B3-5C3A14A9F24A} = {3B7C6144-0B99-42A4-BC28-296E53BB2133}
 		{D4EB3545-C852-4669-9E7E-0C400856D1BF} = {705648AD-D45F-461C-A5CE-85DA6884CA65}
+		{F298E87B-19FD-47AF-9A96-51DBDFC163C2} = {AA89C0DC-E698-43FC-BFEF-20B007A48AAE}
 	EndGlobalSection
 EndGlobal
