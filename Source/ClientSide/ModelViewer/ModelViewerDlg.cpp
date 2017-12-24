@@ -258,7 +258,7 @@ void CModelViewerDlg::ShowExampleMenuFile ()
 		CModelServiceWebClient client ;
 		bool b = false ;
 		char* p = NULL ;
-		client.GetModel ( "ead", "pcwin", &p, b ) ;
+		client.GetModel ( "ead", "pcwin", "khodam", &p, b ) ;
 // 		TD_SCAN_MODEL* pModel = C3DScanFile::Load3DScanModel ( dlg.GetPathName ().GetBuffer () ) ;
 // 		if ( pModel ) {
 // 			m_pModel1 = pModel ;

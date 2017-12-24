@@ -149,7 +149,7 @@ void make_request_post ( http_client & client, method mtd, json::value const & j
       .wait();
 }
 
-bool CModelServiceWebClient::GetModel ( char* pszModelId, char* pszClientId, char** ppszRegKey, bool& rbInvalidSessionId  )
+bool CModelServiceWebClient::GetModel ( char* pszModelId, char* pszClientId, char* pszCustId, char** ppszRegKey, bool& rbInvalidSessionId  )
 {
 	if ( ! pszModelId || ! ppszRegKey )
 		return false ;
@@ -163,6 +163,10 @@ bool CModelServiceWebClient::GetModel ( char* pszModelId, char* pszClientId, cha
 	wchar_t szClientID [ 1000 ] ;
 	iLen = MultiByteToWideChar ( CP_ACP, 0, pszClientId, strlen(pszClientId), szClientID, 1000 ) ;
 	szClientID [ iLen ] = 0 ;
+
+	wchar_t szCustId [ 1000 ] ;
+	iLen = MultiByteToWideChar ( CP_ACP, 0, pszCustId, strlen ( pszCustId ), szCustId, 1000 ) ;
+	szCustId [ iLen ] = 0 ;
 
 
 //     json::value json_obj;
@@ -187,7 +191,8 @@ bool CModelServiceWebClient::GetModel ( char* pszModelId, char* pszClientId, cha
 
     // Append the query parameters: ?method=flickr.test.echo&name=value
 	builder.append_query ( U ( "client" ), szClientID ) ;
-	builder.append_query ( U ("modelid"), szModelId ) ;
+	builder.append_query ( U ( "modelid" ), szModelId ) ;
+	builder.append_query ( U ("custid"), szCustId ) ;
     builder.append_query ( U("hash"), U("") ) ;
  
     auto path_query_fragment = builder.to_string();

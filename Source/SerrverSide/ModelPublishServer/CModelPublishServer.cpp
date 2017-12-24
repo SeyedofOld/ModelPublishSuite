@@ -71,7 +71,7 @@ public:
     pplx::task<void> close() { return m_listener.close(); }
 
  	//static void OnValidatePurchase ( wstring& sessionId, json::value& params, json::value& answer, status_code& http_result ) ;
- 	static void OnGetModel ( wstring& sessionId, json::value& params, json::value& answer, status_code& http_result ) ;
+ 	static void OnGetModel ( json::value& params, json::value& answer, status_code& http_result ) ;
 // 	static void OnAnalyticsData ( wstring& sessionId, json::value& params, json::value& answer, status_code& http_result ) ;
 
 private:
@@ -300,7 +300,7 @@ CModelPublishServer::CModelPublishServer(utility::string_t url) : m_listener(url
 	delete con ;
 }*/
 
-void CModelPublishServer::OnGetModel ( wstring& sessionId, json::value& params, json::value& answer, status_code& http_result )
+void CModelPublishServer::OnGetModel ( json::value& params, json::value& answer, status_code& http_result )
 {
 	int iUserId = -1 ;
 	int iProductId = -1 ;
@@ -333,14 +333,14 @@ void CModelPublishServer::OnGetModel ( wstring& sessionId, json::value& params, 
 		sql::Statement *stmt;
 		sql::ResultSet *res;
 
-		char szSessionId [ 256 ] ;
-		int iLen = WideCharToMultiByte ( CP_ACP, 0, sessionId.c_str(), sessionId.length(), szSessionId, 256, "", NULL ) ;
-		szSessionId [ iLen ] = 0 ;
+// 		char szSessionId [ 256 ] ;
+// 		int iLen = WideCharToMultiByte ( CP_ACP, 0, sessionId.c_str(), sessionId.length(), szSessionId, 256, "", NULL ) ;
+// 		szSessionId [ iLen ] = 0 ;
 
 		// Make query string
 		char szQuery [ 5000 ] ;
 
-		sprintf_s ( szQuery, 5000, "SELECT UserId FROM tblDummySessionIds WHERE SessionId='%s'", szSessionId ) ;
+		sprintf_s ( szQuery, 5000, "SELECT UserId FROM tblDummySessionIds WHERE SessionId='%s'", "1" ) ;
 		cout << szQuery << endl ;
 
 		// Run query
@@ -498,74 +498,63 @@ void CModelPublishServer::HandleGet ( http_request request )
 
 	//wcout << answer.as_string() << endl ;
 
-	auto itAuth = request.headers().find (L"Authorization") ;
-
-	auto itHash = request.headers ().find ( L"Hash" ) ;
+	//auto itAuth = request.headers().find (L"Authorization") ;
+	//auto itHash = request.headers ().find ( L"Hash" ) ;
 
 	try {
-		if ( itAuth != request.headers().end() ) {
+		//wstring strSessionId = itAuth->second ;
 
-			wstring strSessionId = itAuth->second ;
+		auto uri = request.relative_uri();
+		auto path_comps  = uri::split_path ( web::uri::decode(uri.path()) ) ;
+		auto query_comps = uri::split_query ( web::uri::decode(uri.query()) ) ;
 
-			auto uri = request.relative_uri();
-			auto path_comps  = uri::split_path ( web::uri::decode(uri.path()) ) ;
-			auto query_comps = uri::split_query ( web::uri::decode(uri.query()) ) ;
+		json::value jsonParams2 ;//= request.extract_json(true).get() ;
+		//ucout << jsonParams.serialize() << endl ;
 
-			json::value jsonParams2 ;//= request.extract_json(true).get() ;
-			//ucout << jsonParams.serialize() << endl ;
+		if ( path_comps.size() > 0 ) {
 
-			if ( path_comps.size() > 0 ) {
-				if ( true ) {
+			//jsonParams2 [ L"hash" ] = json::value::string ( query_comps [ L"hash" ] ) ;
 
-					//jsonParams2 [ L"hash" ] = json::value::string ( query_comps [ L"hash" ] ) ;
+			wstring strMethod = path_comps [ path_comps.size() - 1 ] ;
 
-					wstring strMethod = path_comps [ path_comps.size() - 1 ] ;
+			if ( strMethod == U(MODEL_API_GET) ) {
 
-					if ( strMethod == U(MODEL_API_GET) ) {
+				if ( query_comps.find(L"modelid") != query_comps.end() )
+					jsonParams2 [ L"modelid" ] = json::value::string ( query_comps [ L"modelid" ] ) ;
+				if ( query_comps.find ( L"client" ) != query_comps.end () )
+					jsonParams2 [ L"client" ] = json::value::string ( query_comps [ L"client" ] ) ;
+				if ( query_comps.find ( L"custid" ) != query_comps.end () )
+					jsonParams2 [ L"custid" ] = json::value::string ( query_comps [ L"custid" ] ) ;
 
-						if ( query_comps.find(L"package_name") != query_comps.end() )
-							jsonParams2 [ L"package_name" ] = json::value::string ( query_comps [ L"package_name" ] ) ;
+				OnGetModel ( jsonParams2, answer, http_result ) ;
+			}
+			else if ( strMethod == L"analyticdata" ) {
 
-						OnGetModel ( strSessionId, jsonParams2, answer, http_result ) ;
-					}
-					else if ( strMethod == L"analyticdata" ) {
+				if ( query_comps.find(L"package_name") != query_comps.end() )
+					jsonParams2 [ L"package_name" ] = json::value::string ( query_comps [ L"package_name" ] ) ;
+				if ( query_comps.find(L"analytictype") != query_comps.end() )
+					jsonParams2 [ L"analytictype" ] = json::value::number ( stoi(query_comps [ L"analytictype" ]) ) ;
+				if ( query_comps.find(L"param1") != query_comps.end() )
+					jsonParams2 [ L"param1" ] = json::value::number ( stoi(query_comps [ L"param1" ]) ) ;
+				if ( query_comps.find(L"param2") != query_comps.end() )
+					jsonParams2 [ L"param2" ] = json::value::number ( stoi(query_comps [ L"param2" ]) ) ;
 
-						if ( query_comps.find(L"package_name") != query_comps.end() )
-							jsonParams2 [ L"package_name" ] = json::value::string ( query_comps [ L"package_name" ] ) ;
-						if ( query_comps.find(L"analytictype") != query_comps.end() )
-							jsonParams2 [ L"analytictype" ] = json::value::number ( stoi(query_comps [ L"analytictype" ]) ) ;
-						if ( query_comps.find(L"param1") != query_comps.end() )
-							jsonParams2 [ L"param1" ] = json::value::number ( stoi(query_comps [ L"param1" ]) ) ;
-						if ( query_comps.find(L"param2") != query_comps.end() )
-							jsonParams2 [ L"param2" ] = json::value::number ( stoi(query_comps [ L"param2" ]) ) ;
+				//OnAnalyticsData ( strSessionId, jsonParams2, answer, http_result ) ;
+			}
+			else if ( strMethod == L"validate" ) {
 
-						//OnAnalyticsData ( strSessionId, jsonParams2, answer, http_result ) ;
-					}
-					else if ( strMethod == L"validate" ) {
+				if ( query_comps.find(L"package_name") != query_comps.end() )
+					jsonParams2 [ L"package_name" ] = json::value::string ( query_comps [ L"package_name" ] ) ;
 
-						if ( query_comps.find(L"package_name") != query_comps.end() )
-							jsonParams2 [ L"package_name" ] = json::value::string ( query_comps [ L"package_name" ] ) ;
-
-						//OnValidatePurchase ( strSessionId, jsonParams2, answer, http_result ) ;
-					}
-					else {
-						answer [ L"message" ] = json::value::string(L"Unrecognized method name!") ;
-					}
-				}
-				else {
-					// No hash (No amphetamine :)
-					answer [ L"message" ] = json::value::string(L"No message hash present!") ;
-				}
+				//OnValidatePurchase ( strSessionId, jsonParams2, answer, http_result ) ;
 			}
 			else {
-				// Invalid request
-				answer [ L"message" ] = json::value::string(L"Invalid request!") ;
+				answer [ L"message" ] = json::value::string(L"Unrecognized method name!") ;
 			}
-
 		}
 		else {
-			// Error no session id in header
-			answer [ L"message" ] = json::value::string(L"No session id specified!") ;
+			// Invalid request
+			answer [ L"message" ] = json::value::string(L"Invalid request!") ;
 		}
 	}
 	catch ( http_exception const & e ) {
