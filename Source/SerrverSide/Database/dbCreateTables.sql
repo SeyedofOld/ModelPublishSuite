@@ -61,11 +61,20 @@ CREATE TABLE tbl_subscription
 		OwnerId int,										-- Owner id for this subscription
 		ModelId int,										-- Model id for this subscription
 		AdId int,											-- Advertisement logo id
+		HashId varchar(32) UNIQUE,
 		Status int default -1,								-- Subscription status (active, expired, banned, etc.)
 		FOREIGN KEY (OwnerId) REFERENCES tbl_owner_desc(id),
 		FOREIGN KEY (ModelId) REFERENCES tbl_model_desc(id),
 		FOREIGN KEY (AdId) REFERENCES tbl_advertisement(id)
 	) ;
+
+-- This table holds client types
+CREATE TABLE tbl_client_type
+	(
+		ClientId varchar(64) PRIMARY KEY,			-- 
+		ClientType int								--
+	) ;
+
 
 -- INSERT INTO tblDummySessionIds (SessionId, UserId) VALUES( 'Token aa12345654321bb', 1396 ) ;
 -- INSERT INTO tblDummyProductIds (PackageName, ProductId) VALUES( 'alakigame', 34 ) ;

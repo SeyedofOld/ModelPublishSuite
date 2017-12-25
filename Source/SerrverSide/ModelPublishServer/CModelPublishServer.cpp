@@ -9,7 +9,9 @@
 #include <cppconn/exception.h>
 #include <cppconn/resultset.h>
 #include <cppconn/statement.h>
- 
+
+#include <atlenc.h>
+
 #include "GlobalDefines.h"
 
 #include <map>
@@ -302,14 +304,14 @@ CModelPublishServer::CModelPublishServer(utility::string_t url) : m_listener(url
 
 void CModelPublishServer::OnGetModel ( json::value& params, json::value& answer, status_code& http_result )
 {
-	int iUserId = -1 ;
-	int iProductId = -1 ;
+// 	int iUserId = -1 ;
+// 	int iProductId = -1 ;
 
-	if ( ! params.has_field(L"package_name") ) {
-		answer [ L"message" ] = json::value::string(L"No product id specified!") ;
-		http_result = status_codes::InternalError ;
-		return ;
-	}
+// 	if ( ! params.has_field(L"package_name") ) {
+// 		answer [ L"message" ] = json::value::string(L"No product id specified!") ;
+// 		http_result = status_codes::InternalError ;
+// 		return ;
+// 	}
 
 	sql::Driver *driver;
 	sql::Connection *con;
@@ -329,9 +331,16 @@ void CModelPublishServer::OnGetModel ( json::value& params, json::value& answer,
 		return ;
 	}
 
+	int iModelId = -1 ;
+
 	{ // Fetch session id from database
 		sql::Statement *stmt;
 		sql::ResultSet *res;
+
+		wstring strPname = params.at ( L"subsid" ).as_string () ;
+		char szModelId [ 256 ] ;
+		int iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), strPname.length (), szModelId, 256, "", NULL ) ;
+		szModelId [ iLen ] = 0 ;
 
 // 		char szSessionId [ 256 ] ;
 // 		int iLen = WideCharToMultiByte ( CP_ACP, 0, sessionId.c_str(), sessionId.length(), szSessionId, 256, "", NULL ) ;
@@ -340,7 +349,7 @@ void CModelPublishServer::OnGetModel ( json::value& params, json::value& answer,
 		// Make query string
 		char szQuery [ 5000 ] ;
 
-		sprintf_s ( szQuery, 5000, "SELECT UserId FROM tblDummySessionIds WHERE SessionId='%s'", "1" ) ;
+		sprintf_s ( szQuery, 5000, "SELECT * FROM tbl_subscription WHERE HashId='%s'", szModelId ) ;
 		cout << szQuery << endl ;
 
 		// Run query
@@ -354,7 +363,7 @@ void CModelPublishServer::OnGetModel ( json::value& params, json::value& answer,
 		}
 	  
 		while ( res->next() ) {
-			iUserId = res->getInt ( "UserId" ) ;
+			iModelId = res->getInt ( "ModelId" ) ;
 		//		cout << "\t... MySQL replies: ";
 		// Access column data by alias or column name 
 		//cout << res->getString("_message") << endl;
@@ -367,7 +376,8 @@ void CModelPublishServer::OnGetModel ( json::value& params, json::value& answer,
 
 	} 
 
-	if ( iUserId != -1 ) { // Fetch product id from database
+	int iFileId = -1 ;
+	if ( iModelId != -1 ) { // Fetch product id from database
 
 		sql::Statement *stmt ;
 		sql::ResultSet *res ;
@@ -375,13 +385,12 @@ void CModelPublishServer::OnGetModel ( json::value& params, json::value& answer,
 		// Make query string
 		char szQuery [ 5000 ] ;
 
-		wstring strPname = params.at(L"package_name").as_string() ;
- 		char szPaclageName [ 256 ] ;
- 		int iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str(), strPname.length(), szPaclageName, 256, "", NULL ) ;
- 		szPaclageName [ iLen ] = 0 ;
+		//wstring strPname = params.at(L"package_name").as_string() ;
+//  		char szPaclageName [ 256 ] ;
+//  		int iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str(), strPname.length(), szPaclageName, 256, "", NULL ) ;
+//  		szPaclageName [ iLen ] = 0 ;
 
-
-		sprintf_s ( szQuery, 5000, "SELECT ProductId FROM tblDummyProductIds WHERE PackageName='%s'", szPaclageName ) ;
+		sprintf_s ( szQuery, 5000, "SELECT * FROM tbl_model_desc WHERE id=%d", iModelId ) ;
 		cout << szQuery << endl ;
 
 		// Run query
@@ -389,25 +398,25 @@ void CModelPublishServer::OnGetModel ( json::value& params, json::value& answer,
 		res = stmt->executeQuery ( szQuery ) ;
 	  
 		if ( res->rowsCount() == 0 ) {
-			answer [ L"message" ] = json::value::string(L"Product token not found!") ;
+			answer [ L"message" ] = json::value::string(L"Model not found!") ;
 			http_result = status_codes::InternalError ;
 		}
 	  
 		while ( res->next() ) {
-			iProductId = res->getInt("ProductId") ;
+			iFileId = res->getInt("PCFileId") ;
 		}
 		delete res;
 		delete stmt;
 	}
 
-	if ( iProductId != -1 ) {
+	if ( iFileId != -1 ) {
 		sql::Statement *stmt;
 		sql::ResultSet *res;
 
 		// Make query string
 		char szQuery [ 5000 ] ;
 
-		sprintf_s ( szQuery, 5000, "SELECT ScrambleKey FROM tblPurchaseKeys WHERE UserId=%d AND ProductId=%d", iUserId, iProductId ) ;
+		sprintf_s ( szQuery, 5000, "SELECT * FROM tbl_file_address WHERE id=%d", iFileId ) ;
 		cout << szQuery << endl ;
 
 		// Run query
@@ -422,45 +431,72 @@ void CModelPublishServer::OnGetModel ( json::value& params, json::value& answer,
 
 		while ( res->next() ) {
 
-			string strScrKey = "" ;//= res->getString ( "UserId" ) ;
+			string strPathName = "" ;//= res->getString ( "UserId" ) ;
 
-			std::istream* blob_stream = res->getBlob("ScrambleKey");
+			std::istream* blob_stream = res->getBlob("FilePathName");
 			
-			char* pKey = NULL;
+			char* pPathName = NULL;
 
 			if (blob_stream) {
 				try {
 					blob_stream->seekg(0, std::ios::end);
 					int blobSize = blob_stream->tellg();
 					blob_stream->seekg(0, std::ios::beg);
-					pKey = new char[blobSize+1];
-					blob_stream->read(pKey, blobSize);
-					pKey[blobSize] = 0;
+					pPathName = new char[blobSize+1];
+					blob_stream->read(pPathName, blobSize);
+					pPathName[blobSize] = 0;
 					//blob_stream->getline(key, 600);
 				}
 				catch (...) {
 
 				}
 				//std::string retrievedPassword(pws); // also, should handle case where Password length > PASSWORD_LENGTH
-				if (pKey) {
-					strScrKey = pKey;
-					delete pKey;
+				if (pPathName) {
+					strPathName = pPathName;
+					delete pPathName;
 				}
 			}
 
-			wchar_t szScrKey [ 1000 ] ;
-			int iLen = MultiByteToWideChar ( CP_ACP, 0, strScrKey.c_str(), strScrKey.length(), szScrKey, 1000 ) ;
-			szScrKey [ iLen ] = 0 ;
+// 			wchar_t szScrKey [ 1000 ] ;
+// 			int iLen = MultiByteToWideChar ( CP_ACP, 0, strPathName.c_str(), strPathName.length(), szScrKey, 1000 ) ;
+// 			szScrKey [ iLen ] = 0 ;
 
 			// Changed to nested (Ugly!)
 			//answer [ L"key" ] = json::value::string(szPubKey) ;
 			//answer [ L"message" ] = json::value::string(L"No error") ;
 			json::value msg ;
-			msg [ L"key" ] = json::value::string(szScrKey) ;
+			//msg [ L"key" ] = json::value::string(szScrKey) ;
 			answer [ L"message" ] = msg ;
 
+			FILE* pFile = fopen ( strPathName.c_str (), "rb" ) ;
+			fseek ( pFile, 0, SEEK_END ) ;
+			int iSize = ftell ( pFile ) ;
+			
+			char* pBuf = new char [ iSize ] ;
+			fseek ( pFile, 0, SEEK_SET ) ;
+			fread ( pBuf, iSize, 1, pFile ) ;
+			fclose ( pFile ) ;
+
+			int iDestSize = Base64EncodeGetRequiredLength ( iSize, 0 ) ;
+			int iEncLen = iDestSize ;
+
+			PSTR pDest = new CHAR [ iDestSize + 1 ] ;
+			Base64Encode ( (BYTE*)pBuf, iSize, pDest, &iEncLen ) ;
+			pDest [ iEncLen ] = 0 ;
+
+			string s = pDest ;
+
+			wchar_t* pszScrKey = new wchar_t [ iEncLen + 1 ] ;
+			int iLen = MultiByteToWideChar ( CP_ACP, 0, s.c_str(), s.length (), pszScrKey, iEncLen ) ;
+			pszScrKey [ iLen ] = 0 ;
+
+
+			if ( pBuf )
+				delete pBuf ;
+
 			answer [ L"error" ] = json::value::boolean(false) ;
-			answer [ L"result_number" ] = json::value::number(1) ;
+			answer [ L"result_number" ] = json::value::number ( 1 ) ;
+			answer [ L"model" ] = json::value::string(pszScrKey) ;
 			http_result = status_codes::OK ;
 		}
 		delete res ;
@@ -519,12 +555,12 @@ void CModelPublishServer::HandleGet ( http_request request )
 
 			if ( strMethod == U(MODEL_API_GET) ) {
 
-				if ( query_comps.find(L"modelid") != query_comps.end() )
-					jsonParams2 [ L"modelid" ] = json::value::string ( query_comps [ L"modelid" ] ) ;
-				if ( query_comps.find ( L"client" ) != query_comps.end () )
-					jsonParams2 [ L"client" ] = json::value::string ( query_comps [ L"client" ] ) ;
-				if ( query_comps.find ( L"custid" ) != query_comps.end () )
-					jsonParams2 [ L"custid" ] = json::value::string ( query_comps [ L"custid" ] ) ;
+				if ( query_comps.find(L"subsid") != query_comps.end() )
+					jsonParams2 [ L"subsid" ] = json::value::string ( query_comps [ L"subsid" ] ) ;
+// 				if ( query_comps.find ( L"client" ) != query_comps.end () )
+// 					jsonParams2 [ L"client" ] = json::value::string ( query_comps [ L"client" ] ) ;
+// 				if ( query_comps.find ( L"custid" ) != query_comps.end () )
+// 					jsonParams2 [ L"custid" ] = json::value::string ( query_comps [ L"custid" ] ) ;
 
 				OnGetModel ( jsonParams2, answer, http_result ) ;
 			}

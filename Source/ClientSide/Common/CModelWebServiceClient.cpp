@@ -12,6 +12,7 @@
 #include "cpprest/asyncrt_utils.h"
 #include "cpprest/http_client.h"
 
+#include <atlenc.h>
 
 using namespace std;
 using namespace web; 
@@ -191,7 +192,7 @@ bool CModelServiceWebClient::GetModel ( char* pszModelId, char* pszClientId, cha
 
     // Append the query parameters: ?method=flickr.test.echo&name=value
 	builder.append_query ( U ( "client" ), szClientID ) ;
-	builder.append_query ( U ( "modelid" ), szModelId ) ;
+	builder.append_query ( U ( "subsid" ), szModelId ) ;
 	builder.append_query ( U ("custid"), szCustId ) ;
     builder.append_query ( U("hash"), U("") ) ;
  
@@ -239,14 +240,14 @@ bool CModelServiceWebClient::GetModel ( char* pszModelId, char* pszClientId, cha
 		return false ;
 	}
 	else {
-		json::value imessage = answer[L"message"];
-		if (!imessage.has_field(L"key"))
+		//json::value imessage = answer[L"message"];
+		if (!answer.has_field(L"model"))
 		{
 			*ppszRegKey = NULL;
 			return false;
 		}
 		else{
-			wstring str1 = imessage[L"key"].as_string();
+			wstring str1 = answer[L"model"].as_string();
 			// 		wstring str2 = L"OK" ;
 			// 		if ( str1 != str2 ) {
 			// 			*ppszRegKey = NULL ;
@@ -255,11 +256,24 @@ bool CModelServiceWebClient::GetModel ( char* pszModelId, char* pszClientId, cha
 
 			//str1 = answer[L"key"].as_string();
 
-			int iLen = WideCharToMultiByte(CP_ACP, 0, str1.c_str(), str1.length(), NULL, 0, "", NULL);
-			*ppszRegKey = new char[iLen + 1];
-			WideCharToMultiByte(CP_ACP, 0, str1.c_str(), str1.length(), *ppszRegKey, iLen, "", NULL);
-			char *p = *ppszRegKey;
-			p[iLen] = 0;
+			char* pszAnsi = new char [ str1.length () + 1 ] ;
+			int iLen = WideCharToMultiByte ( CP_ACP, 0, str1.c_str (), str1.length (), pszAnsi, str1.length (), pszAnsi, NULL );
+			pszAnsi [ iLen ] = 0 ;
+
+			*ppszRegKey = new char [ iLen + 1 ] ;
+
+
+			int iDecSize = iLen ;
+			Base64Decode ( pszAnsi, iLen, (BYTE*)*ppszRegKey, &iDecSize ) ;
+
+// 			int iLen = WideCharToMultiByte(CP_ACP, 0, str1.c_str(), str1.length(), NULL, 0, "", NULL);
+// 			*ppszRegKey = new char[iLen + 1];
+// 			WideCharToMultiByte(CP_ACP, 0, str1.c_str(), str1.length(), *ppszRegKey, iLen, "", NULL);
+// 			char *p = ppszRegKey ;
+// 			p[iLen] = 0;
+			if ( pszAnsi )
+				delete pszAnsi ;
+
 			return true;
 		}
 	}
