@@ -68,6 +68,31 @@ BOOL CModelViewerApp::InitInstance()
 	// such as the name of your company or organization
 	SetRegistryKey(_T("Local AppWizard-Generated Applications"));
 
+	////////////////////////////////
+	// Parse command line for standard shell commands, DDE, file open
+	CCommandLineInfo cmdInfo;
+	ParseCommandLine ( cmdInfo );
+
+	// Enable DDE Execute open
+	EnableShellOpen ();
+	//RegisterShellFileTypes ( TRUE );
+
+
+	CStringW strCmdLine = GetCommandLineW() ;
+	int iParamCount = 0 ;
+	LPWSTR* pStr = CommandLineToArgvW ( strCmdLine, &iParamCount ) ;
+
+// 	if ( pStr )
+// 		delete ( pStr ) ;
+
+	// Dispatch commands specified on the command line.  Will return FALSE if
+	// app was launched with /RegServer, /Register, /Unregserver or /Unregister.
+// 	if ( !ProcessShellCommand ( cmdInfo ) )
+// 		return FALSE;
+	////////////////////////////////
+
+
+
 	//CModelViewerDlg dlg;
 	m_pDlg = new CModelViewerDlg ;
 	m_pDlg->Create ( IDD_MODELVIEWER_DIALOG ) ;
@@ -90,6 +115,9 @@ BOOL CModelViewerApp::InitInstance()
 // 		TRACE(traceAppMsg, 0, "Warning: dialog creation failed, so application is terminating unexpectedly.\n");
 // 		TRACE(traceAppMsg, 0, "Warning: if you are using MFC controls on the dialog, you cannot #define _AFX_NO_MFC_CONTROLS_IN_DIALOGS.\n");
 // 	}
+
+	if ( cmdInfo.m_nShellCommand == CCommandLineInfo::FileOpen )
+		m_pDlg->Load3DScanFile ( cmdInfo.m_strFileName ) ;
 
 	// Delete the shell manager created above.
 	if (pShellManager != NULL)

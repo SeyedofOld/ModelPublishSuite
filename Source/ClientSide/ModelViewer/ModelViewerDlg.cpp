@@ -258,7 +258,7 @@ void CModelViewerDlg::ShowExampleMenuFile ()
 		CModelServiceWebClient client ;
 		bool b = false ;
 		char* p = NULL ;
-		client.GetModel ( "abcdef", "pcwin", "khodam", &p, b ) ;
+		client.GetModel ( "abcdef", "pcwin", &p ) ;
 
 		int mm = 1 ;
 // 		TD_SCAN_MODEL* pModel = C3DScanFile::Load3DScanModel ( dlg.GetPathName ().GetBuffer () ) ;
@@ -640,7 +640,9 @@ void CModelViewerDlg::UpdateGui ()
 			D3DMODEL_PART& part = model.Parts [ iPart ] ;
 			ImGui::Checkbox( part.pBase->sName.c_str(), &part.bVisible );
 
+
 			ImGui::Indent ( 10.0f ) ;
+			if ( 0 )
 			for ( uint32_t iSubset = 0 ; iSubset < model.Parts [ iPart ].Subsets.size () ; iSubset++ ) {
 				D3DMODEL_SUBSET& subset = model.Parts [ iPart ].Subsets [ iSubset ] ;
 
@@ -795,6 +797,57 @@ void CModelViewerDlg::CalcTextureAverages()
 
 	}
 
+}
+
+bool CModelViewerDlg::Load3DScanFile ( CString& strPathName )
+{
+	TD_SCAN_MODEL* pModel = C3DScanFile::Load3DScanModel ( strPathName.GetBuffer () ) ;
+	if ( pModel ) {
+		m_pModel1 = pModel ;
+		m_pd3dModel1 = new D3D_MODEL ;
+		if ( !CD3DModelUtils::CreateFromTDModel ( C3DGfx::GetInstance ()->GetDevice (), C3DGfx::GetInstance ()->GetEffectPool (), *m_pModel1, *m_pd3dModel1 ) ) {
+			delete m_pd3dModel1 ;
+			m_pd3dModel1 = NULL ;
+			delete m_pModel1 ;
+			m_pModel1 = NULL ;
+		}
+		else {
+			FillTextureList () ;
+			m_strFilename = strPathName ;
+			m_bFileOpened = true ;
+			m_bHasFilename = true ;
+		}
+	}
+	
+	return true ;
+}
+
+bool CModelViewerDlg::Load3DScanFromUrl ( CString& strUrl )
+{
+	CModelServiceWebClient client ;
+	bool b = false ;
+	char* p = NULL ;
+	client.GetModel ( "abcdef", "pcwin", &p ) ;
+
+/*	TD_SCAN_MODEL* pModel = C3DScanFile::Load3DScanModel ( strPathName.GetBuffer () ) ;
+	if ( pModel ) {
+		m_pModel1 = pModel ;
+		m_pd3dModel1 = new D3D_MODEL ;
+		if ( !CD3DModelUtils::CreateFromTDModel ( C3DGfx::GetInstance ()->GetDevice (), C3DGfx::GetInstance ()->GetEffectPool (), *m_pModel1, *m_pd3dModel1 ) ) {
+			delete m_pd3dModel1 ;
+			m_pd3dModel1 = NULL ;
+			delete m_pModel1 ;
+			m_pModel1 = NULL ;
+		}
+		else {
+			FillTextureList () ;
+			m_strFilename = strPathName ;
+			m_bFileOpened = true ;
+			m_bHasFilename = true ;
+		}
+	}*/
+
+	return true ;
 }
 
 static bool IsAnyMouseButtonDown ()

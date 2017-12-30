@@ -343,7 +343,9 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
     </FxCompile>
+    <None Include="ModelViewer.reg" />
     <None Include="res\ModelViewer.rc2" />
+    <None Include="UriRegistration.reg" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\ModelViewer.ico" />

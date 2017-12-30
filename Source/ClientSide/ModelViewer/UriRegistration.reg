@@ -1,0 +1,7 @@
+REGEDIT
+
+HKEY_CLASSES_ROOT\3dscan\(Default) = "URL:3dscan Publish Protocol"
+HKEY_CLASSES_ROOT\3dscan\URL Protocol = ""
+HKEY_CLASSES_ROOT\3dscan\DefaultIcon\(Default) = "ModelViewer.exe,1"
+HKEY_CLASSES_ROOT\3dscan\shell\open\command\(Default) = "ModelViewer.exe -url=" "%1"
+			   
