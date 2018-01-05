@@ -260,7 +260,7 @@ void CModelViewerDlg::ShowExampleMenuFile ()
 		CModelServiceWebClient client ;
 		bool b = false ;
 		char* p = NULL ;
-		Load3DScanFromUrl ( (CString)"http://127.0.0.1:5617/3dscan/get?subsid=123dsff&cliendid=pcc" ) ;
+		Load3DScanFromUrl ( (CString)"http://localhost:5617/3dscan/get?subsid=123dsff&clientid=pcc" ) ;
 		//client.GetModel ( , "pcwin", &p ) ;
 
 		int mm = 1 ;
@@ -847,6 +847,24 @@ bool CModelViewerDlg::Load3DScanFromUrl ( CString& strUrl )
 		CModelServiceWebClient client ;
 		char* p = NULL ;
 		client.GetModel ( strUrl.GetBuffer (), MODEL_CLIENT_ID_PCWIN, &p ) ;
+
+		TD_SCAN_MODEL* pModel = C3DScanFile::Load3DScanModelFromMemory ( p, 10000000 ) ;
+		if ( pModel ) {
+			m_pModel1 = pModel ;
+			m_pd3dModel1 = new D3D_MODEL ;
+			if ( ! CD3DModelUtils::CreateFromTDModel ( C3DGfx::GetInstance ()->GetDevice (), C3DGfx::GetInstance ()->GetEffectPool (), *m_pModel1, *m_pd3dModel1 ) ) {
+				delete m_pd3dModel1 ;
+				m_pd3dModel1 = NULL ;
+				delete m_pModel1 ;
+				m_pModel1 = NULL ;
+			}
+			else {
+				FillTextureList () ;
+				m_bFileOpened = true ;
+				m_bHasFilename = false ;
+			}
+		}
+
 	}
 
 	{

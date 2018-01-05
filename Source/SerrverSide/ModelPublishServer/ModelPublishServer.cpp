@@ -71,7 +71,7 @@ int main()
 	builder.set_scheme ( U ( "http" ) ) ;
 	builder.set_host ( U ( STORE_URL ) ) ;
 	builder.set_port ( STORE_PORT ) ;
-	builder.set_path ( U ( STORE_URI ) ) ;
+	builder.set_path ( U ( MODEL_SERVICE_PATH ) ) ;
 
 	auto path_query_fragment = builder.to_string ();
 

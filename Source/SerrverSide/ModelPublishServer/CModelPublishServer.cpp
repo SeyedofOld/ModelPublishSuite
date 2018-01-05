@@ -73,7 +73,9 @@ public:
     pplx::task<void> close() { return m_listener.close(); }
 
  	//static void OnValidatePurchase ( wstring& sessionId, json::value& params, json::value& answer, status_code& http_result ) ;
- 	static void OnGetModel ( json::value& params, json::value& answer, status_code& http_result ) ;
+	static void OnGetModel ( json::value& params, json::value& answer, status_code& http_result ) ;
+	static void OnGetAdd ( json::value& params, json::value& answer, status_code& http_result ) ;
+	static void OnGetInfo ( json::value& params, json::value& answer, status_code& http_result ) ;
 // 	static void OnAnalyticsData ( wstring& sessionId, json::value& params, json::value& answer, status_code& http_result ) ;
 
 private:
@@ -440,7 +442,7 @@ void CModelPublishServer::OnGetModel ( json::value& params, json::value& answer,
 			if (blob_stream) {
 				try {
 					blob_stream->seekg(0, std::ios::end);
-					int blobSize = blob_stream->tellg();
+					uint32_t blobSize = (uint32_t)blob_stream->tellg();
 					blob_stream->seekg(0, std::ios::beg);
 					pPathName = new char[blobSize+1];
 					blob_stream->read(pPathName, blobSize);
@@ -457,15 +459,7 @@ void CModelPublishServer::OnGetModel ( json::value& params, json::value& answer,
 				}
 			}
 
-// 			wchar_t szScrKey [ 1000 ] ;
-// 			int iLen = MultiByteToWideChar ( CP_ACP, 0, strPathName.c_str(), strPathName.length(), szScrKey, 1000 ) ;
-// 			szScrKey [ iLen ] = 0 ;
-
-			// Changed to nested (Ugly!)
-			//answer [ L"key" ] = json::value::string(szPubKey) ;
-			//answer [ L"message" ] = json::value::string(L"No error") ;
 			json::value msg ;
-			//msg [ L"key" ] = json::value::string(szScrKey) ;
 			answer [ L"message" ] = msg ;
 
 			FILE* pFile = fopen ( strPathName.c_str (), "rb" ) ;
@@ -557,32 +551,28 @@ void CModelPublishServer::HandleGet ( http_request request )
 
 				if ( query_comps.find(L"subsid") != query_comps.end() )
 					jsonParams2 [ L"subsid" ] = json::value::string ( query_comps [ L"subsid" ] ) ;
-// 				if ( query_comps.find ( L"client" ) != query_comps.end () )
-// 					jsonParams2 [ L"client" ] = json::value::string ( query_comps [ L"client" ] ) ;
-// 				if ( query_comps.find ( L"custid" ) != query_comps.end () )
-// 					jsonParams2 [ L"custid" ] = json::value::string ( query_comps [ L"custid" ] ) ;
+ 				if ( query_comps.find ( L"clientid" ) != query_comps.end () )
+ 					jsonParams2 [ L"clientid" ] = json::value::string ( query_comps [ L"clientid" ] ) ;
 
 				OnGetModel ( jsonParams2, answer, http_result ) ;
 			}
-			else if ( strMethod == L"analyticdata" ) {
+			else if ( strMethod == U ( MODEL_API_GET_AD ) ) {
 
-				if ( query_comps.find(L"package_name") != query_comps.end() )
-					jsonParams2 [ L"package_name" ] = json::value::string ( query_comps [ L"package_name" ] ) ;
-				if ( query_comps.find(L"analytictype") != query_comps.end() )
-					jsonParams2 [ L"analytictype" ] = json::value::number ( stoi(query_comps [ L"analytictype" ]) ) ;
-				if ( query_comps.find(L"param1") != query_comps.end() )
-					jsonParams2 [ L"param1" ] = json::value::number ( stoi(query_comps [ L"param1" ]) ) ;
-				if ( query_comps.find(L"param2") != query_comps.end() )
-					jsonParams2 [ L"param2" ] = json::value::number ( stoi(query_comps [ L"param2" ]) ) ;
+				if ( query_comps.find ( L"subsid" ) != query_comps.end () )
+					jsonParams2 [ L"subsid" ] = json::value::string ( query_comps [ L"subsid" ] ) ;
+				if ( query_comps.find ( L"clientid" ) != query_comps.end () )
+					jsonParams2 [ L"clientid" ] = json::value::string ( query_comps [ L"clientid" ] ) ;
 
-				//OnAnalyticsData ( strSessionId, jsonParams2, answer, http_result ) ;
+				//OnGetAd ( jsonParams2, answer, http_result ) ;
 			}
-			else if ( strMethod == L"validate" ) {
+			else if ( strMethod == U ( MODEL_API_GET_INFO ) ) {
 
-				if ( query_comps.find(L"package_name") != query_comps.end() )
-					jsonParams2 [ L"package_name" ] = json::value::string ( query_comps [ L"package_name" ] ) ;
+				if ( query_comps.find ( L"subsid" ) != query_comps.end () )
+					jsonParams2 [ L"subsid" ] = json::value::string ( query_comps [ L"subsid" ] ) ;
+				if ( query_comps.find ( L"clientid" ) != query_comps.end () )
+					jsonParams2 [ L"clientid" ] = json::value::string ( query_comps [ L"clientid" ] ) ;
 
-				//OnValidatePurchase ( strSessionId, jsonParams2, answer, http_result ) ;
+				//OnGetAd ( jsonParams2, answer, http_result ) ;
 			}
 			else {
 				answer [ L"message" ] = json::value::string(L"Unrecognized method name!") ;
