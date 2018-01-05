@@ -214,7 +214,10 @@
     <ClInclude Include="..\Common\C3DModelUtils.h" />
     <ClInclude Include="..\Common\C3DScanFile.h" />
     <ClInclude Include="..\Common\C3DScanFileUtils.h" />
+    <ClInclude Include="..\Common\CBaseStream.h" />
     <ClInclude Include="..\Common\CD3DModelUtils.h" />
+    <ClInclude Include="..\Common\CFileStream.h" />
+    <ClInclude Include="..\Common\CMemStream.h" />
     <ClInclude Include="..\Common\CModelWebServiceClient.h" />
     <ClInclude Include="..\Common\CRenderDialog.h" />
     <ClInclude Include="..\Common\D3DModel.h" />
@@ -267,6 +270,8 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\Common\CFileStream.cpp" />
+    <ClCompile Include="..\Common\CMemStream.cpp" />
     <ClCompile Include="..\Common\CModelWebServiceClient.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>

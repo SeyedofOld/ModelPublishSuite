@@ -9,49 +9,62 @@
 #include "C3DScanFile.h"
 #include "C3DScanFileUtils.h"
 #include "lz4hc.h"
+#include "CFileStream.h"
+#include "CMemStream.h"
 
-TD_SCAN_MODEL* C3DScanFile::Load3DScanModel ( char* pszFilename )
+TD_SCAN_MODEL* C3DScanFile::Load3DScanModelFromFile ( char* pszFilename )
 {
-	if ( ! pszFilename )
-		return NULL;
-
-	FILE * pFile = fopen ( pszFilename, "rb" ) ;
-	if ( ! pFile )
+	CFileStream fs ;
+	if ( ! fs.Open ( pszFilename ) )
 		return NULL ;
-	
+
+	return Load3DScanModel ( fs ) ;
+}
+
+TD_SCAN_MODEL* C3DScanFile::Load3DScanModelFromMemory ( void* pMem, uint32_t uiSize )
+{
+	CMemStream ms ;
+	if ( ! ms.Bind ( pMem, uiSize ) )
+		return NULL ;
+
+	return Load3DScanModel ( ms ) ;
+}
+
+TD_SCAN_MODEL* C3DScanFile::Load3DScanModel ( CBaseStream& rStream )
+{
 	// Load Header
 	TDSCAN_FILE_HEADER hdr;
-	fread ( &hdr, sizeof(TDSCAN_FILE_HEADER), 1, pFile ) ;
-	if ( memcmp ( hdr.szSign, "SEYEDOF 3D FORMAT", sizeof(hdr.szSign) ) != 0 ) 
+	rStream.Read ( &hdr, sizeof ( TDSCAN_FILE_HEADER ) ) ;
+	if ( memcmp ( hdr.szSign, "SEYEDOF 3D FORMAT", sizeof ( hdr.szSign ) ) != 0 )
 		goto load_error ;
 
-	if ( hdr.uiVersion != (1 << 16) + 0 )
+	if ( hdr.uiVersion != ( 1 << 16 ) + 0 )
 		goto load_error ;
 
 	// Load Geometry
 	TD_SCAN_MODEL* pModel = new TD_SCAN_MODEL ;
-	if ( ! pModel )
+	if ( !pModel )
 		goto load_error ;
 
 	int32_t iNextPartOfs = hdr.iFirstPartOfs ;
 
 	while ( iNextPartOfs > 0 ) {
 
-		fseek ( pFile, iNextPartOfs, SEEK_SET ) ;
+		rStream.Seek ( iNextPartOfs, SEEK_SET ) ;
 
 		TDSCAN_FILE_PART part_hdr;
-		fread ( &part_hdr, sizeof(TDSCAN_FILE_PART), 1, pFile ) ;
-		if ( memcmp ( part_hdr.szSign, "PART", sizeof(part_hdr.szSign) ) != 0 )
+		rStream.Read ( &part_hdr, sizeof ( TDSCAN_FILE_PART ) ) ;
+		if ( memcmp ( part_hdr.szSign, "PART", sizeof ( part_hdr.szSign ) ) != 0 )
 			goto load_error ;
 
 		{
 			TD_MODEL_PART part ;
 			pModel->Parts.push_back ( part ) ;
 		}
-		TD_MODEL_PART& part = pModel->Parts [ pModel->Parts.size() - 1 ] ;
+		TD_MODEL_PART& part = pModel->Parts [ pModel->Parts.size () - 1 ] ;
 
 		part.sName = (char*)part_hdr.szName ;
-		
+
 		int32_t iNextSubsetOfs = part_hdr.iFirstSubset ;
 
 		while ( iNextSubsetOfs > 0 ) {
@@ -62,25 +75,25 @@ TD_SCAN_MODEL* C3DScanFile::Load3DScanModel ( char* pszFilename )
 			}
 			TD_MODEL_SUBSET& subset = part.Subsets [ part.Subsets.size () - 1 ] ;
 
-			fseek ( pFile, iNextSubsetOfs, SEEK_SET ) ;
+			rStream.Seek ( iNextSubsetOfs, SEEK_SET ) ;
 
 			TDSCAN_FILE_SUBSET sub_hdr;
-			fread ( &sub_hdr, sizeof(TDSCAN_FILE_SUBSET), 1, pFile ) ;
-			if ( memcmp ( sub_hdr.szSign, "SUBSET", sizeof(sub_hdr.szSign) ) != 0 )
+			rStream.Read ( &sub_hdr, sizeof ( TDSCAN_FILE_SUBSET ) ) ;
+			if ( memcmp ( sub_hdr.szSign, "SUBSET", sizeof ( sub_hdr.szSign ) ) != 0 )
 				goto load_error ;
 
 			subset.uiVertexFmt = sub_hdr.uiVertexFormat ;
 
 			uint32_t uiVertexSize = C3DScanFileUtils::GetVertexSize ( sub_hdr.uiVertexFormat ) ;
-			if ( sub_hdr.uiDataSize != uiVertexSize * sub_hdr.uiVertexCount + sub_hdr.uiTriCount * 3 * sizeof(uint32_t) )
+			if ( sub_hdr.uiDataSize != uiVertexSize * sub_hdr.uiVertexCount + sub_hdr.uiTriCount * 3 * sizeof ( uint32_t ) )
 				goto load_error ;
 
 			subset.pVB = new int8_t [ uiVertexSize * sub_hdr.uiVertexCount ] ;
-			if ( ! subset.pVB )
+			if ( !subset.pVB )
 				goto load_error ;
 
-			subset.pIB = new uint32_t [ sizeof(uint32_t) * sub_hdr.uiTriCount * 3 ] ;
-			if ( ! subset.pIB ) 
+			subset.pIB = new uint32_t [ sizeof ( uint32_t ) * sub_hdr.uiTriCount * 3 ] ;
+			if ( !subset.pIB )
 				goto load_error;
 
 			subset.uiTriCount = sub_hdr.uiTriCount ;
@@ -89,7 +102,7 @@ TD_SCAN_MODEL* C3DScanFile::Load3DScanModel ( char* pszFilename )
 			if ( sub_hdr.uiFlags & TDS_FLAG_COMPRESSED ) {
 				char* pDest = new char [ sub_hdr.uiDataSize ] ;
 				char* pSrc = new char [ sub_hdr.uiCompressedSize ] ;
-				fread ( pSrc, sub_hdr.uiCompressedSize, 1, pFile ) ;
+				rStream.Read ( pSrc, sub_hdr.uiCompressedSize ) ;
 				LZ4_decompress_fast ( pSrc, pDest, sub_hdr.uiDataSize ) ;
 				memcpy ( subset.pVB, pDest, uiVertexSize * sub_hdr.uiVertexCount ) ;
 				memcpy ( subset.pIB, pDest + uiVertexSize * sub_hdr.uiVertexCount, sizeof ( uint32_t ) * sub_hdr.uiTriCount * 3 ) ;
@@ -97,8 +110,8 @@ TD_SCAN_MODEL* C3DScanFile::Load3DScanModel ( char* pszFilename )
 				delete pSrc ;
 			}
 			else {
-				fread ( subset.pVB, uiVertexSize, sub_hdr.uiVertexCount, pFile ) ;
-				fread ( subset.pIB, sizeof ( uint32_t ), sub_hdr.uiTriCount * 3, pFile ) ;
+				rStream.Read ( subset.pVB, uiVertexSize * sub_hdr.uiVertexCount ) ;
+				rStream.Read ( subset.pIB, sizeof ( uint32_t ) * sub_hdr.uiTriCount * 3 ) ;
 			}
 
 			subset.sMatName = (char*)sub_hdr.szMatName ;
@@ -113,10 +126,10 @@ TD_SCAN_MODEL* C3DScanFile::Load3DScanModel ( char* pszFilename )
 	int32_t iNextMatOfs = hdr.iMaterialLibOfs ;
 	while ( iNextMatOfs > 0 ) {
 
-		fseek ( pFile, iNextMatOfs, SEEK_SET ) ;
+		rStream.Seek ( iNextMatOfs, SEEK_SET ) ;
 
 		TDSCAN_FILE_MATERIAL mat_hdr ;
-		fread ( &mat_hdr, sizeof ( TDSCAN_FILE_MATERIAL ), 1, pFile ) ;
+		rStream.Read ( &mat_hdr, sizeof ( TDSCAN_FILE_MATERIAL ) ) ;
 		if ( memcmp ( mat_hdr.szSign, "MATERIAL", sizeof ( mat_hdr.szSign ) ) != 0 )
 			goto load_error ;
 
@@ -127,18 +140,18 @@ TD_SCAN_MODEL* C3DScanFile::Load3DScanModel ( char* pszFilename )
 
 		TD_MODEL_MATERIAL& mtrl = pModel->Materials [ (char*)mat_hdr.szName ] ;
 
-		mtrl.sName			= (char*)mat_hdr.szName ;
-		mtrl.clrDiffuse		= mat_hdr.f4Diffuse ;
-		mtrl.clrAmbient		= mat_hdr.f4Ambient ;
+		mtrl.sName = (char*)mat_hdr.szName ;
+		mtrl.clrDiffuse = mat_hdr.f4Diffuse ;
+		mtrl.clrAmbient = mat_hdr.f4Ambient ;
 		mtrl.fSpecIntensity = mat_hdr.fSpecIntensity ;
-		mtrl.fTransparency	= mat_hdr.fAlpha ;
-		mtrl.fGlossiness	= mat_hdr.fGlossiness ;
+		mtrl.fTransparency = mat_hdr.fAlpha ;
+		mtrl.fGlossiness = mat_hdr.fGlossiness ;
 		mtrl.fReflectionFactor = mat_hdr.fReflectionFactor ;
-		
-		mtrl.sDiffuseTextureName	= (char*)mat_hdr.szDiffuseTex ;
-		mtrl.sNormalTextureName		= (char*)mat_hdr.szNormalTex ;
-		mtrl.sAlphaTextureName		= (char*)mat_hdr.szAlphaTex ;
-		mtrl.sSpecularTextureName	= (char*)mat_hdr.szSpecularTex ;
+
+		mtrl.sDiffuseTextureName = (char*)mat_hdr.szDiffuseTex ;
+		mtrl.sNormalTextureName = (char*)mat_hdr.szNormalTex ;
+		mtrl.sAlphaTextureName = (char*)mat_hdr.szAlphaTex ;
+		mtrl.sSpecularTextureName = (char*)mat_hdr.szSpecularTex ;
 		mtrl.sReflectionTextureName = (char*)mat_hdr.szReflectionTex ;
 
 		iNextMatOfs = mat_hdr.iNextMaterialOfs ;
@@ -148,10 +161,10 @@ TD_SCAN_MODEL* C3DScanFile::Load3DScanModel ( char* pszFilename )
 	int32_t iNextTexOfs = hdr.iTexLibOfs ;
 	while ( iNextTexOfs > 0 ) {
 
-		fseek ( pFile, iNextTexOfs, SEEK_SET ) ;
+		rStream.Seek ( iNextTexOfs, SEEK_SET ) ;
 
 		TDSCAN_FILE_TEXTURE tex_hdr ;
-		fread ( &tex_hdr, sizeof ( TDSCAN_FILE_TEXTURE ), 1, pFile ) ;
+		rStream.Read ( &tex_hdr, sizeof ( TDSCAN_FILE_TEXTURE ) ) ;
 		if ( memcmp ( tex_hdr.szSign, "TEX", sizeof ( tex_hdr.szSign ) ) != 0 )
 			goto load_error ;
 
@@ -160,7 +173,7 @@ TD_SCAN_MODEL* C3DScanFile::Load3DScanModel ( char* pszFilename )
 			tex.sName = (char*)tex_hdr.szName ;
 			pModel->Textures [ tex.sName ] = tex ;
 		}
-		
+
 		TD_MODEL_TEXTURE_SLOT& tex = pModel->Textures [ (char*)tex_hdr.szName ] ;
 
 		tex.clrAvgColor = tex_hdr.clrAvgColor ;
@@ -170,27 +183,23 @@ TD_SCAN_MODEL* C3DScanFile::Load3DScanModel ( char* pszFilename )
 
 		if ( tex_hdr.uiFlags == TDS_FLAG_COMPRESSED ) {
 			char* pSrc = new char [ tex_hdr.uiCompressedSize ] ;
-			fread ( pSrc, 1, tex_hdr.uiCompressedSize, pFile ) ;
+			rStream.Read ( pSrc, tex_hdr.uiCompressedSize ) ;
 
 			LZ4_decompress_fast ( pSrc, (char*)tex.pData, (int)tex_hdr.uiDataSize ) ;
 			delete pSrc ;
-		} 
+		}
 		else {
-			fread ( tex.pData, 1, tex_hdr.uiDataSize, pFile ) ;
+			rStream.Read ( tex.pData, tex_hdr.uiDataSize ) ;
 		}
 
 		iNextTexOfs = tex_hdr.iNextTexOfs ;
 	}
 
-	fclose  ( pFile ) ;
-	
 	return pModel ;
 
 load_error:
-	if ( pFile )
-		fclose ( pFile ) ;
-// 	if ( pModel )
-// 		CD3DModelUtils::FreeD3DModel ( pModel ) ;
+	// 	if ( pModel )
+	// 		CD3DModelUtils::FreeD3DModel ( pModel ) ;
 
 	return NULL ;
 }

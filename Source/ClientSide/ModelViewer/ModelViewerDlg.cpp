@@ -15,6 +15,7 @@
 #include "C3DModelUtils.h"
 #include "FreeImage.h"
 #include "CModelWebServiceClient.h"
+#include "GlobalDefines.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -234,7 +235,7 @@ void CModelViewerDlg::ShowExampleMenuFile ()
 		char szFilters[] = "3D Scan Files (*.3dscan)|*.3dscan||";
 		CFileDialog dlg ( TRUE, "3dscan", "*.3dscan", OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, szFilters, AfxGetMainWnd () ) ;
 		if (dlg.DoModal() == IDOK) {
-			TD_SCAN_MODEL* pModel = C3DScanFile::Load3DScanModel ( dlg.GetPathName().GetBuffer() ) ;
+			TD_SCAN_MODEL* pModel = C3DScanFile::Load3DScanModelFromFile ( dlg.GetPathName().GetBuffer() ) ;
 			if ( pModel ) {
 				m_pModel1 = pModel ;
 				m_pd3dModel1 = new D3D_MODEL ;
@@ -255,10 +256,12 @@ void CModelViewerDlg::ShowExampleMenuFile ()
 	}
 
 	if ( ImGui::MenuItem ( "Get 3D Scan From Server", "" ) ) {
+		
 		CModelServiceWebClient client ;
 		bool b = false ;
 		char* p = NULL ;
-		client.GetModel ( "abcdef", "pcwin", &p ) ;
+		Load3DScanFromUrl ( (CString)"http://127.0.0.1:5617/3dscan/get?subsid=123dsff&cliendid=pcc" ) ;
+		//client.GetModel ( , "pcwin", &p ) ;
 
 		int mm = 1 ;
 // 		TD_SCAN_MODEL* pModel = C3DScanFile::Load3DScanModel ( dlg.GetPathName ().GetBuffer () ) ;
@@ -801,7 +804,7 @@ void CModelViewerDlg::CalcTextureAverages()
 
 bool CModelViewerDlg::Load3DScanFile ( CString& strPathName )
 {
-	TD_SCAN_MODEL* pModel = C3DScanFile::Load3DScanModel ( strPathName.GetBuffer () ) ;
+	TD_SCAN_MODEL* pModel = C3DScanFile::Load3DScanModelFromFile ( strPathName.GetBuffer () ) ;
 	if ( pModel ) {
 		m_pModel1 = pModel ;
 		m_pd3dModel1 = new D3D_MODEL ;
@@ -824,28 +827,55 @@ bool CModelViewerDlg::Load3DScanFile ( CString& strPathName )
 
 bool CModelViewerDlg::Load3DScanFromUrl ( CString& strUrl )
 {
-	CModelServiceWebClient client ;
-	bool b = false ;
-	char* p = NULL ;
-	client.GetModel ( "abcdef", "pcwin", &p ) ;
+	wchar_t szUrl [ 1000 ] ;
+	int iLen = MultiByteToWideChar ( CP_ACP, 0, strUrl.GetBuffer (), strUrl.GetLength (), szUrl, 1000 ) ;
+	szUrl [ iLen ] = 0 ;
 
-/*	TD_SCAN_MODEL* pModel = C3DScanFile::Load3DScanModel ( strPathName.GetBuffer () ) ;
-	if ( pModel ) {
-		m_pModel1 = pModel ;
-		m_pd3dModel1 = new D3D_MODEL ;
-		if ( !CD3DModelUtils::CreateFromTDModel ( C3DGfx::GetInstance ()->GetDevice (), C3DGfx::GetInstance ()->GetEffectPool (), *m_pModel1, *m_pd3dModel1 ) ) {
-			delete m_pd3dModel1 ;
-			m_pd3dModel1 = NULL ;
-			delete m_pModel1 ;
-			m_pModel1 = NULL ;
-		}
-		else {
-			FillTextureList () ;
-			m_strFilename = strPathName ;
-			m_bFileOpened = true ;
-			m_bHasFilename = true ;
-		}
-	}*/
+	web::uri_builder builder ( szUrl ) ;
+	auto query = builder.query () ;
+	auto query_split = web::uri::split_query ( query ) ;
+
+	{
+		web::uri_builder builder_mdl ;
+		builder_mdl.set_scheme ( builder.scheme () ) ;
+		builder_mdl.set_host ( builder.host () ) ;
+		builder_mdl.set_port ( builder.port () ) ;
+		builder_mdl.set_path ( U ( MODEL_SERVICE_PATH ) ) ;
+		builder_mdl.append_path ( U ( MODEL_API_GET_INFO ) ) ;
+		builder_mdl.append_query ( L"subsid", query_split [ L"subsid" ] ) ;
+
+		CModelServiceWebClient client ;
+		char* p = NULL ;
+		client.GetModel ( strUrl.GetBuffer (), MODEL_CLIENT_ID_PCWIN, &p ) ;
+	}
+
+	{
+		web::uri_builder builder_mdl ;
+		builder_mdl.set_scheme ( builder.scheme () ) ;
+		builder_mdl.set_host ( builder.host () ) ;
+		builder_mdl.set_port ( builder.port () ) ;
+		builder_mdl.set_path ( U ( MODEL_SERVICE_PATH ) ) ;
+		builder_mdl.append_path ( U ( MODEL_API_GET ) ) ;
+		builder_mdl.append_query ( L"subsid", query_split [ L"subsid" ] ) ;
+
+		CModelServiceWebClient client ;
+		char* p = NULL ;
+		client.GetModel ( strUrl.GetBuffer (), MODEL_CLIENT_ID_PCWIN, &p ) ;
+	}
+
+	{
+		web::uri_builder builder_ad ;
+		builder_ad.set_scheme ( builder.scheme () ) ;
+		builder_ad.set_host ( builder.host () ) ;
+		builder_ad.set_port ( builder.port () ) ;
+		builder_ad.set_path ( U ( MODEL_SERVICE_PATH ) ) ;
+		builder_ad.append_path ( U ( MODEL_API_GET_AD ) ) ;
+		builder_ad.append_query ( L"subsid", query_split [ L"subsid" ] ) ;
+
+		CModelServiceWebClient client ;
+		char* p = NULL ;
+		client.GetModel ( strUrl.GetBuffer (), MODEL_CLIENT_ID_PCWIN, &p ) ;
+	}
 
 	return true ;
 }

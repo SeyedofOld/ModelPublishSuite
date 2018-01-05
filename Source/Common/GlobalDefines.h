@@ -8,11 +8,12 @@
 //#define STORE_SCHEME				"https"
 #define STORE_SCHEME				"http"
 
-#define STORE_URI					"/model/"
-//#define STORE_URI                   "/sdk/windows"
-#define STORE_API_VALIDATE			"validate"
+#define MODEL_SERVICE_PATH			"/3dscan/"
+#define MODEL_API_GET_INFO			"getinfo"
 #define MODEL_API_GET				"get"
-#define STORE_API_ANALYTIC_DATA		"analyticdata"
+#define MODEL_API_GET_AD			"getad"
+
+#define MODEL_CLIENT_ID_PCWIN		"pcwin"
 
 // Database defines
 #define MYSQL_SERVER		"tcp://127.0.0.1:3306"
