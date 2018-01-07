@@ -119,6 +119,8 @@ BOOL CModelViewerDlg::OnInitDialog()
 
 	ModifyStyleEx ( 0, SS_NOTIFY ) ;
 
+	CModelServiceWebClient::m_hCallbackWnd = GetSafeHwnd() ;
+
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
@@ -709,6 +711,20 @@ void CModelViewerDlg::UpdateGui ()
 
 		ImGui::End ();
 	}
+
+	flags = 0;
+	flags |= ImGuiWindowFlags_NoMove;
+	flags |= ImGuiWindowFlags_NoResize;
+	flags |= ImGuiWindowFlags_NoCollapse;
+	flags |= ImGuiWindowFlags_NoInputs;
+	flags |= ImGuiWindowFlags_NoTitleBar;
+
+	if ( ImGui::Begin ( "Bar", NULL, flags ) ) {
+		ImGui::SetWindowSize ( ImVec2(600, 50) ) ;
+		ImGui::ProgressBar ( (float)( GetTickCount () % 10000 ) / 10000.0f ) ;
+		ImGui::End ();
+	}
+
 
 	ImGui::EndFrame () ;
 }

@@ -17,6 +17,7 @@ CREATE TABLE tbl_file_address
 	(
 		id int NOT NULL PRIMARY KEY AUTO_INCREMENT, -- id for file
 		FilePathName varchar(128),					-- File path name on disk
+		Base64FilePathName varchar(128),			-- Base64 encoded file path name on disk
 		Size int NOT NULL							-- File size in bytes
 	) ;
 

@@ -21,6 +21,8 @@ using namespace http;
 using namespace http::client;
 using namespace web::json ;
 
+HWND CModelServiceWebClient::m_hCallbackWnd = NULL ;
+
 #ifdef _WIN32
 # define iequals(x, y) (_stricmp((x), (y))==0)
 #else
@@ -166,7 +168,7 @@ void make_request_post ( http_client & client, method mtd, json::value const & j
       .wait();
 }
 
-bool CModelServiceWebClient::GetModel ( char* pszUrl, char* pszClientId, char** ppData )
+bool CModelServiceWebClient::GetModel ( char* pszUrl, char* pszClientId, char** ppData, int iInstanceId )
 {
 	if ( ! pszUrl || ! ppData )
 		return false ;
@@ -475,6 +477,10 @@ void CModelServiceWebClient::ProgressCallback ( web::http::message_direction::di
 {
 	static int64_t s = 0 ;
 	s += so_far ;
+
+	if ( m_hCallbackWnd ) {
+		::PostMessage ( m_hCallbackWnd, WM_USER_HTTP_PROGRESS, 0, (LPARAM)so_far ) ;
+	}
 }
 
 /*
@@ -611,7 +617,7 @@ bool CStoreWebServiceClientOld::SendAnalyticsData ( char* pszSessionId, char* ps
 */
 
 
-bool CModelServiceWebClient::GetModelInfo ( char* pszUrl, char* pszClientId, char** ppData )
+bool CModelServiceWebClient::GetModelInfo ( char* pszUrl, char* pszClientId, char** ppData, int iInstanceId )
 {
 	if ( !pszUrl || !ppData )
 		return false ;
@@ -688,7 +694,7 @@ bool CModelServiceWebClient::GetModelInfo ( char* pszUrl, char* pszClientId, cha
 	return false ;
 }
 
-bool CModelServiceWebClient::GetAd ( char* pszUrl, char* pszClientId, char** ppData )
+bool CModelServiceWebClient::GetAd ( char* pszUrl, char* pszClientId, char** ppData, int iInstanceId )
 {
 	if ( !pszUrl || !ppData )
 		return false ;

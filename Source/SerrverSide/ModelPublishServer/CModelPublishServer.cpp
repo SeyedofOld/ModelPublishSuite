@@ -74,7 +74,7 @@ public:
 
  	//static void OnValidatePurchase ( wstring& sessionId, json::value& params, json::value& answer, status_code& http_result ) ;
 	static void OnGetModel ( json::value& params, json::value& answer, status_code& http_result ) ;
-	static void OnGetAdd ( json::value& params, json::value& answer, status_code& http_result ) ;
+	static void OnGetAd ( json::value& params, json::value& answer, status_code& http_result ) ;
 	static void OnGetInfo ( json::value& params, json::value& answer, status_code& http_result ) ;
 // 	static void OnAnalyticsData ( wstring& sessionId, json::value& params, json::value& answer, status_code& http_result ) ;
 
@@ -506,6 +506,409 @@ void CModelPublishServer::OnGetModel ( json::value& params, json::value& answer,
 	delete con ;
 }
 
+void CModelPublishServer::OnGetAd ( json::value& params, json::value& answer, status_code& http_result )
+{
+	// 	int iUserId = -1 ;
+	// 	int iProductId = -1 ;
+
+	// 	if ( ! params.has_field(L"package_name") ) {
+	// 		answer [ L"message" ] = json::value::string(L"No product id specified!") ;
+	// 		http_result = status_codes::InternalError ;
+	// 		return ;
+	// 	}
+
+	sql::Driver *driver;
+	sql::Connection *con;
+
+	try {
+		// Create a connection
+		driver = get_driver_instance ();
+		con = driver->connect ( MYSQL_SERVER, MYSQL_USER, MYSQL_PASS ) ;
+
+		// Connect to the MySQL test database
+		con->setSchema ( STORE_DATABASE_NAME ) ;
+	}
+	catch ( sql::SQLException &e ) {
+		cout << e.what () << endl ;
+		answer [ L"message" ] = json::value::string ( L"Database connectivity error!" ) ;
+		http_result = status_codes::InternalError ;
+		return ;
+	}
+
+	int iModelId = -1 ;
+
+	{ // Fetch session id from database
+		sql::Statement *stmt;
+		sql::ResultSet *res;
+
+		wstring strPname = params.at ( L"subsid" ).as_string () ;
+		char szModelId [ 256 ] ;
+		int iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), strPname.length (), szModelId, 256, "", NULL ) ;
+		szModelId [ iLen ] = 0 ;
+
+		// 		char szSessionId [ 256 ] ;
+		// 		int iLen = WideCharToMultiByte ( CP_ACP, 0, sessionId.c_str(), sessionId.length(), szSessionId, 256, "", NULL ) ;
+		// 		szSessionId [ iLen ] = 0 ;
+
+		// Make query string
+		char szQuery [ 5000 ] ;
+
+		sprintf_s ( szQuery, 5000, "SELECT * FROM tbl_subscription WHERE HashId='%s'", szModelId ) ;
+		cout << szQuery << endl ;
+
+		// Run query
+		stmt = con->createStatement () ;
+		res = stmt->executeQuery ( szQuery ) ;
+
+		if ( res->rowsCount () == 0 ) {
+			answer [ L"message" ] = json::value::string ( L"Invalid token. Token is expired." ) ;
+			answer [ L"result_number" ] = json::value::number ( 9999 ) ;
+			http_result = status_codes::Unauthorized ;
+		}
+
+		while ( res->next () ) {
+			iModelId = res->getInt ( "ModelId" ) ;
+			//		cout << "\t... MySQL replies: ";
+			// Access column data by alias or column name 
+			//cout << res->getString("_message") << endl;
+			//cout << "\t... MySQL says it again: ";
+			// Access column data by numeric offset, 1 is the first column 
+			//cout << res->getString(1) << endl;
+		}
+		delete res;
+		delete stmt;
+
+	}
+
+	int iFileId = -1 ;
+	if ( iModelId != -1 ) { // Fetch product id from database
+
+		sql::Statement *stmt ;
+		sql::ResultSet *res ;
+
+		// Make query string
+		char szQuery [ 5000 ] ;
+
+		//wstring strPname = params.at(L"package_name").as_string() ;
+		//  		char szPaclageName [ 256 ] ;
+		//  		int iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str(), strPname.length(), szPaclageName, 256, "", NULL ) ;
+		//  		szPaclageName [ iLen ] = 0 ;
+
+		sprintf_s ( szQuery, 5000, "SELECT * FROM tbl_model_desc WHERE id=%d", iModelId ) ;
+		cout << szQuery << endl ;
+
+		// Run query
+		stmt = con->createStatement () ;
+		res = stmt->executeQuery ( szQuery ) ;
+
+		if ( res->rowsCount () == 0 ) {
+			answer [ L"message" ] = json::value::string ( L"Model not found!" ) ;
+			http_result = status_codes::InternalError ;
+		}
+
+		while ( res->next () ) {
+			iFileId = res->getInt ( "PCFileId" ) ;
+		}
+		delete res;
+		delete stmt;
+	}
+
+	if ( iFileId != -1 ) {
+		sql::Statement *stmt;
+		sql::ResultSet *res;
+
+		// Make query string
+		char szQuery [ 5000 ] ;
+
+		sprintf_s ( szQuery, 5000, "SELECT * FROM tbl_file_address WHERE id=%d", iFileId ) ;
+		cout << szQuery << endl ;
+
+		// Run query
+		stmt = con->createStatement () ;
+		res = stmt->executeQuery ( szQuery ) ;
+
+		if ( res->rowsCount () == 0 ) {
+			answer [ L"message" ] = json::value::string ( L"This user does not have permission to access this product!" ) ;
+			answer [ L"result_number" ] = json::value::number ( 2053 ) ;
+			http_result = status_codes::NotFound ;
+		}
+
+		while ( res->next () ) {
+
+			string strPathName = "" ;//= res->getString ( "UserId" ) ;
+
+			std::istream* blob_stream = res->getBlob ( "FilePathName" );
+
+			char* pPathName = NULL;
+
+			if ( blob_stream ) {
+				try {
+					blob_stream->seekg ( 0, std::ios::end );
+					uint32_t blobSize = (uint32_t)blob_stream->tellg ();
+					blob_stream->seekg ( 0, std::ios::beg );
+					pPathName = new char [ blobSize + 1 ];
+					blob_stream->read ( pPathName, blobSize );
+					pPathName [ blobSize ] = 0;
+					//blob_stream->getline(key, 600);
+				}
+				catch ( ... ) {
+
+				}
+				//std::string retrievedPassword(pws); // also, should handle case where Password length > PASSWORD_LENGTH
+				if ( pPathName ) {
+					strPathName = pPathName;
+					delete pPathName;
+				}
+			}
+
+			json::value msg ;
+			answer [ L"message" ] = msg ;
+
+			FILE* pFile = fopen ( strPathName.c_str (), "rb" ) ;
+			fseek ( pFile, 0, SEEK_END ) ;
+			int iSize = ftell ( pFile ) ;
+
+			char* pBuf = new char [ iSize ] ;
+			fseek ( pFile, 0, SEEK_SET ) ;
+			fread ( pBuf, iSize, 1, pFile ) ;
+			fclose ( pFile ) ;
+
+			int iDestSize = Base64EncodeGetRequiredLength ( iSize, 0 ) ;
+			int iEncLen = iDestSize ;
+
+			PSTR pDest = new CHAR [ iDestSize + 1 ] ;
+			Base64Encode ( (BYTE*)pBuf, iSize, pDest, &iEncLen ) ;
+			pDest [ iEncLen ] = 0 ;
+
+			string s = pDest ;
+
+			wchar_t* pszScrKey = new wchar_t [ iEncLen + 1 ] ;
+			int iLen = MultiByteToWideChar ( CP_ACP, 0, s.c_str (), s.length (), pszScrKey, iEncLen ) ;
+			pszScrKey [ iLen ] = 0 ;
+
+
+			if ( pBuf )
+				delete pBuf ;
+
+			answer [ L"error" ] = json::value::boolean ( false ) ;
+			answer [ L"result_number" ] = json::value::number ( 1 ) ;
+			answer [ L"model" ] = json::value::string ( pszScrKey ) ;
+			http_result = status_codes::OK ;
+		}
+		delete res ;
+		delete stmt ;
+
+	} //catch (sql::SQLException &e) {
+	  //  	  cout << "# ERR: SQLException in " << __FILE__ ;
+	  //  	  cout << "(" << __FUNCTION__ << ") on line " << __LINE__ << endl;
+	  //  	  cout << "# ERR: " << e.what();
+	  //  	  cout << " (MySQL error code: " << e.getErrorCode();
+	  //  	  cout << ", SQLState: " << e.getSQLState() << " )" << endl;
+	  //}
+	delete con ;
+}
+
+void CModelPublishServer::OnGetInfo ( json::value& params, json::value& answer, status_code& http_result )
+{
+	// 	int iUserId = -1 ;
+	// 	int iProductId = -1 ;
+
+	// 	if ( ! params.has_field(L"package_name") ) {
+	// 		answer [ L"message" ] = json::value::string(L"No product id specified!") ;
+	// 		http_result = status_codes::InternalError ;
+	// 		return ;
+	// 	}
+
+	sql::Driver *driver;
+	sql::Connection *con;
+
+	try {
+		// Create a connection
+		driver = get_driver_instance ();
+		con = driver->connect ( MYSQL_SERVER, MYSQL_USER, MYSQL_PASS ) ;
+
+		// Connect to the MySQL test database
+		con->setSchema ( STORE_DATABASE_NAME ) ;
+	}
+	catch ( sql::SQLException &e ) {
+		cout << e.what () << endl ;
+		answer [ L"message" ] = json::value::string ( L"Database connectivity error!" ) ;
+		http_result = status_codes::InternalError ;
+		return ;
+	}
+
+	int iModelId = -1 ;
+
+	{ // Fetch session id from database
+		sql::Statement *stmt;
+		sql::ResultSet *res;
+
+		wstring strPname = params.at ( L"subsid" ).as_string () ;
+		char szModelId [ 256 ] ;
+		int iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), strPname.length (), szModelId, 256, "", NULL ) ;
+		szModelId [ iLen ] = 0 ;
+
+		// 		char szSessionId [ 256 ] ;
+		// 		int iLen = WideCharToMultiByte ( CP_ACP, 0, sessionId.c_str(), sessionId.length(), szSessionId, 256, "", NULL ) ;
+		// 		szSessionId [ iLen ] = 0 ;
+
+		// Make query string
+		char szQuery [ 5000 ] ;
+
+		sprintf_s ( szQuery, 5000, "SELECT * FROM tbl_subscription WHERE HashId='%s'", szModelId ) ;
+		cout << szQuery << endl ;
+
+		// Run query
+		stmt = con->createStatement () ;
+		res = stmt->executeQuery ( szQuery ) ;
+
+		if ( res->rowsCount () == 0 ) {
+			answer [ L"message" ] = json::value::string ( L"Invalid token. Token is expired." ) ;
+			answer [ L"result_number" ] = json::value::number ( 9999 ) ;
+			http_result = status_codes::Unauthorized ;
+		}
+
+		while ( res->next () ) {
+			iModelId = res->getInt ( "ModelId" ) ;
+			//		cout << "\t... MySQL replies: ";
+			// Access column data by alias or column name 
+			//cout << res->getString("_message") << endl;
+			//cout << "\t... MySQL says it again: ";
+			// Access column data by numeric offset, 1 is the first column 
+			//cout << res->getString(1) << endl;
+		}
+		delete res;
+		delete stmt;
+
+	}
+
+	int iFileId = -1 ;
+	if ( iModelId != -1 ) { // Fetch product id from database
+
+		sql::Statement *stmt ;
+		sql::ResultSet *res ;
+
+		// Make query string
+		char szQuery [ 5000 ] ;
+
+		//wstring strPname = params.at(L"package_name").as_string() ;
+		//  		char szPaclageName [ 256 ] ;
+		//  		int iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str(), strPname.length(), szPaclageName, 256, "", NULL ) ;
+		//  		szPaclageName [ iLen ] = 0 ;
+
+		sprintf_s ( szQuery, 5000, "SELECT * FROM tbl_model_desc WHERE id=%d", iModelId ) ;
+		cout << szQuery << endl ;
+
+		// Run query
+		stmt = con->createStatement () ;
+		res = stmt->executeQuery ( szQuery ) ;
+
+		if ( res->rowsCount () == 0 ) {
+			answer [ L"message" ] = json::value::string ( L"Model not found!" ) ;
+			http_result = status_codes::InternalError ;
+		}
+
+		while ( res->next () ) {
+			iFileId = res->getInt ( "PCFileId" ) ;
+		}
+		delete res;
+		delete stmt;
+	}
+
+	if ( iFileId != -1 ) {
+		sql::Statement *stmt;
+		sql::ResultSet *res;
+
+		// Make query string
+		char szQuery [ 5000 ] ;
+
+		sprintf_s ( szQuery, 5000, "SELECT * FROM tbl_file_address WHERE id=%d", iFileId ) ;
+		cout << szQuery << endl ;
+
+		// Run query
+		stmt = con->createStatement () ;
+		res = stmt->executeQuery ( szQuery ) ;
+
+		if ( res->rowsCount () == 0 ) {
+			answer [ L"message" ] = json::value::string ( L"This user does not have permission to access this product!" ) ;
+			answer [ L"result_number" ] = json::value::number ( 2053 ) ;
+			http_result = status_codes::NotFound ;
+		}
+
+		while ( res->next () ) {
+
+			string strPathName = "" ;//= res->getString ( "UserId" ) ;
+
+			std::istream* blob_stream = res->getBlob ( "FilePathName" );
+
+			char* pPathName = NULL;
+
+			if ( blob_stream ) {
+				try {
+					blob_stream->seekg ( 0, std::ios::end );
+					uint32_t blobSize = (uint32_t)blob_stream->tellg ();
+					blob_stream->seekg ( 0, std::ios::beg );
+					pPathName = new char [ blobSize + 1 ];
+					blob_stream->read ( pPathName, blobSize );
+					pPathName [ blobSize ] = 0;
+					//blob_stream->getline(key, 600);
+				}
+				catch ( ... ) {
+
+				}
+				//std::string retrievedPassword(pws); // also, should handle case where Password length > PASSWORD_LENGTH
+				if ( pPathName ) {
+					strPathName = pPathName;
+					delete pPathName;
+				}
+			}
+
+			json::value msg ;
+			answer [ L"message" ] = msg ;
+
+			FILE* pFile = fopen ( strPathName.c_str (), "rb" ) ;
+			fseek ( pFile, 0, SEEK_END ) ;
+			int iSize = ftell ( pFile ) ;
+
+			char* pBuf = new char [ iSize ] ;
+			fseek ( pFile, 0, SEEK_SET ) ;
+			fread ( pBuf, iSize, 1, pFile ) ;
+			fclose ( pFile ) ;
+
+			int iDestSize = Base64EncodeGetRequiredLength ( iSize, 0 ) ;
+			int iEncLen = iDestSize ;
+
+			PSTR pDest = new CHAR [ iDestSize + 1 ] ;
+			Base64Encode ( (BYTE*)pBuf, iSize, pDest, &iEncLen ) ;
+			pDest [ iEncLen ] = 0 ;
+
+			string s = pDest ;
+
+			wchar_t* pszScrKey = new wchar_t [ iEncLen + 1 ] ;
+			int iLen = MultiByteToWideChar ( CP_ACP, 0, s.c_str (), s.length (), pszScrKey, iEncLen ) ;
+			pszScrKey [ iLen ] = 0 ;
+
+
+			if ( pBuf )
+				delete pBuf ;
+
+			answer [ L"error" ] = json::value::boolean ( false ) ;
+			answer [ L"result_number" ] = json::value::number ( 1 ) ;
+			answer [ L"model" ] = json::value::string ( pszScrKey ) ;
+			http_result = status_codes::OK ;
+		}
+		delete res ;
+		delete stmt ;
+
+	} //catch (sql::SQLException &e) {
+	  //  	  cout << "# ERR: SQLException in " << __FILE__ ;
+	  //  	  cout << "(" << __FUNCTION__ << ") on line " << __LINE__ << endl;
+	  //  	  cout << "# ERR: " << e.what();
+	  //  	  cout << " (MySQL error code: " << e.getErrorCode();
+	  //  	  cout << ", SQLState: " << e.getSQLState() << " )" << endl;
+	  //}
+	delete con ;
+}
 
 
 // void CStoreRegServer::OnAnalyticsData ( wstring& sessionId, json::value& params, json::value& answer, status_code& http_result )
@@ -540,6 +943,10 @@ void CModelPublishServer::HandleGet ( http_request request )
 
 		json::value jsonParams2 ;//= request.extract_json(true).get() ;
 		//ucout << jsonParams.serialize() << endl ;
+		
+		if ( query_comps.find ( L"magic" ) == query_comps.end () || query_comps [ L"magic" ] != U(MODEL_API_MAGIC) ) {
+			// Request not sent from client
+		}
 
 		if ( path_comps.size() > 0 ) {
 
@@ -563,7 +970,7 @@ void CModelPublishServer::HandleGet ( http_request request )
 				if ( query_comps.find ( L"clientid" ) != query_comps.end () )
 					jsonParams2 [ L"clientid" ] = json::value::string ( query_comps [ L"clientid" ] ) ;
 
-				//OnGetAd ( jsonParams2, answer, http_result ) ;
+				OnGetAd ( jsonParams2, answer, http_result ) ;
 			}
 			else if ( strMethod == U ( MODEL_API_GET_INFO ) ) {
 
@@ -572,7 +979,7 @@ void CModelPublishServer::HandleGet ( http_request request )
 				if ( query_comps.find ( L"clientid" ) != query_comps.end () )
 					jsonParams2 [ L"clientid" ] = json::value::string ( query_comps [ L"clientid" ] ) ;
 
-				//OnGetAd ( jsonParams2, answer, http_result ) ;
+				OnGetInfo ( jsonParams2, answer, http_result ) ;
 			}
 			else {
 				answer [ L"message" ] = json::value::string(L"Unrecognized method name!") ;

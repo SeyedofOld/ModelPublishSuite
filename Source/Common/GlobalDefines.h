@@ -15,6 +15,8 @@
 
 #define MODEL_CLIENT_ID_PCWIN		"pcwin"
 
+#define MODEL_API_MAGIC				"tfzfepg"
+
 // Database defines
 #define MYSQL_SERVER		"tcp://127.0.0.1:3306"
 #define MYSQL_USER			"root"
