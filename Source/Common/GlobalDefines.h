@@ -25,3 +25,7 @@
 
 #define HMAC_SECRET_KEY		"Everything" // the light touches is our kingdom"
 
+#define MODEL_FILE_EXTENSION	".3dscan"
+#define AD_FILE_EXTENSION		".png"
+#define MODEL_FILE_PATH			"Models//"
+#define MODEL_AD_PATH			"Ads//"

@@ -43,6 +43,8 @@ CModelViewerDlg::CModelViewerDlg(CWnd* pParent /*=NULL*/)
 
 	m_ppszTextureNames = NULL ;
 	m_iTextureCount = 0 ;
+
+	m_pAdTex = NULL ;
 }
 
 void CModelViewerDlg::DoDataExchange(CDataExchange* pDX)
@@ -433,6 +435,17 @@ void CModelViewerDlg::Render()
 		CD3DModelUtils::RenderD3DModel ( pDevice, *m_pd3dModel1 ) ;
 	}
 
+	if ( m_pAdTex ) {
+		CRect rc ;
+		GetClientRect ( rc ) ;
+		D3DSURFACE_DESC desc ;
+		m_pAdTex->GetLevelDesc ( 0, &desc ) ;
+
+		C3DGfx::GetInstance ()->GetD3DXSprite ()->Begin ( D3DXSPRITE_ALPHABLEND ) ;
+		C3DGfx::GetInstance ()->GetD3DXSprite ()->Draw ( m_pAdTex, NULL, NULL, &D3DXVECTOR3 (0, rc.Height() - desc.Height, 0), 0xffffffff ) ;
+		C3DGfx::GetInstance ()->GetD3DXSprite ()->End () ;
+	}
+
 	ImGui::Render () ;
 
 	C3DGfx::GetInstance ()->EndFrame ();
@@ -704,7 +717,7 @@ void CModelViewerDlg::UpdateGui ()
 					ImGui::PopStyleColor() ;
 
 			}
-			ImGui::Separator () ;
+			//ImGui::Separator () ;
 			ImGui::Unindent ( 10.0f ) ;
 
 		}
@@ -719,11 +732,13 @@ void CModelViewerDlg::UpdateGui ()
 	flags |= ImGuiWindowFlags_NoInputs;
 	flags |= ImGuiWindowFlags_NoTitleBar;
 
+	ImGui::PushStyleColor ( ImGuiCol_WindowBg, ImVec4 ( 0, 0, 0, 0 ) ) ;
 	if ( ImGui::Begin ( "Bar", NULL, flags ) ) {
-		ImGui::SetWindowSize ( ImVec2(600, 50) ) ;
+		ImGui::SetWindowSize ( ImVec2(800, 50) ) ;
 		ImGui::ProgressBar ( (float)( GetTickCount () % 10000 ) / 10000.0f ) ;
 		ImGui::End ();
 	}
+	ImGui::PopStyleColor () ;
 
 
 	ImGui::EndFrame () ;
@@ -862,7 +877,25 @@ bool CModelViewerDlg::Load3DScanFromUrl ( CString& strUrl )
 
 		CModelServiceWebClient client ;
 		char* p = NULL ;
-		client.GetModel ( strUrl.GetBuffer (), MODEL_CLIENT_ID_PCWIN, &p ) ;
+		if ( client.GetModelInfo ( (wchar_t*)builder_mdl.to_string().c_str(), MODEL_CLIENT_ID_PCWIN, &p ) ) {
+			TDSCAN_FILE_HEADER hdr ;
+			memcpy ( &hdr, p, sizeof ( TDSCAN_FILE_HEADER ) ) ;
+			int mm = 1 ;
+		}
+	}
+
+	{
+		web::uri_builder builder_mdl ;
+		builder_mdl.set_scheme ( builder.scheme () ) ;
+		builder_mdl.set_host ( builder.host () ) ;
+		builder_mdl.set_port ( builder.port () ) ;
+		builder_mdl.set_path ( U ( MODEL_SERVICE_PATH ) ) ;
+		builder_mdl.append_path ( U ( MODEL_API_GET ) ) ;
+		builder_mdl.append_query ( L"subsid", query_split [ L"subsid" ] ) ;
+
+		CModelServiceWebClient client ;
+		char* p = NULL ;
+		client.GetModel ( (wchar_t*)builder_mdl.to_string ().c_str(), MODEL_CLIENT_ID_PCWIN, &p ) ;
 
 		TD_SCAN_MODEL* pModel = C3DScanFile::Load3DScanModelFromMemory ( p, 10000000 ) ;
 		if ( pModel ) {
@@ -884,20 +917,6 @@ bool CModelViewerDlg::Load3DScanFromUrl ( CString& strUrl )
 	}
 
 	{
-		web::uri_builder builder_mdl ;
-		builder_mdl.set_scheme ( builder.scheme () ) ;
-		builder_mdl.set_host ( builder.host () ) ;
-		builder_mdl.set_port ( builder.port () ) ;
-		builder_mdl.set_path ( U ( MODEL_SERVICE_PATH ) ) ;
-		builder_mdl.append_path ( U ( MODEL_API_GET ) ) ;
-		builder_mdl.append_query ( L"subsid", query_split [ L"subsid" ] ) ;
-
-		CModelServiceWebClient client ;
-		char* p = NULL ;
-		client.GetModel ( strUrl.GetBuffer (), MODEL_CLIENT_ID_PCWIN, &p ) ;
-	}
-
-	{
 		web::uri_builder builder_ad ;
 		builder_ad.set_scheme ( builder.scheme () ) ;
 		builder_ad.set_host ( builder.host () ) ;
@@ -908,7 +927,10 @@ bool CModelViewerDlg::Load3DScanFromUrl ( CString& strUrl )
 
 		CModelServiceWebClient client ;
 		char* p = NULL ;
-		client.GetModel ( strUrl.GetBuffer (), MODEL_CLIENT_ID_PCWIN, &p ) ;
+		int iSize = 0 ;
+		if ( client.GetAd ( (wchar_t*)builder_ad.to_string ().c_str(), MODEL_CLIENT_ID_PCWIN, &p, iSize, m_strAdUrl ) ) {
+			D3DXCreateTextureFromFileInMemory ( C3DGfx::GetInstance ()->GetDevice (), p, iSize, &m_pAdTex ) ;
+		}
 	}
 
 	return true ;

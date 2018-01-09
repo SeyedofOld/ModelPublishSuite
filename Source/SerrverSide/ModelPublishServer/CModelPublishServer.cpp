@@ -1,5 +1,4 @@
-#include "stdafx.h"
-
+#include "CModelPublishServer.h"
 #include <stdlib.h>
 #include <iostream>
 #include <conio.h>
@@ -16,74 +15,25 @@
 
 #include <map>
 #include <set>
-#include "cpprest/json.h"
-#include "cpprest/http_listener.h"
-#include "cpprest/uri.h"
-#include "cpprest/asyncrt_utils.h"
 
 using namespace std;
+
 using namespace web; 
 using namespace utility;
 using namespace http;
 using namespace web::http::experimental::listener;
-
 
 using namespace sql ;
 
 #define TRACE(msg)            wcout << msg
 #define TRACE_ACTION(a, k, v) wcout << a << L" (" << k << L", " << v << L")\n"
 
+char CModelPublishServer::m_szServerRootFolder [ MAX_PATH ] = { 0 } ;
 
-/*
-Request:
-[GET]: http://testapi.ariogames.ir/purchase/key?pid=1&hash=4234253214323234325
-
-Response:
-Status code: 401
+CModelPublishServer::CModelPublishServer ()
 {
-  "message": "Invalid token. Token is expired.",
-  "error": true,
-  "result_number": 9999
+	m_szServerRootFolder [ 0 ] = 0 ;
 }
-
-Status code: 404
-{
-  "error": true,
-  "message": "this user do not have permission to access this product",
-  "result_number": 2053
-}
-
-Status code: 200
-{
-  "error": false,
-  "result_number": 1,
-  "message": {
-    "key": "123123"
-  }
-}
-*/
-
-class CModelPublishServer
-{
-public:
-    CModelPublishServer() { }
-    CModelPublishServer(utility::string_t url);
-
-	pplx::task<void> open() { return m_listener.open(); }
-    pplx::task<void> close() { return m_listener.close(); }
-
- 	//static void OnValidatePurchase ( wstring& sessionId, json::value& params, json::value& answer, status_code& http_result ) ;
-	static void OnGetModel ( json::value& params, json::value& answer, status_code& http_result ) ;
-	static void OnGetAd ( json::value& params, json::value& answer, status_code& http_result ) ;
-	static void OnGetInfo ( json::value& params, json::value& answer, status_code& http_result ) ;
-// 	static void OnAnalyticsData ( wstring& sessionId, json::value& params, json::value& answer, status_code& http_result ) ;
-
-private:
-    void HandleGet ( http_request message ) ;
-    void HandlePost ( http_request message ) ;
-    
-	http_listener m_listener;   
-};
 
 CModelPublishServer::CModelPublishServer(utility::string_t url) : m_listener(url)
 {
@@ -306,15 +256,6 @@ CModelPublishServer::CModelPublishServer(utility::string_t url) : m_listener(url
 
 void CModelPublishServer::OnGetModel ( json::value& params, json::value& answer, status_code& http_result )
 {
-// 	int iUserId = -1 ;
-// 	int iProductId = -1 ;
-
-// 	if ( ! params.has_field(L"package_name") ) {
-// 		answer [ L"message" ] = json::value::string(L"No product id specified!") ;
-// 		http_result = status_codes::InternalError ;
-// 		return ;
-// 	}
-
 	sql::Driver *driver;
 	sql::Connection *con;
 
@@ -453,45 +394,93 @@ void CModelPublishServer::OnGetModel ( json::value& params, json::value& answer,
 
 				}
 				//std::string retrievedPassword(pws); // also, should handle case where Password length > PASSWORD_LENGTH
-				if (pPathName) {
+				if ( pPathName ) {
 					strPathName = pPathName;
 					delete pPathName;
 				}
 			}
 
-			json::value msg ;
-			answer [ L"message" ] = msg ;
+			//json::value msg ;
+			//answer [ L"message" ] = msg ;
 
-			FILE* pFile = fopen ( strPathName.c_str (), "rb" ) ;
-			fseek ( pFile, 0, SEEK_END ) ;
-			int iSize = ftell ( pFile ) ;
-			
-			char* pBuf = new char [ iSize ] ;
-			fseek ( pFile, 0, SEEK_SET ) ;
-			fread ( pBuf, iSize, 1, pFile ) ;
-			fclose ( pFile ) ;
+			string strFullFilePathName ;
+			strFullFilePathName = m_szServerRootFolder ;
+			strFullFilePathName += MODEL_FILE_PATH ;
+			strFullFilePathName += strPathName.c_str() ;
 
-			int iDestSize = Base64EncodeGetRequiredLength ( iSize, 0 ) ;
-			int iEncLen = iDestSize ;
+			string strBase64FileName = strFullFilePathName + ".base64" ;
 
-			PSTR pDest = new CHAR [ iDestSize + 1 ] ;
-			Base64Encode ( (BYTE*)pBuf, iSize, pDest, &iEncLen ) ;
-			pDest [ iEncLen ] = 0 ;
+			wchar_t* pszModelBase64 = NULL ;
 
-			string s = pDest ;
+			FILE* pFile = fopen ( strBase64FileName.c_str(), "rb" ) ;
+			if ( ! pFile ) {
+				string strModelFileName = strFullFilePathName + MODEL_FILE_EXTENSION ;
+				pFile = fopen ( strModelFileName.c_str (), "rb" ) ;
 
-			wchar_t* pszScrKey = new wchar_t [ iEncLen + 1 ] ;
-			int iLen = MultiByteToWideChar ( CP_ACP, 0, s.c_str(), s.length (), pszScrKey, iEncLen ) ;
-			pszScrKey [ iLen ] = 0 ;
+				if ( ! pFile ) {
+					answer [ L"result_number" ] = json::value::number ( 100 ) ;
+					answer [ L"message" ] = json::value::string ( L"Could not open model file!" ) ;
+				}
+				else { // Open original binary model
+
+					fseek ( pFile, 0, SEEK_END ) ;
+					int iSize = ftell ( pFile ) ;
+
+					char* pBuf = new char [ iSize ] ;
+					fseek ( pFile, 0, SEEK_SET ) ;
+					fread ( pBuf, iSize, 1, pFile ) ;
+					fclose ( pFile ) ;
+
+					int iDestSize = Base64EncodeGetRequiredLength ( iSize, 0 ) ;
+					int iEncLen = iDestSize ;
+
+					PSTR pDest = new CHAR [ iDestSize + 1 ] ;
+					Base64Encode ( (BYTE*)pBuf, iSize, pDest, &iEncLen ) ;
+					pDest [ iEncLen ] = 0 ;
+
+					string s = pDest ;
+
+					pszModelBase64 = new wchar_t [ iEncLen + 1 ] ;
+					int iLen = MultiByteToWideChar ( CP_ACP, 0, s.c_str (), s.length (), pszModelBase64, iEncLen ) ;
+					pszModelBase64 [ iLen ] = 0 ;
+
+					pFile = fopen ( strBase64FileName.c_str (), "wb" ) ;
+					fwrite ( pszModelBase64, sizeof ( wchar_t ), iLen, pFile ) ;
+					fclose ( pFile ) ;
 
 
-			if ( pBuf )
-				delete pBuf ;
+					if ( pBuf )
+						delete pBuf ;
 
-			answer [ L"error" ] = json::value::boolean(false) ;
-			answer [ L"result_number" ] = json::value::number ( 1 ) ;
-			answer [ L"model" ] = json::value::string(pszScrKey) ;
-			http_result = status_codes::OK ;
+					answer [ L"error" ] = json::value::boolean ( false ) ;
+					answer [ L"result_number" ] = json::value::number ( 1 ) ;
+					answer [ L"model" ] = json::value::string ( pszModelBase64 ) ;
+					http_result = status_codes::OK ;
+				}
+
+			}
+			else { // Opened base64 file
+
+				fseek ( pFile, 0, SEEK_END ) ;
+				int iSize = ftell ( pFile ) ;
+
+				pszModelBase64 = new wchar_t [ iSize + 1 ] ;
+				fseek ( pFile, 0, SEEK_SET ) ;
+				fread ( pszModelBase64, iSize, 1, pFile ) ;
+				fclose ( pFile ) ;
+				
+				pszModelBase64 [ iSize ] = 0 ;
+
+				answer [ L"error" ] = json::value::boolean ( false ) ;
+				answer [ L"result_number" ] = json::value::number ( 1 ) ;
+				answer [ L"model" ] = json::value::string ( pszModelBase64 ) ;
+				http_result = status_codes::OK ;
+
+			}
+
+			if ( pszModelBase64 )
+				delete pszModelBase64 ;
+
 		}
 		delete res ;
 		delete stmt ;
@@ -508,15 +497,6 @@ void CModelPublishServer::OnGetModel ( json::value& params, json::value& answer,
 
 void CModelPublishServer::OnGetAd ( json::value& params, json::value& answer, status_code& http_result )
 {
-	// 	int iUserId = -1 ;
-	// 	int iProductId = -1 ;
-
-	// 	if ( ! params.has_field(L"package_name") ) {
-	// 		answer [ L"message" ] = json::value::string(L"No product id specified!") ;
-	// 		http_result = status_codes::InternalError ;
-	// 		return ;
-	// 	}
-
 	sql::Driver *driver;
 	sql::Connection *con;
 
@@ -535,7 +515,7 @@ void CModelPublishServer::OnGetAd ( json::value& params, json::value& answer, st
 		return ;
 	}
 
-	int iModelId = -1 ;
+	int iAdId = -1 ;
 
 	{ // Fetch session id from database
 		sql::Statement *stmt;
@@ -567,7 +547,7 @@ void CModelPublishServer::OnGetAd ( json::value& params, json::value& answer, st
 		}
 
 		while ( res->next () ) {
-			iModelId = res->getInt ( "ModelId" ) ;
+			iAdId = res->getInt ( "AdId" ) ;
 			//		cout << "\t... MySQL replies: ";
 			// Access column data by alias or column name 
 			//cout << res->getString("_message") << endl;
@@ -580,47 +560,15 @@ void CModelPublishServer::OnGetAd ( json::value& params, json::value& answer, st
 
 	}
 
-	int iFileId = -1 ;
-	if ( iModelId != -1 ) { // Fetch product id from database
 
-		sql::Statement *stmt ;
-		sql::ResultSet *res ;
-
-		// Make query string
-		char szQuery [ 5000 ] ;
-
-		//wstring strPname = params.at(L"package_name").as_string() ;
-		//  		char szPaclageName [ 256 ] ;
-		//  		int iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str(), strPname.length(), szPaclageName, 256, "", NULL ) ;
-		//  		szPaclageName [ iLen ] = 0 ;
-
-		sprintf_s ( szQuery, 5000, "SELECT * FROM tbl_model_desc WHERE id=%d", iModelId ) ;
-		cout << szQuery << endl ;
-
-		// Run query
-		stmt = con->createStatement () ;
-		res = stmt->executeQuery ( szQuery ) ;
-
-		if ( res->rowsCount () == 0 ) {
-			answer [ L"message" ] = json::value::string ( L"Model not found!" ) ;
-			http_result = status_codes::InternalError ;
-		}
-
-		while ( res->next () ) {
-			iFileId = res->getInt ( "PCFileId" ) ;
-		}
-		delete res;
-		delete stmt;
-	}
-
-	if ( iFileId != -1 ) {
+	if ( iAdId != -1 ) {
 		sql::Statement *stmt;
 		sql::ResultSet *res;
 
 		// Make query string
 		char szQuery [ 5000 ] ;
 
-		sprintf_s ( szQuery, 5000, "SELECT * FROM tbl_file_address WHERE id=%d", iFileId ) ;
+		sprintf_s ( szQuery, 5000, "SELECT * FROM tbl_advertisement WHERE id=%d", iAdId ) ;
 		cout << szQuery << endl ;
 
 		// Run query
@@ -635,65 +583,143 @@ void CModelPublishServer::OnGetAd ( json::value& params, json::value& answer, st
 
 		while ( res->next () ) {
 
-			string strPathName = "" ;//= res->getString ( "UserId" ) ;
+			string strPathName = "" ;
+			string strUrl = "" ;
 
-			std::istream* blob_stream = res->getBlob ( "FilePathName" );
+			{
+				std::istream* blob_stream = res->getBlob ( "FilePathName" );
 
-			char* pPathName = NULL;
+				char* pPathName = NULL;
 
-			if ( blob_stream ) {
-				try {
-					blob_stream->seekg ( 0, std::ios::end );
-					uint32_t blobSize = (uint32_t)blob_stream->tellg ();
-					blob_stream->seekg ( 0, std::ios::beg );
-					pPathName = new char [ blobSize + 1 ];
-					blob_stream->read ( pPathName, blobSize );
-					pPathName [ blobSize ] = 0;
-					//blob_stream->getline(key, 600);
-				}
-				catch ( ... ) {
+				if ( blob_stream ) {
+					try {
+						blob_stream->seekg ( 0, std::ios::end );
+						uint32_t blobSize = (uint32_t)blob_stream->tellg ();
+						blob_stream->seekg ( 0, std::ios::beg );
+						pPathName = new char [ blobSize + 1 ];
+						blob_stream->read ( pPathName, blobSize );
+						pPathName [ blobSize ] = 0;
+					}
+					catch ( ... ) {
 
-				}
-				//std::string retrievedPassword(pws); // also, should handle case where Password length > PASSWORD_LENGTH
-				if ( pPathName ) {
-					strPathName = pPathName;
-					delete pPathName;
+					}
+					if ( pPathName ) {
+						strPathName = pPathName;
+						delete pPathName;
+					}
 				}
 			}
 
-			json::value msg ;
-			answer [ L"message" ] = msg ;
+			{
+				std::istream* blob_stream = res->getBlob ( "AdUrl" );
 
-			FILE* pFile = fopen ( strPathName.c_str (), "rb" ) ;
-			fseek ( pFile, 0, SEEK_END ) ;
-			int iSize = ftell ( pFile ) ;
+				char* pszUrl = NULL;
 
-			char* pBuf = new char [ iSize ] ;
-			fseek ( pFile, 0, SEEK_SET ) ;
-			fread ( pBuf, iSize, 1, pFile ) ;
-			fclose ( pFile ) ;
+				if ( blob_stream ) {
+					try {
+						blob_stream->seekg ( 0, std::ios::end );
+						uint32_t blobSize = (uint32_t)blob_stream->tellg ();
+						blob_stream->seekg ( 0, std::ios::beg );
+						pszUrl = new char [ blobSize + 1 ];
+						blob_stream->read ( pszUrl, blobSize );
+						pszUrl [ blobSize ] = 0;
+					}
+					catch ( ... ) {
 
-			int iDestSize = Base64EncodeGetRequiredLength ( iSize, 0 ) ;
-			int iEncLen = iDestSize ;
+					}
+					if ( pszUrl ) {
+						strUrl = pszUrl ;
+						delete pszUrl ;
+					}
+				}
+			}
 
-			PSTR pDest = new CHAR [ iDestSize + 1 ] ;
-			Base64Encode ( (BYTE*)pBuf, iSize, pDest, &iEncLen ) ;
-			pDest [ iEncLen ] = 0 ;
+			wchar_t* pszUrl = new wchar_t [ strUrl.length() + 1 ] ;
+			int iLen = MultiByteToWideChar ( CP_ACP, 0, strUrl.c_str (), strUrl.length (), pszUrl, strUrl.length () + 1 ) ;
+			pszUrl [ iLen ] = 0 ;
 
-			string s = pDest ;
+			answer [ L"url" ] = json::value::string ( pszUrl ) ;
 
-			wchar_t* pszScrKey = new wchar_t [ iEncLen + 1 ] ;
-			int iLen = MultiByteToWideChar ( CP_ACP, 0, s.c_str (), s.length (), pszScrKey, iEncLen ) ;
-			pszScrKey [ iLen ] = 0 ;
+			//json::value msg ;
+			//answer [ L"message" ] = msg ;
+
+			string strFullFilePathName ;
+			strFullFilePathName = m_szServerRootFolder ;
+			strFullFilePathName += MODEL_AD_PATH ;
+			strFullFilePathName += strPathName.c_str () ;
+
+			string strBase64FileName = strFullFilePathName + ".base64" ;
+
+			wchar_t* pszBase64Ad = NULL ;
+
+			FILE* pFile = fopen ( strBase64FileName.c_str (), "rb" ) ;
+			if ( !pFile ) {
+				string strModelFileName = strFullFilePathName + AD_FILE_EXTENSION ;
+				pFile = fopen ( strModelFileName.c_str (), "rb" ) ;
+
+				if ( !pFile ) {
+					answer [ L"result_number" ] = json::value::number ( 100 ) ;
+					answer [ L"message" ] = json::value::string ( L"Could not open model file!" ) ;
+				}
+				else { // Open original binary model
+
+					fseek ( pFile, 0, SEEK_END ) ;
+					int iSize = ftell ( pFile ) ;
+
+					char* pBuf = new char [ iSize ] ;
+					fseek ( pFile, 0, SEEK_SET ) ;
+					fread ( pBuf, iSize, 1, pFile ) ;
+					fclose ( pFile ) ;
+
+					int iDestSize = Base64EncodeGetRequiredLength ( iSize, 0 ) ;
+					int iEncLen = iDestSize ;
+
+					PSTR pDest = new CHAR [ iDestSize + 1 ] ;
+					Base64Encode ( (BYTE*)pBuf, iSize, pDest, &iEncLen ) ;
+					pDest [ iEncLen ] = 0 ;
+
+					string s = pDest ;
+
+					pszBase64Ad = new wchar_t [ iEncLen + 1 ] ;
+					int iLen = MultiByteToWideChar ( CP_ACP, 0, s.c_str (), s.length (), pszBase64Ad, iEncLen ) ;
+					pszBase64Ad [ iLen ] = 0 ;
+
+					pFile = fopen ( strBase64FileName.c_str (), "wb" ) ;
+					fwrite ( pszBase64Ad, sizeof ( wchar_t ), iLen, pFile ) ;
+					fclose ( pFile ) ;
 
 
-			if ( pBuf )
-				delete pBuf ;
+					if ( pBuf )
+						delete pBuf ;
 
-			answer [ L"error" ] = json::value::boolean ( false ) ;
-			answer [ L"result_number" ] = json::value::number ( 1 ) ;
-			answer [ L"model" ] = json::value::string ( pszScrKey ) ;
-			http_result = status_codes::OK ;
+					answer [ L"error" ] = json::value::boolean ( false ) ;
+					answer [ L"result_number" ] = json::value::number ( 1 ) ;
+					answer [ L"ad" ] = json::value::string ( pszBase64Ad ) ;
+					http_result = status_codes::OK ;
+				}
+
+			}
+			else { // Opened base64 file
+
+				fseek ( pFile, 0, SEEK_END ) ;
+				int iSize = ftell ( pFile ) ;
+
+				pszBase64Ad = new wchar_t [ iSize + 1 ] ;
+				fseek ( pFile, 0, SEEK_SET ) ;
+				fread ( pszBase64Ad, iSize, 1, pFile ) ;
+				fclose ( pFile ) ;
+
+				pszBase64Ad [ iSize ] = 0 ;
+
+				answer [ L"error" ] = json::value::boolean ( false ) ;
+				answer [ L"result_number" ] = json::value::number ( 1 ) ;
+				answer [ L"ad" ] = json::value::string ( pszBase64Ad ) ;
+				http_result = status_codes::OK ;
+			}
+
+			if ( pszBase64Ad )
+				delete pszBase64Ad ;
+
 		}
 		delete res ;
 		delete stmt ;
@@ -710,15 +736,6 @@ void CModelPublishServer::OnGetAd ( json::value& params, json::value& answer, st
 
 void CModelPublishServer::OnGetInfo ( json::value& params, json::value& answer, status_code& http_result )
 {
-	// 	int iUserId = -1 ;
-	// 	int iProductId = -1 ;
-
-	// 	if ( ! params.has_field(L"package_name") ) {
-	// 		answer [ L"message" ] = json::value::string(L"No product id specified!") ;
-	// 		http_result = status_codes::InternalError ;
-	// 		return ;
-	// 	}
-
 	sql::Driver *driver;
 	sql::Connection *con;
 
@@ -863,39 +880,80 @@ void CModelPublishServer::OnGetInfo ( json::value& params, json::value& answer, 
 				}
 			}
 
-			json::value msg ;
-			answer [ L"message" ] = msg ;
+			//json::value msg ;
+			//answer [ L"message" ] = msg ;
 
-			FILE* pFile = fopen ( strPathName.c_str (), "rb" ) ;
-			fseek ( pFile, 0, SEEK_END ) ;
-			int iSize = ftell ( pFile ) ;
+			string strFullFilePathName ;
+			strFullFilePathName = m_szServerRootFolder ;
+			strFullFilePathName += MODEL_FILE_PATH ;
+			strFullFilePathName += strPathName.c_str () ;
 
-			char* pBuf = new char [ iSize ] ;
-			fseek ( pFile, 0, SEEK_SET ) ;
-			fread ( pBuf, iSize, 1, pFile ) ;
-			fclose ( pFile ) ;
+			string strBase64FileName = strFullFilePathName + ".base64" ;
 
-			int iDestSize = Base64EncodeGetRequiredLength ( iSize, 0 ) ;
-			int iEncLen = iDestSize ;
+			wchar_t* pszBase64Hdr = NULL ;
 
-			PSTR pDest = new CHAR [ iDestSize + 1 ] ;
-			Base64Encode ( (BYTE*)pBuf, iSize, pDest, &iEncLen ) ;
-			pDest [ iEncLen ] = 0 ;
+			FILE* pFile = fopen ( strBase64FileName.c_str (), "rb" ) ;
+			if ( ! pFile ) {
+				string strModelFileName = strFullFilePathName + MODEL_FILE_EXTENSION ;
+				pFile = fopen ( strModelFileName.c_str (), "rb" ) ;
 
-			string s = pDest ;
+				if ( !pFile ) {
+					answer [ L"result_number" ] = json::value::number ( 100 ) ;
+					answer [ L"message" ] = json::value::string ( L"Could not open model file!" ) ;
+				}
+				else { // Open original binary model
 
-			wchar_t* pszScrKey = new wchar_t [ iEncLen + 1 ] ;
-			int iLen = MultiByteToWideChar ( CP_ACP, 0, s.c_str (), s.length (), pszScrKey, iEncLen ) ;
-			pszScrKey [ iLen ] = 0 ;
+					int iSize = 64 ;
 
+					char* pBuf = new char [ iSize ] ;
+					fseek ( pFile, 0, SEEK_SET ) ;
+					fread ( pBuf, iSize, 1, pFile ) ;
+					fclose ( pFile ) ;
 
-			if ( pBuf )
-				delete pBuf ;
+					int iDestSize = Base64EncodeGetRequiredLength ( iSize, 0 ) ;
+					int iEncLen = iDestSize ;
 
-			answer [ L"error" ] = json::value::boolean ( false ) ;
-			answer [ L"result_number" ] = json::value::number ( 1 ) ;
-			answer [ L"model" ] = json::value::string ( pszScrKey ) ;
-			http_result = status_codes::OK ;
+					PSTR pDest = new CHAR [ iDestSize + 1 ] ;
+					Base64Encode ( (BYTE*)pBuf, iSize, pDest, &iEncLen ) ;
+					pDest [ iEncLen ] = 0 ;
+
+					string s = pDest ;
+
+					pszBase64Hdr = new wchar_t [ iEncLen + 1 ] ;
+					int iLen = MultiByteToWideChar ( CP_ACP, 0, s.c_str (), s.length (), pszBase64Hdr, iEncLen ) ;
+					pszBase64Hdr [ iLen ] = 0 ;
+
+					if ( pBuf )
+						delete pBuf ;
+
+					answer [ L"error" ] = json::value::boolean ( false ) ;
+					answer [ L"result_number" ] = json::value::number ( 1 ) ;
+					answer [ L"info" ] = json::value::string ( pszBase64Hdr ) ;
+					http_result = status_codes::OK ;
+				}
+
+			}
+			else { // Opened base64 file
+
+				int iSize = 64 ;
+				iSize = Base64EncodeGetRequiredLength ( iSize, 0 ) * 2 ;
+
+				pszBase64Hdr = new wchar_t [ iSize + 1 ] ;
+				fseek ( pFile, 0, SEEK_SET ) ;
+				fread ( pszBase64Hdr, iSize, sizeof(wchar_t), pFile ) ;
+				fclose ( pFile ) ;
+
+				pszBase64Hdr [ iSize ] = 0 ;
+
+				answer [ L"error" ] = json::value::boolean ( false ) ;
+				answer [ L"result_number" ] = json::value::number ( 1 ) ;
+				answer [ L"info" ] = json::value::string ( pszBase64Hdr ) ;
+				http_result = status_codes::OK ;
+			}
+
+			if ( pszBase64Hdr )
+				delete pszBase64Hdr ;
+
 		}
 		delete res ;
 		delete stmt ;
@@ -910,6 +968,12 @@ void CModelPublishServer::OnGetInfo ( json::value& params, json::value& answer, 
 	delete con ;
 }
 
+
+void CModelPublishServer::SetServerRootFolder ( char* pszRoot )
+{
+	if ( pszRoot )
+		strcpy ( m_szServerRootFolder, pszRoot ) ;
+}
 
 // void CStoreRegServer::OnAnalyticsData ( wstring& sessionId, json::value& params, json::value& answer, status_code& http_result )
 // {

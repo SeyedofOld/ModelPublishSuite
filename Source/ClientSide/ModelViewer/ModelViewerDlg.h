@@ -60,6 +60,9 @@ public:
 	float4_rgba		m_clrClear ;
 	float4_rgba		m_clrLight ; 
 
+	IDirect3DTexture9*	m_pAdTex ;
+	std::string			m_strAdUrl ;
+
 public:
 	void Update() ;
 	void ShowExampleMenuFile();
