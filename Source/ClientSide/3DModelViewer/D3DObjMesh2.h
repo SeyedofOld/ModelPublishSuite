@@ -9,20 +9,6 @@
 #include "ObjLoader.h"
 #include <map>
 
-#ifndef SAFE_DELETE
-/// For pointers allocated with new.
-#define SAFE_DELETE(p)			{ if(p) { delete (p);     (p)=NULL; } }
-#endif
-
-#ifndef SAFE_DELETE_ARRAY
-/// For arrays allocated with new [].
-#define SAFE_DELETE_ARRAY(p)	{ if(p) { delete[] (p);   (p)=NULL; } }
-#endif
-
-#ifndef SAFE_RELEASE
-/// For use with COM pointers.
-#define SAFE_RELEASE(p)			{ if(p) { (p)->Release(); (p)=NULL; } }
-#endif
 
 #ifndef MIN
 #define MIN(x,y)				( (x)<(y)? (x) : (y) )

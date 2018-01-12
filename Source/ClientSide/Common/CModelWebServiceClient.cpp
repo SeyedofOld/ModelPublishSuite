@@ -170,6 +170,126 @@ void make_request_post ( http_client & client, method mtd, json::value const & j
 
 bool CModelServiceWebClient::GetModel ( wchar_t* pszUrl, char* pszClientId, char** ppData, int iInstanceId )
 {
+	if ( !pszUrl || !ppData )
+		return false ;
+	if ( !pszClientId )
+		return false ;
+
+	// 	wchar_t szUrl [ 1000 ] ;
+	// 	int iLen = MultiByteToWideChar ( CP_ACP, 0, pszUrl, strlen(pszUrl), szUrl, 1000 ) ;
+	// 	szUrl [ iLen ] = 0 ;
+
+	wchar_t szClientID [ 1000 ] ;
+	int iLen = MultiByteToWideChar ( CP_ACP, 0, pszClientId, strlen ( pszClientId ), szClientID, 1000 ) ;
+	szClientID [ iLen ] = 0 ;
+
+	web::uri inuri ( pszUrl ) ;
+
+	uri_builder builder ( inuri ) ;
+	builder.append_query ( U ( "client" ), szClientID ) ;
+
+	auto path_query_fragment = builder.to_string ();
+
+	std::wcout << path_query_fragment << endl;
+
+	json::value answer ;
+	status_code http_result ;
+
+	http_client_config config;
+	config.set_validate_certificates ( false ) ;
+
+	try {
+		http_client client ( builder.to_uri (), config ) ;
+		MessageBox ( NULL, "1", "", MB_OK ) ;
+		http_request request ( methods::GET ) ;
+		request.set_request_uri ( builder.to_uri () ) ;
+
+		request.set_progress_handler ( CModelServiceWebClient::ProgressCallback ) ;
+
+		auto response = client.request ( request ).get () ;
+
+		//auto response = request.get_response ().get () ;
+
+		http_result = response.status_code () ;
+		if ( http_result == status_codes::OK ) {
+			answer = response.extract_json ( true ).get () ;
+		}
+		else {
+			answer = response.extract_json ( true ).get () ;
+		}
+	}
+	catch ( ... ) {
+		http_result = status_codes::ServiceUnavailable ;
+	}
+
+
+	//make_request_get ( client, methods::GET, my_uri, answer, http_result, &CModelServiceWebClient::ProgressCallback ) ;
+	{
+	}
+
+
+	//wcout << answer << endl ;
+	wcout << L"HTTP Status Code:" << http_result << endl ;
+
+	//	rbInvalidSessionId = (http_result == status_codes::Unauthorized) ;
+
+	if ( http_result != status_codes::OK ) {
+		*ppData = NULL ;
+		return false ;
+	}
+	else if ( answer.is_null () ) {
+		*ppData = NULL ;
+		return false ;
+	}
+	else if ( !answer.has_field ( L"message" ) ) {
+		*ppData = NULL ;
+		return false ;
+	}
+	else {
+		//json::value imessage = answer[L"message"];
+		if ( !answer.has_field ( L"model" ) )
+		{
+			*ppData = NULL;
+			return false;
+		}
+		else {
+			wstring str1 = answer [ L"model" ].as_string ();
+			// 		wstring str2 = L"OK" ;
+			// 		if ( str1 != str2 ) {
+			// 			*ppszRegKey = NULL ;
+			// 			return false ;
+			// 		}
+
+			//str1 = answer[L"key"].as_string();
+
+			char* pszAnsi = new char [ str1.length () + 1 ] ;
+			int iLen = WideCharToMultiByte ( CP_ACP, 0, str1.c_str (), str1.length (), pszAnsi, str1.length (), pszAnsi, NULL );
+			pszAnsi [ iLen ] = 0 ;
+
+			*ppData = new char [ iLen + 1 ] ;
+
+
+			int iDecSize = iLen ;
+			Base64Decode ( pszAnsi, iLen, (BYTE*)*ppData, &iDecSize ) ;
+
+			// 			int iLen = WideCharToMultiByte(CP_ACP, 0, str1.c_str(), str1.length(), NULL, 0, "", NULL);
+			// 			*ppszRegKey = new char[iLen + 1];
+			// 			WideCharToMultiByte(CP_ACP, 0, str1.c_str(), str1.length(), *ppszRegKey, iLen, "", NULL);
+			// 			char *p = ppszRegKey ;
+			// 			p[iLen] = 0;
+			if ( pszAnsi )
+				delete pszAnsi ;
+
+			return true;
+		}
+	}
+
+	return false ;
+}
+
+
+bool CModelServiceWebClient::GetModel2 ( wchar_t* pszUrl, char* pszClientId, char** ppData, int iInstanceId )
+{
 	if ( ! pszUrl || ! ppData )
 		return false ;
 	if ( ! pszClientId )
@@ -241,7 +361,7 @@ bool CModelServiceWebClient::GetModel ( wchar_t* pszUrl, char* pszClientId, char
 
 	make_request_get ( client, methods::GET, my_uri, answer, http_result, &CModelServiceWebClient::ProgressCallback ) ;
 
-	wcout << answer << endl ;
+	//wcout << answer << endl ;
 	wcout << L"HTTP Status Code:" << http_result << endl ;
 
 //	rbInvalidSessionId = (http_result == status_codes::Unauthorized) ;
@@ -412,13 +532,12 @@ bool CModelServiceWebClient::GetModel ( wchar_t* pszUrl, char* pszClientId, char
 	return false ;
 }*/
 
-bool CModelServiceWebClient::SendAnalyticsData ( char* pszSessionId, char* pszProductId, int iAnalyticType, int iParam1, int iParam2, bool& rbInvalidSessionId )
+/*bool CModelServiceWebClient::SendAnalyticsData ( char* pszSessionId, char* pszProductId, int iAnalyticType, int iParam1, int iParam2, bool& rbInvalidSessionId )
 {
 	if ( ! pszSessionId )
 		return false ;
 	if ( ! pszProductId )
 		return false ;
-/*
 	wchar_t szSid [ 1000 ] ;
 	int iLen = MultiByteToWideChar ( CP_ACP, 0, pszSessionId, strlen(pszSessionId), szSid, 1000 ) ;
 	szSid [ iLen ] = 0 ;
@@ -469,9 +588,9 @@ bool CModelServiceWebClient::SendAnalyticsData ( char* pszSessionId, char* pszPr
 
 		return true ;
 	}
-	*/
 	return true ;
 }
+*/
 
 void CModelServiceWebClient::ProgressCallback ( web::http::message_direction::direction direction, utility::size64_t so_far )
 {
@@ -651,7 +770,7 @@ bool CModelServiceWebClient::GetModelInfo ( wchar_t* pszUrl, char* pszClientId, 
 
 	make_request_get ( client, methods::GET, my_uri, answer, http_result, CModelServiceWebClient::ProgressCallbackNull ) ;
 
-	wcout << answer << endl ;
+	//wcout << answer << endl ;
 	wcout << L"HTTP Status Code:" << http_result << endl ;
 
 	if ( http_result != status_codes::OK ) {
@@ -701,9 +820,121 @@ bool CModelServiceWebClient::GetAd ( wchar_t* pszUrl, char* pszClientId, char** 
 	if ( !pszClientId )
 		return false ;
 
-// 	wchar_t szUrl [ 1000 ] ;
-// 	int iLen = MultiByteToWideChar ( CP_ACP, 0, pszUrl, strlen ( pszUrl ), szUrl, 1000 ) ;
-// 	szUrl [ iLen ] = 0 ;
+	wchar_t szClientID [ 1000 ] ;
+	int iLen = MultiByteToWideChar ( CP_ACP, 0, pszClientId, strlen ( pszClientId ), szClientID, 1000 ) ;
+	szClientID [ iLen ] = 0 ;
+
+	web::uri inuri ( pszUrl ) ;
+
+	uri_builder builder ( inuri ) ;
+	builder.append_query ( U ( "client" ), szClientID ) ;
+
+	auto path_query_fragment = builder.to_string ();
+
+	std::wcout << path_query_fragment << endl;
+
+	json::value answer ;
+	status_code http_result ;
+
+	http_client_config config;
+	config.set_validate_certificates ( false ) ;
+
+	try {
+		http_client client ( builder.to_uri (), config ) ;
+		http_request request ( methods::GET ) ;
+		request.set_request_uri ( builder.to_uri () ) ;
+
+		request.set_progress_handler ( CModelServiceWebClient::ProgressCallback ) ;
+
+		auto response = client.request ( request ).get () ;
+
+		//auto response = request.get_response ().get () ;
+
+		http_result = response.status_code () ;
+		if ( http_result == status_codes::OK ) {
+			answer = response.extract_json ( true ).get () ;
+		}
+		else {
+			answer = response.extract_json ( true ).get () ;
+		}
+	}
+	catch ( ... ) {
+		http_result = status_codes::ServiceUnavailable ;
+	}
+
+
+	//make_request_get ( client, methods::GET, my_uri, answer, http_result, &CModelServiceWebClient::ProgressCallback ) ;
+	{
+	}
+
+	//wcout << answer << endl ;
+	wcout << L"HTTP Status Code:" << http_result << endl ;
+
+	if ( http_result != status_codes::OK ) {
+		*ppData = NULL ;
+		return false ;
+	}
+	else if ( answer.is_null () ) {
+		*ppData = NULL ;
+		return false ;
+	}
+	else if ( !answer.has_field ( L"message" ) ) {
+		*ppData = NULL ;
+		return false ;
+	}
+	else {
+		if ( !answer.has_field ( L"ad" ) )
+		{
+			*ppData = NULL;
+			return false;
+		}
+		else {
+			wstring str1 = answer [ L"ad" ].as_string ();
+
+			char* pszAnsi = new char [ str1.length () + 1 ] ;
+			int iLen = WideCharToMultiByte ( CP_ACP, 0, str1.c_str (), str1.length (), pszAnsi, str1.length (), pszAnsi, NULL );
+			pszAnsi [ iLen ] = 0 ;
+
+			*ppData = new char [ iLen + 1 ] ;
+
+			int iDecSize = iLen ;
+			Base64Decode ( pszAnsi, iLen, (BYTE*)*ppData, &iDecSize ) ;
+
+			riSize = iDecSize ;
+
+			if ( pszAnsi )
+				delete pszAnsi ;
+
+			{
+				wstring sUrl = answer [ L"url" ].as_string ();
+
+				char* pszUrl = new char [ sUrl.length () + 1 ] ;
+				int iLen = WideCharToMultiByte ( CP_ACP, 0, sUrl.c_str (), sUrl.length (), pszUrl, sUrl.length (), "", NULL );
+				pszUrl [ iLen ] = 0 ;
+
+				if ( pszUrl ) {
+					strUrl = pszUrl ;
+					delete pszUrl ;
+				}
+			}
+
+			return true;
+		}
+	}
+
+	return false ;
+}
+
+bool CModelServiceWebClient::GetAd2 ( wchar_t* pszUrl, char* pszClientId, char** ppData, int& riSize, std::string& strUrl, int iInstanceId )
+{
+	if ( !pszUrl || !ppData )
+		return false ;
+	if ( !pszClientId )
+		return false ;
+
+	// 	wchar_t szUrl [ 1000 ] ;
+	// 	int iLen = MultiByteToWideChar ( CP_ACP, 0, pszUrl, strlen ( pszUrl ), szUrl, 1000 ) ;
+	// 	szUrl [ iLen ] = 0 ;
 
 	wchar_t szClientID [ 1000 ] ;
 	int iLen = MultiByteToWideChar ( CP_ACP, 0, pszClientId, strlen ( pszClientId ), szClientID, 1000 ) ;
@@ -728,7 +959,7 @@ bool CModelServiceWebClient::GetAd ( wchar_t* pszUrl, char* pszClientId, char** 
 
 	make_request_get ( client, methods::GET, my_uri, answer, http_result, CModelServiceWebClient::ProgressCallbackNull ) ;
 
-	wcout << answer << endl ;
+	//wcout << answer << endl ;
 	wcout << L"HTTP Status Code:" << http_result << endl ;
 
 	if ( http_result != status_codes::OK ) {

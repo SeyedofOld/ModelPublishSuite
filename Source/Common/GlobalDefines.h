@@ -1,8 +1,8 @@
 #pragma once
 
 // Server defines
-#define STORE_URL					"localhost"
-//#define STORE_URL                   "testapi.ariogames.ir"
+//#define STORE_URL					"localhost"
+#define STORE_URL					"51.254.82.69"
 #define STORE_PORT					5617
 //#define STORE_PORT					443
 //#define STORE_SCHEME				"https"

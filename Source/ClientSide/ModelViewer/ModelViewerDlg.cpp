@@ -16,13 +16,77 @@
 #include "FreeImage.h"
 #include "CModelWebServiceClient.h"
 #include "GlobalDefines.h"
+#include <thread>
+#include "CustomURLProtocolApp.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
 
+using namespace std ;
+
+
+#ifndef SAFE_DELETE
+/// For pointers allocated with new.
+#define SAFE_DELETE(p)			{ if(p) { delete (p);     (p)=NULL; } }
+#endif
+
+#ifndef SAFE_DELETE_ARRAY
+/// For arrays allocated with new [].
+#define SAFE_DELETE_ARRAY(p)	{ if(p) { delete[] (p);   (p)=NULL; } }
+#endif
+
+#ifndef SAFE_RELEASE
+/// For use with COM pointers.
+#define SAFE_RELEASE(p)			{ if(p) { (p)->Release(); (p)=NULL; } }
+#endif
+
 // CModelViewerDlg dialog
+
+DWORD WINAPI DownloadAdProc ( void* pParam )
+{
+	CModelViewerDlg* pDlg = (CModelViewerDlg*)pParam ;
+
+	CModelServiceWebClient client ;
+	char* p = NULL ;
+	int iSize = 0 ;
+	if ( client.GetAd ( (wchar_t*)pDlg->m_AdUrl.c_str (), MODEL_CLIENT_ID_PCWIN, &p, iSize, pDlg->m_strAdUrl ) ) {
+
+		pDlg->m_PointerPass [ 2 ].pData = p ;
+		pDlg->m_PointerPass [ 2 ].iSize = iSize ;
+
+		pDlg->PostMessage ( WM_USER_AD_DOWNLOADED, 2, 0 ) ;
+	}
+
+	return 0 ;
+}
+
+DWORD WINAPI DownloadModelProc ( void* pParam )
+{
+	CModelViewerDlg* pDlg = (CModelViewerDlg*)pParam ;
+	
+	pDlg->m_bDownloading = true ;
+	CModelServiceWebClient client ;
+	char* p = NULL ;
+
+	//AfxMessageBox ( "A" ) ;
+	//MessageBoxW ( NULL, pDlg->m_ModelUrl.c_str(), L"", MB_OK ) ;
+
+	if ( client.GetModel ( (wchar_t*)pDlg->m_ModelUrl.c_str (), MODEL_CLIENT_ID_PCWIN, &p ) ) {
+		pDlg->m_PointerPass [ 1 ].pData = p ;
+		pDlg->m_PointerPass [ 1 ].iSize = 100000000 ;
+
+		//AfxMessageBox ( "B" ) ;
+		pDlg->PostMessage ( WM_USER_MODEL_DOWNLOADED, 1, 0 ) ;
+	}
+	
+	pDlg->m_bDownloading = false ;
+
+	//AfxMessageBox ( "C" ) ;
+
+	return 0 ;
+}
 
 
 CModelViewerDlg::CModelViewerDlg(CWnd* pParent /*=NULL*/)
@@ -45,6 +109,13 @@ CModelViewerDlg::CModelViewerDlg(CWnd* pParent /*=NULL*/)
 	m_iTextureCount = 0 ;
 
 	m_pAdTex = NULL ;
+
+	m_bDownloading = false ;
+// 	CustomURLProtocol prot ;
+// 	prot.setProtocolName ( L"3dscan" ) ;
+// 	prot.setAppPath ( L"ModelViewer.exe" ) ;
+// 	prot.setCompanyName ( L"Seyedof" ) ;
+// 	prot.CreateCustomProtocol () ;
 }
 
 void CModelViewerDlg::DoDataExchange(CDataExchange* pDX)
@@ -206,6 +277,7 @@ void CModelViewerDlg::Update()
 
 void CModelViewerDlg::ShowExampleMenuFile ()
 {
+	if ( 0 )
 	if (ImGui::MenuItem("Import Obj File", "Ctrl+I")) {
 		char szFilters[] = "3D Scan Files (*.obj)|*.iobj||";
 		CFileDialog dlg(TRUE, "obj", "*.obj", OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, szFilters, AfxGetMainWnd());
@@ -239,23 +311,8 @@ void CModelViewerDlg::ShowExampleMenuFile ()
 		char szFilters[] = "3D Scan Files (*.3dscan)|*.3dscan||";
 		CFileDialog dlg ( TRUE, "3dscan", "*.3dscan", OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, szFilters, AfxGetMainWnd () ) ;
 		if (dlg.DoModal() == IDOK) {
-			TD_SCAN_MODEL* pModel = C3DScanFile::Load3DScanModelFromFile ( dlg.GetPathName().GetBuffer() ) ;
-			if ( pModel ) {
-				m_pModel1 = pModel ;
-				m_pd3dModel1 = new D3D_MODEL ;
-				if ( ! CD3DModelUtils::CreateFromTDModel ( C3DGfx::GetInstance ()->GetDevice (), C3DGfx::GetInstance ()->GetEffectPool (), *m_pModel1, *m_pd3dModel1 ) ) {
-					delete m_pd3dModel1 ;
-					m_pd3dModel1 = NULL ;
-					delete m_pModel1 ;
-					m_pModel1 = NULL ;
-				}
-				else {
-					FillTextureList () ;
-					m_strFilename = dlg.GetPathName () ;
-					m_bFileOpened = true ;
-					m_bHasFilename = true ;
-				}
-			}
+
+			Load3DScanFile ( dlg.GetPathName () ) ;
 		}
 	}
 
@@ -264,7 +321,8 @@ void CModelViewerDlg::ShowExampleMenuFile ()
 		CModelServiceWebClient client ;
 		bool b = false ;
 		char* p = NULL ;
-		Load3DScanFromUrl ( (CString)"http://localhost:5617/3dscan/get?subsid=123dsff&clientid=pcc" ) ;
+		Load3DScanFromUrl ( ( CString )"http://localhost:5617/3dscan/get?subsid=123dsff&clientid=pcc" ) ;
+		//Load3DScanFromUrl ( (CString)"http://51.254.82.69:5617/3dscan/get?subsid=123dsff&clientid=pcc" ) ;
 		//client.GetModel ( , "pcwin", &p ) ;
 
 		int mm = 1 ;
@@ -294,6 +352,7 @@ void CModelViewerDlg::ShowExampleMenuFile ()
 		ImGui::EndMenu ();
 	}
 	
+	if ( 0 )
 	if ( ImGui::MenuItem ( "Save 3D Scan File", "Ctrl+S", false, m_bFileOpened ) ) {
 		if ( m_bFileOpened && m_pModel1 ) {
 			if ( ! m_bHasFilename ) {
@@ -312,6 +371,7 @@ void CModelViewerDlg::ShowExampleMenuFile ()
 		}
 	}
 	
+	if ( 0 )
 	if ( ImGui::MenuItem ( "Save 3D Scan File As...", "", false, m_bFileOpened ) ) {
 		if ( m_bFileOpened && m_pModel1 ) {
 			char szFilters[] = "3D Scan Files (*.3dscan)|*.3dscan||";
@@ -442,7 +502,7 @@ void CModelViewerDlg::Render()
 		m_pAdTex->GetLevelDesc ( 0, &desc ) ;
 
 		C3DGfx::GetInstance ()->GetD3DXSprite ()->Begin ( D3DXSPRITE_ALPHABLEND ) ;
-		C3DGfx::GetInstance ()->GetD3DXSprite ()->Draw ( m_pAdTex, NULL, NULL, &D3DXVECTOR3 (0, rc.Height() - desc.Height, 0), 0xffffffff ) ;
+		C3DGfx::GetInstance ()->GetD3DXSprite ()->Draw ( m_pAdTex, NULL, NULL, &D3DXVECTOR3 (0, (float)rc.Height() - desc.Height, 0), 0xffffffff ) ;
 		C3DGfx::GetInstance ()->GetD3DXSprite ()->End () ;
 	}
 
@@ -490,7 +550,46 @@ LRESULT CModelViewerDlg::WindowProc ( UINT message, WPARAM wParam, LPARAM lParam
 	// TODO: Add your specialized code here and/or call the base class
 	//if ( CGuiRenderer::s_pDevice )
 		//CGuiRenderer::WndProc ( GetSafeHwnd(), message, wParam, lParam ) ;
+
 	ImGui_ImplWin32_WndProcHandler ( GetSafeHwnd (), message, wParam, lParam ) ;
+
+	if ( message == WM_USER_HTTP_PROGRESS ) {
+		m_fDownloadProgress = (float)lParam / 2000000.0f ;
+	
+	} else if ( message == WM_USER_MODEL_DOWNLOADED ) {
+		TD_SCAN_MODEL* pModel = C3DScanFile::Load3DScanModelFromMemory ( m_PointerPass[1].pData, m_PointerPass[1].iSize ) ;
+		if ( pModel ) {
+			D3D_MODEL* pd3dModel = new D3D_MODEL ;
+			if ( ! CD3DModelUtils::CreateFromTDModel ( C3DGfx::GetInstance ()->GetDevice (), C3DGfx::GetInstance ()->GetEffectPool (), *pModel, *pd3dModel ) ) {
+				SAFE_DELETE ( pd3dModel ) ;
+				C3DModelUtils::FreeModel ( *pModel ) ;
+				SAFE_DELETE ( pModel ) ;
+			}
+			else {
+				if ( m_pd3dModel1 ) {
+					CD3DModelUtils::FreeD3DModel ( *m_pd3dModel1 ) ;
+					SAFE_DELETE ( m_pd3dModel1 ) ;
+				}
+				if ( m_pModel1 ) {
+					C3DModelUtils::FreeModel ( *m_pModel1 ) ;
+					SAFE_DELETE ( m_pModel1 ) ;
+				}
+				m_pModel1 = pModel ;
+				m_pd3dModel1 = pd3dModel ;
+				
+				ResetView () ;
+
+				FillTextureList () ;
+				m_bFileOpened = true ;
+				m_bHasFilename = false ;
+			}
+		}
+	
+		DownloadAd ( m_AdUrl ) ;
+
+	} else if ( message == WM_USER_AD_DOWNLOADED ) {
+		D3DXCreateTextureFromFileInMemory ( C3DGfx::GetInstance ()->GetDevice (), m_PointerPass[2].pData, m_PointerPass[2].iSize, &m_pAdTex ) ;
+	}
 
 	if ( message == WUM_INTERACTION_MSG ) {
 		INTERACTION_MSG_DATA& imd = *((INTERACTION_MSG_DATA*)lParam) ;
@@ -554,7 +653,7 @@ LRESULT CModelViewerDlg::WindowProc ( UINT message, WPARAM wParam, LPARAM lParam
 				float3 ptHit ;
 				D3DMODEL_SUBSET* pSubset = NULL ;
 				if ( CD3DModelUtils::IntersectRay ( float3{ ptPos.x, ptPos.y, ptPos.z }, float3{ vDir.x, vDir.y, vDir.z }, *m_pd3dModel1, &ptHit, &pSubset ) ) {
-					pSubset->bSelected = ! pSubset->bSelected ;
+					//pSubset->bSelected = ! pSubset->bSelected ;
 				}
 			}
 		}
@@ -629,26 +728,9 @@ void CModelViewerDlg::UpdateGui ()
 
 	static bool opn = false ;
 
-	if ( ! ImGui::Begin ( "Hierarchy", NULL, flags ) ) {
-		ImGui::End ();
-	}
-	else /*( ! ImGui::Begin ( "Hierarchy", &opn, flags ) )*/ {
-		ImGuiStyle& style = ImGui::GetStyle ();
-		//style.WindowRounding = 0.0f ;
-		style.FrameBorderSize = 1.0f ;
-
-		bool b = false ;
-		ImGui::Checkbox("Show FPS", &b);
-		//ImGui::PushItemWidth ( 120.0f );
-		//ImGui::InputFloat ( "Transparency", &m_fAlpha, 0.01f, 0.1f, 2 );
-		//ImGui::PopItemWidth ();
-		//VALIDATE_RANGE ( m_fAlpha, 0.1f, 1.0f );
-		ImGui::End ();
-	}
-
 	//SetNextWindowSize ( ImVec2 ( 300, 400 ), ImGuiCond_FirstUseEver );
 	static bool s_b = false ;
-	if ( ImGui::Begin ( "Object Inspector", NULL, ImVec2(200,100)) ) {
+	if ( ImGui::Begin ( "Parts", NULL, ImVec2(200,100)) ) {
 		
 		if ( m_pd3dModel1 )
 		for ( uint32_t iPart = 0 ; iPart < m_pd3dModel1->Parts.size () ; iPart++ ) {
@@ -732,13 +814,22 @@ void CModelViewerDlg::UpdateGui ()
 	flags |= ImGuiWindowFlags_NoInputs;
 	flags |= ImGuiWindowFlags_NoTitleBar;
 
-	ImGui::PushStyleColor ( ImGuiCol_WindowBg, ImVec4 ( 0, 0, 0, 0 ) ) ;
-	if ( ImGui::Begin ( "Bar", NULL, flags ) ) {
-		ImGui::SetWindowSize ( ImVec2(800, 50) ) ;
-		ImGui::ProgressBar ( (float)( GetTickCount () % 10000 ) / 10000.0f ) ;
-		ImGui::End ();
+	if ( m_bDownloading ) {
+		CRect rc ;
+		GetClientRect ( rc ) ;
+
+		ImGui::PushStyleColor ( ImGuiCol_WindowBg, ImVec4 ( 0, 0, 0, 0 ) ) ;
+		ImGui::PushStyleVar ( ImGuiStyleVar_Alpha, 0.5f ) ;
+		if ( ImGui::Begin ( "Bar", NULL, flags ) ) {
+			ImGui::SetWindowSize ( ImVec2 ( (float)rc.Width (), 50 ) ) ;
+			ImGui::SetWindowPos ( ImVec2(0, (float)rc.Height () - 50 ) )  ;
+			//ImGui::ProgressBar ( (float)( GetTickCount () % 10000 ) / 10000.0f ) ;
+			ImGui::ProgressBar ( m_fDownloadProgress ) ;
+			ImGui::End ();
+		}
+		ImGui::PopStyleVar () ;
+		ImGui::PopStyleColor () ;
 	}
-	ImGui::PopStyleColor () ;
 
 
 	ImGui::EndFrame () ;
@@ -759,15 +850,15 @@ void CModelViewerDlg::UpdateWorldMatrix ()
 
 void CModelViewerDlg::FillTextureList ()
 {
-	if ( m_pd3dModel1 ) {
-		if ( m_ppszTextureNames ) {
-			for ( int i = 0 ; i < m_iTextureCount ; i++ ) {
-				char* p = *m_ppszTextureNames ;
-				delete p ;
-			}
-			delete m_ppszTextureNames ;
-			m_ppszTextureNames = NULL ;
+	if ( m_ppszTextureNames ) {
+		for ( int i = 0 ; i < m_iTextureCount ; i++ ) {
+			SAFE_DELETE ( m_ppszTextureNames [ i ] ) ;
 		}
+		SAFE_DELETE ( m_ppszTextureNames ) ;
+		m_iTextureCount = 0 ;
+	}
+
+	if ( m_pd3dModel1 ) {
 
 		m_iTextureCount = m_pd3dModel1->Textures.size() + 1 ;
 		m_ppszTextureNames = new char* [ m_iTextureCount ] ;
@@ -837,15 +928,27 @@ bool CModelViewerDlg::Load3DScanFile ( CString& strPathName )
 {
 	TD_SCAN_MODEL* pModel = C3DScanFile::Load3DScanModelFromFile ( strPathName.GetBuffer () ) ;
 	if ( pModel ) {
-		m_pModel1 = pModel ;
-		m_pd3dModel1 = new D3D_MODEL ;
-		if ( !CD3DModelUtils::CreateFromTDModel ( C3DGfx::GetInstance ()->GetDevice (), C3DGfx::GetInstance ()->GetEffectPool (), *m_pModel1, *m_pd3dModel1 ) ) {
-			delete m_pd3dModel1 ;
-			m_pd3dModel1 = NULL ;
-			delete m_pModel1 ;
-			m_pModel1 = NULL ;
+		D3D_MODEL* pd3dModel = new D3D_MODEL ;
+		if ( ! CD3DModelUtils::CreateFromTDModel ( C3DGfx::GetInstance ()->GetDevice (), C3DGfx::GetInstance ()->GetEffectPool (), *pModel, *pd3dModel ) ) {
+			SAFE_DELETE ( pd3dModel ) ;
+			C3DModelUtils::FreeModel ( *pModel ) ;
+			SAFE_DELETE ( pModel ) ;
 		}
 		else {
+			if ( m_pd3dModel1 ) {
+				CD3DModelUtils::FreeD3DModel ( *m_pd3dModel1 ) ;
+				SAFE_DELETE ( m_pd3dModel1 ) ;
+			}
+			if ( m_pd3dModel1 ) {
+				C3DModelUtils::FreeModel ( *m_pModel1 ) ;
+				SAFE_DELETE ( m_pModel1 ) ;
+			}
+
+			m_pd3dModel1 = pd3dModel ;
+			m_pModel1 = pModel ;
+
+			ResetView () ;
+
 			FillTextureList () ;
 			m_strFilename = strPathName ;
 			m_bFileOpened = true ;
@@ -856,83 +959,96 @@ bool CModelViewerDlg::Load3DScanFile ( CString& strPathName )
 	return true ;
 }
 
+void CModelViewerDlg::DownloadInfo ( wstring strUrl )
+{
+	CModelServiceWebClient client ;
+	char* p = NULL ;
+	if ( client.GetModelInfo ( (wchar_t*)strUrl.c_str (), MODEL_CLIENT_ID_PCWIN, &p ) ) {
+		TDSCAN_FILE_HEADER hdr ;
+		memcpy ( &hdr, p, sizeof ( TDSCAN_FILE_HEADER ) ) ;
+	}
+}
+
+void CModelViewerDlg::DownloadModel ( wstring strUrl )
+{
+	//AfxMessageBox ( "55" ) ;
+	m_ModelUrl = strUrl ;
+	CreateThread ( NULL, 10000, DownloadModelProc, this, 0, NULL ) ;
+}
+
+void CModelViewerDlg::DownloadAd ( wstring strUrl )
+{
+	m_AdUrl = strUrl ;
+	CreateThread ( NULL, 10000, DownloadAdProc, this, 0, NULL ) ;
+}
+
 bool CModelViewerDlg::Load3DScanFromUrl ( CString& strUrl )
 {
+	strUrl.Replace ( "3dscan:", STORE_SCHEME":" ) ;
+
 	wchar_t szUrl [ 1000 ] ;
 	int iLen = MultiByteToWideChar ( CP_ACP, 0, strUrl.GetBuffer (), strUrl.GetLength (), szUrl, 1000 ) ;
 	szUrl [ iLen ] = 0 ;
 
-	web::uri_builder builder ( szUrl ) ;
+	//AfxMessageBox ( strUrl ) ;
+
+	web::uri original ( szUrl );
+
+	web::uri_builder builder ( original ) ;
 	auto query = builder.query () ;
 	auto query_split = web::uri::split_query ( query ) ;
 
-	{
+	if ( 0 ) {
 		web::uri_builder builder_mdl ;
-		builder_mdl.set_scheme ( builder.scheme () ) ;
+		builder_mdl.set_scheme ( U(STORE_SCHEME) ) ;
 		builder_mdl.set_host ( builder.host () ) ;
 		builder_mdl.set_port ( builder.port () ) ;
 		builder_mdl.set_path ( U ( MODEL_SERVICE_PATH ) ) ;
 		builder_mdl.append_path ( U ( MODEL_API_GET_INFO ) ) ;
 		builder_mdl.append_query ( L"subsid", query_split [ L"subsid" ] ) ;
 
-		CModelServiceWebClient client ;
-		char* p = NULL ;
-		if ( client.GetModelInfo ( (wchar_t*)builder_mdl.to_string().c_str(), MODEL_CLIENT_ID_PCWIN, &p ) ) {
-			TDSCAN_FILE_HEADER hdr ;
-			memcpy ( &hdr, p, sizeof ( TDSCAN_FILE_HEADER ) ) ;
-			int mm = 1 ;
-		}
-	}
+		wstring strUrl2 = builder_mdl.to_string() ;
+		//thread *t1 = new thread ( &CModelViewerDlg::DownloadInfo, this, strUrl ) ;
 
-	{
+		DownloadInfo ( strUrl2 ) ;
+	}
+	//AfxMessageBox ( "4" ) ;
+
+	if ( 1 ) {
 		web::uri_builder builder_mdl ;
-		builder_mdl.set_scheme ( builder.scheme () ) ;
+		builder_mdl.set_scheme ( U ( STORE_SCHEME ) ) ;
 		builder_mdl.set_host ( builder.host () ) ;
 		builder_mdl.set_port ( builder.port () ) ;
 		builder_mdl.set_path ( U ( MODEL_SERVICE_PATH ) ) ;
 		builder_mdl.append_path ( U ( MODEL_API_GET ) ) ;
 		builder_mdl.append_query ( L"subsid", query_split [ L"subsid" ] ) ;
 
-		CModelServiceWebClient client ;
-		char* p = NULL ;
-		client.GetModel ( (wchar_t*)builder_mdl.to_string ().c_str(), MODEL_CLIENT_ID_PCWIN, &p ) ;
+		wstring strUrl2 = builder_mdl.to_string() ;
 
-		TD_SCAN_MODEL* pModel = C3DScanFile::Load3DScanModelFromMemory ( p, 10000000 ) ;
-		if ( pModel ) {
-			m_pModel1 = pModel ;
-			m_pd3dModel1 = new D3D_MODEL ;
-			if ( ! CD3DModelUtils::CreateFromTDModel ( C3DGfx::GetInstance ()->GetDevice (), C3DGfx::GetInstance ()->GetEffectPool (), *m_pModel1, *m_pd3dModel1 ) ) {
-				delete m_pd3dModel1 ;
-				m_pd3dModel1 = NULL ;
-				delete m_pModel1 ;
-				m_pModel1 = NULL ;
-			}
-			else {
-				FillTextureList () ;
-				m_bFileOpened = true ;
-				m_bHasFilename = false ;
-			}
-		}
-
+		//thread* t2 = new thread  ( &CModelViewerDlg::DownloadModel, this, strUrl ) ;
+		//MessageBoxW ( NULL, strUrl2.c_str (), L"", MB_ICONASTERISK ) ;
+		DownloadModel ( strUrl2 ) ;
 	}
+	//AfxMessageBox ( "5" ) ;
 
-	{
+	if ( 1 ) {
 		web::uri_builder builder_ad ;
-		builder_ad.set_scheme ( builder.scheme () ) ;
+		builder_ad.set_scheme ( U ( STORE_SCHEME ) ) ;
 		builder_ad.set_host ( builder.host () ) ;
 		builder_ad.set_port ( builder.port () ) ;
 		builder_ad.set_path ( U ( MODEL_SERVICE_PATH ) ) ;
 		builder_ad.append_path ( U ( MODEL_API_GET_AD ) ) ;
 		builder_ad.append_query ( L"subsid", query_split [ L"subsid" ] ) ;
 
-		CModelServiceWebClient client ;
-		char* p = NULL ;
-		int iSize = 0 ;
-		if ( client.GetAd ( (wchar_t*)builder_ad.to_string ().c_str(), MODEL_CLIENT_ID_PCWIN, &p, iSize, m_strAdUrl ) ) {
-			D3DXCreateTextureFromFileInMemory ( C3DGfx::GetInstance ()->GetDevice (), p, iSize, &m_pAdTex ) ;
-		}
-	}
+		wstring strUrl2 = builder_ad.to_string () ;
+		m_AdUrl = strUrl2 ;
 
+		//thread* t3 = new thread ( &CModelViewerDlg::DownloadAd, this, strUrl ) ;
+		DownloadAd ( strUrl2 ) ;
+	}
+	//AfxMessageBox ( "6" ) ;
+
+	//Sleep ( 20000 ) ;
 	return true ;
 }
 
@@ -1000,4 +1116,27 @@ LRESULT ImGui_ImplWin32_WndProcHandler ( HWND hwnd, UINT msg, WPARAM wParam, LPA
 		return 0;
 	}
 	return 0;
+}
+
+void CModelViewerDlg::ResetView ()
+{
+	if ( m_pd3dModel1 ) {
+		float dy = 1.0f / tanf ( m_Camera.GetFovY () / 2.0f ) ;
+		float zy = dy * ( m_pModel1->ptMax.y - m_pModel1->ptMin.y ) * 1.25f / 2.0f ;
+
+		float dx = 1.0f / tanf ( m_Camera.GetFovX () / 2.0f ) ;
+		float zx = dx * ( m_pModel1->ptMax.x - m_pModel1->ptMin.x ) * 1.25f / 2.0f ;
+
+		float z = zy ;
+		if ( zx > zy )
+			z = zx ;
+
+		m_Camera.SetDistance ( z ) ;
+
+		m_fYaw = 0.0f ;
+		m_fPitch = 0.0f ;
+		m_ptPos = vector3 ( 0.0f, 0.0f, 0.0f ) ;
+		
+		UpdateWorldMatrix() ;
+	}
 }

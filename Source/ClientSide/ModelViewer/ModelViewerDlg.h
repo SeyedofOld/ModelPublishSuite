@@ -38,6 +38,11 @@ public:
 	afx_msg void OnBnClickedCancel ();
 	afx_msg void OnBnClickedOk ();
 
+	struct POINTER_PASS {
+		void* pData ;
+		int32_t iSize ;
+	};
+
 public:
 	ID3DXEffect*	m_pShader ;
 	CCamera			m_Camera ;
@@ -63,6 +68,11 @@ public:
 	IDirect3DTexture9*	m_pAdTex ;
 	std::string			m_strAdUrl ;
 
+	bool			m_bDownloading ;
+	float			m_fDownloadProgress ;
+
+	POINTER_PASS	m_PointerPass [ 3 ] ;
+
 public:
 	void Update() ;
 	void ShowExampleMenuFile();
@@ -70,9 +80,14 @@ public:
 	void UpdateWorldMatrix() ;
 	void FillTextureList() ;
 	void CalcTextureAverages() ;
+	void ResetView ();
 
 	bool Load3DScanFile ( CString& strPathName ) ;
 	bool Load3DScanFromUrl ( CString& strUrl ) ;
+
+	void DownloadInfo ( wstring strUrl );
+	void DownloadModel ( wstring strUrl );
+	void DownloadAd ( wstring strUrl );
 
 	char**			m_ppszTextureNames ;
 	int				m_iTextureCount ;
@@ -81,4 +96,9 @@ public:
 	virtual LRESULT WindowProc ( UINT message, WPARAM wParam, LPARAM lParam );
 	afx_msg BOOL OnEraseBkgnd ( CDC* pDC );
 	void UpdateGui() ;
+
+	friend DWORD WINAPI DownloadAdProc ( void* pParam ) ;
+	friend DWORD WINAPI DownloadModelProc ( void* pParam ) ;
+
+	std::wstring m_ModelUrl, m_AdUrl ;
 };

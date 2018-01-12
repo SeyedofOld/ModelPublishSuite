@@ -70,8 +70,8 @@ BOOL CModelViewerApp::InitInstance()
 
 	////////////////////////////////
 	// Parse command line for standard shell commands, DDE, file open
-	CCommandLineInfo cmdInfo;
-	ParseCommandLine ( cmdInfo );
+// 	CCommandLineInfo cmdInfo;
+// 	ParseCommandLine ( cmdInfo );
 
 	// Enable DDE Execute open
 	EnableShellOpen ();
@@ -81,6 +81,42 @@ BOOL CModelViewerApp::InitInstance()
 	CStringW strCmdLine = GetCommandLineW() ;
 	int iParamCount = 0 ;
 	LPWSTR* pStr = CommandLineToArgvW ( strCmdLine, &iParamCount ) ;
+
+	bool bIsUrl = false ;
+	bool bIsFile = false ;
+
+	int iUrlParamIndex = 0 ;
+
+	for ( int i = 0 ; i < iParamCount ; i++ ) {
+		if ( wcscmp ( pStr [ i ], L"-url" ) == 0 ) {
+			iUrlParamIndex = i ;
+			bIsUrl = true ;
+		}
+	}
+
+	if ( ! bIsUrl && iParamCount > 1 )
+		bIsFile = true ;
+
+// 	if ( bIsUrl ) {
+// 		MessageBoxW ( NULL, L"IsUrl", L"A", MB_ICONEXCLAMATION ) ;
+// 		MessageBoxW ( NULL, (wchar_t*)(pStr [ 1 ]), L"A", MB_ICONEXCLAMATION ) ;
+// 	}
+
+	{ // Set current directory to where the exe exists
+		wchar_t g_szExeName [ MAX_PATH ] ;
+		wcscpy ( g_szExeName, pStr [ 0 ] ) ;
+
+		wchar_t szDrive [ MAX_PATH ], szDir [ MAX_PATH ]  ;
+		_wsplitpath ( g_szExeName, szDrive, szDir, NULL, NULL ) ;
+
+		wchar_t szFolder [ MAX_PATH ] ;
+		wcscpy ( szFolder, szDrive ) ;
+		wcscat ( szFolder, szDir ) ;
+
+		SetCurrentDirectoryW ( szFolder ) ;
+	}
+
+	//AfxMessageBox ( "1" ) ;
 
 // 	if ( pStr )
 // 		delete ( pStr ) ;
@@ -92,32 +128,36 @@ BOOL CModelViewerApp::InitInstance()
 	////////////////////////////////
 
 
-
 	//CModelViewerDlg dlg;
 	m_pDlg = new CModelViewerDlg ;
 	m_pDlg->Create ( IDD_MODELVIEWER_DIALOG ) ;
 	m_pMainWnd = m_pDlg;
 	m_pMainWnd->ShowWindow ( SW_SHOW ) ;
 
-	//INT_PTR nResponse = dlg.DoModal();
-// 	if (nResponse == IDOK)
-// 	{
-// 		// TODO: Place code here to handle when the dialog is
-// 		//  dismissed with OK
-// 	}
-// 	else if (nResponse == IDCANCEL)
-// 	{
-// 		// TODO: Place code here to handle when the dialog is
-// 		//  dismissed with Cancel
-// 	}
-// 	else if (nResponse == -1)
-// 	{
-// 		TRACE(traceAppMsg, 0, "Warning: dialog creation failed, so application is terminating unexpectedly.\n");
-// 		TRACE(traceAppMsg, 0, "Warning: if you are using MFC controls on the dialog, you cannot #define _AFX_NO_MFC_CONTROLS_IN_DIALOGS.\n");
-// 	}
+	if ( bIsFile ) {
+		char* pszAnsi = new char [ 1000 ] ;
+		int iLen = WideCharToMultiByte ( CP_ACP, 0, pStr [ 1 ], wcslen ( pStr [ 1 ] ), pszAnsi, 1000, pszAnsi, NULL );
+		pszAnsi [ iLen ] = 0 ;
 
-	if ( cmdInfo.m_nShellCommand == CCommandLineInfo::FileOpen )
-		m_pDlg->Load3DScanFile ( cmdInfo.m_strFileName ) ;
+		//MessageBox ( NULL, pszAnsi, "File", MB_OK ) ;
+
+		m_pDlg->Load3DScanFile ( (CString)pszAnsi ) ;
+		if ( pszAnsi )
+			delete pszAnsi ;
+	}
+	else if ( bIsUrl ) {
+		char* pszAnsi = new char [ 1000 ] ;
+		int iLen = WideCharToMultiByte ( CP_ACP, 0, pStr [ 1 ], wcslen ( pStr [ 1 ] ), pszAnsi, 1000, pszAnsi, NULL );
+		pszAnsi [ iLen ] = 0 ;
+
+		//MessageBox ( NULL, pszAnsi, "Url", MB_OK ) ;
+
+		m_pDlg->Load3DScanFromUrl ( (CString)pszAnsi ) ;
+		if ( pszAnsi )
+			delete pszAnsi ;
+	}
+
+	//AfxMessageBox ( "3" ) ;
 
 	// Delete the shell manager created above.
 	if (pShellManager != NULL)

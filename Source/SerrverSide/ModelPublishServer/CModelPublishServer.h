@@ -4,6 +4,11 @@
 #include "cpprest/uri.h"
 #include "cpprest/asyncrt_utils.h"
 
+#include <cppconn/driver.h>
+#include <cppconn/exception.h>
+#include <cppconn/resultset.h>
+#include <cppconn/statement.h>
+
 using namespace web; 
 using namespace utility;
 using namespace http;
@@ -31,5 +36,9 @@ private:
     
 	http_listener m_listener ;
 	static char	m_szServerRootFolder [ MAX_PATH ] ;
+
+ 	static sql::Driver *driver;
+ 	static sql::Connection *con;
+
 };
 

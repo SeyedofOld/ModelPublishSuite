@@ -30,6 +30,9 @@ using namespace sql ;
 
 char CModelPublishServer::m_szServerRootFolder [ MAX_PATH ] = { 0 } ;
 
+sql::Driver* CModelPublishServer::driver= NULL ;
+sql::Connection* CModelPublishServer::con = NULL ;
+
 CModelPublishServer::CModelPublishServer ()
 {
 	m_szServerRootFolder [ 0 ] = 0 ;
@@ -39,240 +42,34 @@ CModelPublishServer::CModelPublishServer(utility::string_t url) : m_listener(url
 {
 	m_listener.support ( methods::GET,  std::bind(&CModelPublishServer::HandleGet,  this, std::placeholders::_1) ) ;
 	m_listener.support ( methods::POST, std::bind(&CModelPublishServer::HandlePost, this, std::placeholders::_1) ) ;
+
+	driver = get_driver_instance ();
+	con = driver->connect ( MYSQL_SERVER, MYSQL_USER, MYSQL_PASS ) ;
+
+	// Connect to the MySQL test database
+	con->setSchema ( STORE_DATABASE_NAME ) ;
 }
-
-/*void CModelPublishServer::OnValidatePurchase ( wstring& sessionId, json::value& params, json::value& answer, status_code& http_result )
-{
-	int iUserId = -1 ;
-	int iProductId = -1 ;
-	int iPurchaseId = -1 ;
-
-	if ( ! params.has_field(L"package_name") ) {
-		answer [ L"message" ] = json::value::string(L"No product id specified!") ;
-		http_result = status_codes::InternalError ;
-		return ;
-	}
-
-	sql::Driver *driver;
-	sql::Connection *con;
-
-	try {
-		// Create a connection
-		driver = get_driver_instance();
-		con = driver->connect ( MYSQL_SERVER, MYSQL_USER, MYSQL_PASS ) ;
-
-		// Connect to the MySQL test database 
-		con->setSchema ( STORE_DATABASE_NAME ) ;
-	}
-	catch ( sql::SQLException &e ) {
-		cout << e.what() << endl ;
-		answer [ L"message" ] = json::value::string(L"Database connectivity error!") ;
-		http_result = status_codes::InternalError ;
-		return ;
-	}
-
-	{ // Fetch session id from database
-		sql::Statement *stmt;
-		sql::ResultSet *res;
-
-		char szSessionId [ 256 ] ;
-		int iLen = WideCharToMultiByte ( CP_ACP, 0, sessionId.c_str(), sessionId.length(), szSessionId, 256, "", NULL ) ;
-		szSessionId [ iLen ] = 0 ;
-
-		// Make query string
-		char szQuery [ 5000 ] ;
-
-		sprintf_s ( szQuery, 5000, "SELECT UserId FROM tblDummySessionIds WHERE SessionId='%s'", szSessionId ) ;
-		cout << szQuery << endl ;
-
-		// Run query
-		stmt = con->createStatement() ;
-		res = stmt->executeQuery ( szQuery ) ;
-	  
-		if ( res->rowsCount() == 0 ) {
-			answer [ L"message" ] = json::value::string(L"Invalid token. Token is expired.") ;
-			answer [ L"result_number" ] = json::value::number(9999) ;
-			http_result = status_codes::Unauthorized ;
-		}
-	  
-		while ( res->next() ) {
-			iUserId = res->getInt ( "UserId" ) ;
-		//		cout << "\t... MySQL replies: ";
-		// Access column data by alias or column name 
-		//cout << res->getString("_message") << endl;
-		//cout << "\t... MySQL says it again: ";
-		// Access column data by numeric offset, 1 is the first column 
-		//cout << res->getString(1) << endl;
-		}
-		delete res;
-		delete stmt;
-
-	} 
-
-	if ( iUserId != -1 ) { // Fetch product id from database
-
-		sql::Statement *stmt ;
-		sql::ResultSet *res ;
-
-		// Make query string
-		char szQuery [ 5000 ] ;
-
-		wstring strPname = params.at(L"package_name").as_string() ;
- 		char szPaclageName [ 256 ] ;
- 		int iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str(), strPname.length(), szPaclageName, 256, "", NULL ) ;
- 		szPaclageName [ iLen ] = 0 ;
-
-
-		sprintf_s ( szQuery, 5000, "SELECT ProductId FROM tblDummyProductIds WHERE PackageName='%s'", szPaclageName ) ;
-		cout << szQuery << endl ;
-
-		// Run query
-		stmt = con->createStatement() ;
-		res = stmt->executeQuery ( szQuery ) ;
-	  
-		if ( res->rowsCount() == 0 ) {
-			answer [ L"message" ] = json::value::string(L"Product token not found!") ;
-			http_result = status_codes::InternalError ;
-		}
-	  
-		while ( res->next() ) {
-			iProductId = res->getInt("ProductId") ;
-		}
-		delete res;
-		delete stmt;
-	}
-
-	if ( iProductId != -1 ) { // Fetch purchase id from database
-
-		sql::Statement *stmt;
-		sql::ResultSet *res;
-
-		// Make query string
-		char szQuery [ 5000 ] ;
-
-		sprintf_s ( szQuery, 5000, "SELECT PurchaseId FROM tblPurchaseKeys WHERE UserId=%d AND ProductId=%d", iUserId, iProductId ) ;
-		cout << szQuery << endl ;
-
-		// Run query
-		stmt = con->createStatement() ;
-		res = stmt->executeQuery ( szQuery ) ;
-	  
-		if ( res->rowsCount() == 0 ) {
-			answer [ L"message" ] = json::value::string(L"This user does not have permission to access this product!") ;
-			answer [ L"result_number" ] = json::value::number(2053) ;
-			http_result = status_codes::NotFound ;
-		}
-
-		while ( res->next() ) {
-			iPurchaseId = res->getInt("PurchaseId") ;
-		}
-
-		delete res ;
-		delete stmt ;
-
-	} //catch (sql::SQLException &e) {
-
-
-	if ( iPurchaseId != -1 ) {
-		sql::Statement *stmt;
-		sql::ResultSet *res;
-
-		// Make query string
-		char szQuery [ 5000 ] ;
-
-		sprintf_s ( szQuery, 5000, "SELECT OrderId FROM tblDummyOrderIds WHERE PurchaseId=%d", iPurchaseId ) ;
-		cout << szQuery << endl ;
-
-		// Run query
-		stmt = con->createStatement() ;
-		res = stmt->executeQuery ( szQuery ) ;
-	  
-		if ( res->rowsCount() == 0 ) {
-			answer [ L"message" ] = json::value::string(L"This user does not have permission to access this product!") ;
-			answer [ L"result_number" ] = json::value::number(2053) ;
-			http_result = status_codes::NotFound ;
-		}
-
-		while ( res->next() ) {
-
-			string strOrderId = "" ;
-			std::istream* blob_stream = res->getBlob("OrderId");
-
-			char* pOid = NULL;
-
-			if (blob_stream) {
-				try {
-					blob_stream->seekg(0, std::ios::end);
-					int blobSize = blob_stream->tellg();
-					blob_stream->seekg(0, std::ios::beg);
-					pOid = new char[blobSize+1];
-					blob_stream->read(pOid, blobSize);
-					pOid[blobSize] = 0;
-					//blob_stream->getline(key, 600);
-				}
-				catch (...) {
-
-				}
-				//std::string retrievedPassword(pws); // also, should handle case where Password length > PASSWORD_LENGTH
-				if (pOid) {
-					strOrderId = pOid;
-					delete pOid;
-				}
-			}
-
-// 			if ( blob_stream ) {
-// 				char oid[1000]; // PASSWORD_LENGTH defined elsewhere; or use other functions to retrieve it
-// 				blob_stream->getline(oid, 1000);
-// 				strOrderId = oid ;
-// 			}
-
-			wchar_t szOrderId [ 1000 ] ;
-			int iLen = MultiByteToWideChar ( CP_ACP, 0, strOrderId.c_str(), strOrderId.length(), szOrderId, 1000 ) ;
-			szOrderId [ iLen ] = 0 ;
-
-			// Changed to nested (Ugly!)
-			//answer [ L"key" ] = json::value::string(szPubKey) ;
-			//answer [ L"message" ] = json::value::string(L"No error") ;
-			json::value msg ;
-			msg [ L"order_id" ] = json::value::string(szOrderId) ;
-			answer [ L"message" ] = msg ;
-
-			answer [ L"error" ] = json::value::boolean(false) ;
-			answer [ L"result_number" ] = json::value::number(1) ;
-			http_result = status_codes::OK ;
-		}
-		delete res ;
-		delete stmt ;
-
-	} //catch (sql::SQLException &e) {
-//  	  cout << "# ERR: SQLException in " << __FILE__ ;
-//  	  cout << "(" << __FUNCTION__ << ") on line " << __LINE__ << endl;
-//  	  cout << "# ERR: " << e.what();
-//  	  cout << " (MySQL error code: " << e.getErrorCode();
-//  	  cout << ", SQLState: " << e.getSQLState() << " )" << endl;
-	//}
-	delete con ;
-}*/
 
 void CModelPublishServer::OnGetModel ( json::value& params, json::value& answer, status_code& http_result )
 {
-	sql::Driver *driver;
-	sql::Connection *con;
-
-	try {
-		// Create a connection
-		driver = get_driver_instance();
-		con = driver->connect ( MYSQL_SERVER, MYSQL_USER, MYSQL_PASS ) ;
-
-		// Connect to the MySQL test database
-		con->setSchema ( STORE_DATABASE_NAME ) ;
-	}
-	catch ( sql::SQLException &e ) {
-		cout << e.what() << endl ;
-		answer [ L"message" ] = json::value::string(L"Database connectivity error!") ;
-		http_result = status_codes::InternalError ;
-		return ;
-	}
+// 	sql::Driver *driver;
+// 	sql::Connection *con;
+// 
+// 
+// 	try {
+// 		// Create a connection
+// 		driver = get_driver_instance();
+// 		con = driver->connect ( MYSQL_SERVER, MYSQL_USER, MYSQL_PASS ) ;
+// 
+// 		// Connect to the MySQL test database
+// 		con->setSchema ( STORE_DATABASE_NAME ) ;
+// 	}
+// 	catch ( sql::SQLException &e ) {
+// 		cout << e.what() << endl ;
+// 		answer [ L"message" ] = json::value::string(L"Database connectivity error!") ;
+// 		http_result = status_codes::InternalError ;
+// 		return ;
+// 	}
 
 	int iModelId = -1 ;
 
@@ -492,28 +289,28 @@ void CModelPublishServer::OnGetModel ( json::value& params, json::value& answer,
 //  	  cout << " (MySQL error code: " << e.getErrorCode();
 //  	  cout << ", SQLState: " << e.getSQLState() << " )" << endl;
 	//}
-	delete con ;
+	//delete con ;
 }
 
 void CModelPublishServer::OnGetAd ( json::value& params, json::value& answer, status_code& http_result )
 {
-	sql::Driver *driver;
-	sql::Connection *con;
-
-	try {
-		// Create a connection
-		driver = get_driver_instance ();
-		con = driver->connect ( MYSQL_SERVER, MYSQL_USER, MYSQL_PASS ) ;
-
-		// Connect to the MySQL test database
-		con->setSchema ( STORE_DATABASE_NAME ) ;
-	}
-	catch ( sql::SQLException &e ) {
-		cout << e.what () << endl ;
-		answer [ L"message" ] = json::value::string ( L"Database connectivity error!" ) ;
-		http_result = status_codes::InternalError ;
-		return ;
-	}
+// 	sql::Driver *driver;
+// 	sql::Connection *con;
+// 
+// 	try {
+// 		// Create a connection
+// 		driver = get_driver_instance ();
+// 		con = driver->connect ( MYSQL_SERVER, MYSQL_USER, MYSQL_PASS ) ;
+// 
+// 		// Connect to the MySQL test database
+// 		con->setSchema ( STORE_DATABASE_NAME ) ;
+// 	}
+// 	catch ( sql::SQLException &e ) {
+// 		cout << e.what () << endl ;
+// 		answer [ L"message" ] = json::value::string ( L"Database connectivity error!" ) ;
+// 		http_result = status_codes::InternalError ;
+// 		return ;
+// 	}
 
 	int iAdId = -1 ;
 
@@ -731,28 +528,28 @@ void CModelPublishServer::OnGetAd ( json::value& params, json::value& answer, st
 	  //  	  cout << " (MySQL error code: " << e.getErrorCode();
 	  //  	  cout << ", SQLState: " << e.getSQLState() << " )" << endl;
 	  //}
-	delete con ;
+	//delete con ;
 }
 
 void CModelPublishServer::OnGetInfo ( json::value& params, json::value& answer, status_code& http_result )
 {
-	sql::Driver *driver;
-	sql::Connection *con;
+// 	sql::Driver *driver;
+// 	sql::Connection *con;
 
-	try {
-		// Create a connection
-		driver = get_driver_instance ();
-		con = driver->connect ( MYSQL_SERVER, MYSQL_USER, MYSQL_PASS ) ;
-
-		// Connect to the MySQL test database
-		con->setSchema ( STORE_DATABASE_NAME ) ;
-	}
-	catch ( sql::SQLException &e ) {
-		cout << e.what () << endl ;
-		answer [ L"message" ] = json::value::string ( L"Database connectivity error!" ) ;
-		http_result = status_codes::InternalError ;
-		return ;
-	}
+// 	try {
+// 		// Create a connection
+// 		driver = get_driver_instance ();
+// 		con = driver->connect ( MYSQL_SERVER, MYSQL_USER, MYSQL_PASS ) ;
+// 
+// 		// Connect to the MySQL test database
+// 		con->setSchema ( STORE_DATABASE_NAME ) ;
+// 	}
+// 	catch ( sql::SQLException &e ) {
+// 		cout << e.what () << endl ;
+// 		answer [ L"message" ] = json::value::string ( L"Database connectivity error!" ) ;
+// 		http_result = status_codes::InternalError ;
+// 		return ;
+// 	}
 
 	int iModelId = -1 ;
 
@@ -965,7 +762,7 @@ void CModelPublishServer::OnGetInfo ( json::value& params, json::value& answer, 
 	  //  	  cout << " (MySQL error code: " << e.getErrorCode();
 	  //  	  cout << ", SQLState: " << e.getSQLState() << " )" << endl;
 	  //}
-	delete con ;
+	//delete con ;
 }
 
 
@@ -981,9 +778,9 @@ void CModelPublishServer::SetServerRootFolder ( char* pszRoot )
 
 void CModelPublishServer::HandleGet ( http_request request )
 {
-	TRACE("\nhandle GET\n");
+	//TRACE("\nhandle GET\n");
 
-	ucout << request.to_string() << endl ;
+	wcout << request.to_string () << endl ;
 
 	json::value answer ;
 
@@ -1010,6 +807,7 @@ void CModelPublishServer::HandleGet ( http_request request )
 		
 		if ( query_comps.find ( L"magic" ) == query_comps.end () || query_comps [ L"magic" ] != U(MODEL_API_MAGIC) ) {
 			// Request not sent from client
+			answer [ L"message" ] = json::value::string ( L"Request from unknown source!" ) ;
 		}
 
 		if ( path_comps.size() > 0 ) {
@@ -1058,8 +856,9 @@ void CModelPublishServer::HandleGet ( http_request request )
 		wcout << e.what() << endl;
 	}
 
-	wcout << http_result << endl ;
-	wcout << answer << endl ;
+	wcout << L"HTTP Result: " << http_result << endl << endl ;
+	
+	// wcout << answer << endl ;
 
 	request.reply ( http_result, answer ) ;
 }

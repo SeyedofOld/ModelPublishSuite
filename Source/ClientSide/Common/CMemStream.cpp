@@ -46,7 +46,7 @@ uint32_t CMemStream::Seek ( int32_t iOfs, uint32_t uiOrig )
 
 	if ( iNewPos < 0 )
 		iNewPos = 0 ;
-	if ( iNewPos >= m_uiSize )
+	if ( iNewPos >= (signed)m_uiSize )
 		iNewPos = m_uiSize - 1 ;
 
 	m_uiCurPos = iNewPos ;

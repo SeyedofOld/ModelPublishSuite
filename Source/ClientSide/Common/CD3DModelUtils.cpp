@@ -187,17 +187,12 @@ bool CD3DModelUtils::RenderD3DModel ( IDirect3DDevice9* pDevice, D3D_MODEL& d3dM
 	return true ;
 }
 
-void CD3DModelUtils::FreeD3DModel ( D3D_MODEL & d3dModel )
+void CD3DModelUtils::FreeD3DModel ( D3D_MODEL& d3dModel )
 {
-/*	for ( unsigned int iPart = 0 ; iPart < d3dModel.Parts.size () ; iPart++ ) {
+	for ( unsigned int iPart = 0 ; iPart < d3dModel.Parts.size () ; iPart++ ) {
 		D3DMODEL_PART& part = d3dModel.Parts [ iPart ] ;
 		for ( unsigned int iSubset = 0 ; iSubset < d3dModel.Parts [ iPart ].Subsets.size () ; iSubset++ ) {
-			D3D_SUBSET& subset = part.Subsets [ iSubset ] ;
-
-			if ( subset.pVB )
-				delete subset.pVB ;
-			subset.pVB = NULL ;
-			subset.iTriCount = 0 ;
+			D3DMODEL_SUBSET& subset = part.Subsets [ iSubset ] ;
 		}
 		part.Subsets.clear () ;
 	}
@@ -205,14 +200,20 @@ void CD3DModelUtils::FreeD3DModel ( D3D_MODEL & d3dModel )
 	d3dModel.Parts.clear () ;
 
 	for ( auto iMtrl = d3dModel.Materials.begin () ; iMtrl != d3dModel.Materials.end () ; iMtrl++ ) {
-		D3D_MATERIAL& mtrl = iMtrl->second ;
-// 		if ( mtrl.pTexDiffuse )
-// 			mtrl.pTexDiffuse->Release() ;
+		D3DMODEL_MATERIAL& mtrl = iMtrl->second ;
 		if ( mtrl.pShader )
 			mtrl.pShader->Release() ;
 	}
 
-	d3dModel.Materials.clear() ;*/
+	d3dModel.Materials.clear() ;
+
+	for ( auto iTex = d3dModel.Textures.begin () ; iTex != d3dModel.Textures.end () ; iTex++ ) {
+		D3DMODEL_TEXTURE_SLOT& tex = iTex->second ;
+		if ( tex.pTexture )
+			tex.pTexture->Release () ;
+	}
+
+	d3dModel.Textures.clear () ;
 }
 
 uint32_t CD3DModelUtils::VertexFormatToFvf ( uint32_t uiVertFmt )

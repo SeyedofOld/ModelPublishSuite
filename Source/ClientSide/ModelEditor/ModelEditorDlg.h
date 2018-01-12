@@ -68,6 +68,8 @@ public:
 	void FillTextureList() ;
 	void CalcTextureAverages() ;
 
+	bool Load3DScanFile ( CString& strPathName ) ;
+
 	char**			m_ppszTextureNames ;
 	int				m_iTextureCount ;
 

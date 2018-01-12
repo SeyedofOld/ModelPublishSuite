@@ -129,6 +129,9 @@
     <ClInclude Include="..\Common\CMemStream.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CustomURLProtocolApp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -192,6 +195,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\Common\CMemStream.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CustomURLProtocolApp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

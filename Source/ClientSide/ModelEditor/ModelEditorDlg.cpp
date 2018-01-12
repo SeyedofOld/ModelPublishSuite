@@ -22,6 +22,21 @@
 
 // CModelViewerDlg dialog
 
+#ifndef SAFE_DELETE
+/// For pointers allocated with new.
+#define SAFE_DELETE(p)			{ if(p) { delete (p);     (p)=NULL; } }
+#endif
+
+#ifndef SAFE_DELETE_ARRAY
+/// For arrays allocated with new [].
+#define SAFE_DELETE_ARRAY(p)	{ if(p) { delete[] (p);   (p)=NULL; } }
+#endif
+
+#ifndef SAFE_RELEASE
+/// For use with COM pointers.
+#define SAFE_RELEASE(p)			{ if(p) { (p)->Release(); (p)=NULL; } }
+#endif
+
 
 CModelViewerDlg::CModelViewerDlg(CWnd* pParent /*=NULL*/)
 	: CRenderDialog(IDD_MODELEDITOR_DIALOG, pParent) 
@@ -204,23 +219,35 @@ void CModelViewerDlg::ShowExampleMenuFile ()
 		char szFilters[] = "3D Scan Files (*.obj)|*.iobj||";
 		CFileDialog dlg(TRUE, "obj", "*.obj", OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, szFilters, AfxGetMainWnd());
 		if (dlg.DoModal() == IDOK) {
+
 			char szOldPath [ MAX_PATH ] ;
 			GetCurrentDirectory ( MAX_PATH, szOldPath ) ;
 			SetCurrentDirectory ( dlg.GetFolderPath() ) ;
 			MY_OBJ obj ;
 			LoadObj2 ( dlg.GetPathName(), &obj ) ;
-			m_pModel1 = new TD_SCAN_MODEL ;
-			ConvertObjTo3DModel ( obj, *m_pModel1 ) ;
+			TD_SCAN_MODEL* pModel = new TD_SCAN_MODEL ;
+			ConvertObjTo3DModel ( obj, *pModel ) ;
 			SetCurrentDirectory ( szOldPath ) ;
 
-			m_pd3dModel1 = new D3D_MODEL ;
-			if ( ! CD3DModelUtils::CreateFromTDModel ( C3DGfx::GetInstance ()->GetDevice (), C3DGfx::GetInstance ()->GetEffectPool (), *m_pModel1, *m_pd3dModel1 ) ) {
-				delete m_pd3dModel1 ;
-				m_pd3dModel1 = NULL ;
-				delete m_pModel1 ;
-				m_pModel1 = NULL ;
+			D3D_MODEL* pd3dModel = new D3D_MODEL ;
+			if ( ! CD3DModelUtils::CreateFromTDModel ( C3DGfx::GetInstance ()->GetDevice (), C3DGfx::GetInstance ()->GetEffectPool (), *pModel, *pd3dModel ) ) {
+				SAFE_DELETE ( pd3dModel ) ;
+				C3DModelUtils::FreeModel ( *pModel ) ;
+				SAFE_DELETE ( pModel ) ;
 			}
 			else {
+				if ( m_pModel1 ) {
+					C3DModelUtils::FreeModel ( *m_pModel1 ) ;
+					SAFE_DELETE ( m_pModel1 ) ;
+				}
+				m_pModel1 = pModel ;
+
+				if ( m_pd3dModel1 ) {
+					CD3DModelUtils::FreeD3DModel ( *m_pd3dModel1 ) ;
+					SAFE_DELETE ( m_pd3dModel1 ) ;
+				}
+				m_pd3dModel1 = pd3dModel ;
+
 				FillTextureList () ;
 				m_bFileOpened = true ;
 				m_bHasFilename = false ;
@@ -234,23 +261,7 @@ void CModelViewerDlg::ShowExampleMenuFile ()
 		char szFilters[] = "3D Scan Files (*.3dscan)|*.3dscan||";
 		CFileDialog dlg ( TRUE, "3dscan", "*.3dscan", OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, szFilters, AfxGetMainWnd () ) ;
 		if (dlg.DoModal() == IDOK) {
-			TD_SCAN_MODEL* pModel = C3DScanFile::Load3DScanModel ( dlg.GetPathName().GetBuffer() ) ;
-			if ( pModel ) {
-				m_pModel1 = pModel ;
-				m_pd3dModel1 = new D3D_MODEL ;
-				if ( ! CD3DModelUtils::CreateFromTDModel ( C3DGfx::GetInstance ()->GetDevice (), C3DGfx::GetInstance ()->GetEffectPool (), *m_pModel1, *m_pd3dModel1 ) ) {
-					delete m_pd3dModel1 ;
-					m_pd3dModel1 = NULL ;
-					delete m_pModel1 ;
-					m_pModel1 = NULL ;
-				}
-				else {
-					FillTextureList () ;
-					m_strFilename = dlg.GetPathName () ;
-					m_bFileOpened = true ;
-					m_bHasFilename = true ;
-				}
-			}
+			Load3DScanFile ( dlg.GetPathName() ) ;
 		}
 	}
 	
@@ -585,10 +596,11 @@ void CModelViewerDlg::UpdateGui ()
 
 	static bool opn = false ;
 
+	/*
 	if ( ! ImGui::Begin ( "Hierarchy", NULL, flags ) ) {
 		ImGui::End ();
 	}
-	else /*( ! ImGui::Begin ( "Hierarchy", &opn, flags ) )*/ {
+	else ( ! ImGui::Begin ( "Hierarchy", &opn, flags ) ) {
 		ImGuiStyle& style = ImGui::GetStyle ();
 		//style.WindowRounding = 0.0f ;
 		style.FrameBorderSize = 1.0f ;
@@ -600,7 +612,7 @@ void CModelViewerDlg::UpdateGui ()
 		//ImGui::PopItemWidth ();
 		//VALIDATE_RANGE ( m_fAlpha, 0.1f, 1.0f );
 		ImGui::End ();
-	}
+	}*/
 
 	//SetNextWindowSize ( ImVec2 ( 300, 400 ), ImGuiCond_FirstUseEver );
 	static bool s_b = false ;
@@ -697,16 +709,15 @@ void CModelViewerDlg::UpdateWorldMatrix ()
 
 void CModelViewerDlg::FillTextureList ()
 {
-	if ( m_pd3dModel1 ) {
-		if ( m_ppszTextureNames ) {
-			for ( int i = 0 ; i < m_iTextureCount ; i++ ) {
-				char* p = *m_ppszTextureNames ;
-				delete p ;
-			}
-			delete m_ppszTextureNames ;
-			m_ppszTextureNames = NULL ;
+	if ( m_ppszTextureNames ) {
+		for ( int i = 0 ; i < m_iTextureCount ; i++ ) {
+			SAFE_DELETE ( m_ppszTextureNames [ i ] ) ;
 		}
+		SAFE_DELETE ( m_ppszTextureNames ) ;
+		m_iTextureCount = 0 ;
+	}
 
+	if ( m_pd3dModel1 ) {
 		m_iTextureCount = m_pd3dModel1->Textures.size() + 1 ;
 		m_ppszTextureNames = new char* [ m_iTextureCount ] ;
 
@@ -835,4 +846,39 @@ LRESULT ImGui_ImplWin32_WndProcHandler ( HWND hwnd, UINT msg, WPARAM wParam, LPA
 		return 0;
 	}
 	return 0;
+}
+
+bool CModelViewerDlg::Load3DScanFile ( CString& strPathName )
+{
+	TD_SCAN_MODEL* pModel = C3DScanFile::Load3DScanModelFromFile ( strPathName.GetBuffer () ) ;
+	if ( pModel ) {
+		D3D_MODEL* pd3dModel = new D3D_MODEL ;
+		if ( !CD3DModelUtils::CreateFromTDModel ( C3DGfx::GetInstance ()->GetDevice (), C3DGfx::GetInstance ()->GetEffectPool (), *pModel, *pd3dModel ) ) {
+			SAFE_DELETE ( pd3dModel ) ;
+			C3DModelUtils::FreeModel ( *pModel ) ;
+			SAFE_DELETE ( pModel ) ;
+		}
+		else {
+			if ( m_pd3dModel1 ) {
+				CD3DModelUtils::FreeD3DModel ( *m_pd3dModel1 ) ;
+				SAFE_DELETE ( m_pd3dModel1 ) ;
+			}
+			if ( m_pd3dModel1 ) {
+				C3DModelUtils::FreeModel ( *m_pModel1 ) ;
+				SAFE_DELETE ( m_pModel1 ) ;
+			}
+
+			m_pd3dModel1 = pd3dModel ;
+			m_pModel1 = pModel ;
+
+			//ResetView () ;
+
+			FillTextureList () ;
+			m_strFilename = strPathName ;
+			m_bFileOpened = true ;
+			m_bHasFilename = true ;
+		}
+	}
+
+	return true ;
 }

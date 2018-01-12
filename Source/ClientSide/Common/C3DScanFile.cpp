@@ -46,6 +46,9 @@ TD_SCAN_MODEL* C3DScanFile::Load3DScanModel ( CBaseStream& rStream )
 	if ( !pModel )
 		goto load_error ;
 
+	pModel->ptMin = float3{ FLT_MAX, FLT_MAX, FLT_MAX } ;
+	pModel->ptMax = float3{ -FLT_MAX, -FLT_MAX, -FLT_MAX } ;
+
 	int32_t iNextPartOfs = hdr.iFirstPartOfs ;
 
 	while ( iNextPartOfs > 0 ) {
@@ -96,7 +99,7 @@ TD_SCAN_MODEL* C3DScanFile::Load3DScanModel ( CBaseStream& rStream )
 			if ( !subset.pIB )
 				goto load_error;
 
-			subset.uiTriCount = sub_hdr.uiTriCount ;
+			subset.uiTriCount  = sub_hdr.uiTriCount ;
 			subset.uiVertCount = sub_hdr.uiVertexCount ;
 
 			if ( sub_hdr.uiFlags & TDS_FLAG_COMPRESSED ) {
@@ -112,6 +115,26 @@ TD_SCAN_MODEL* C3DScanFile::Load3DScanModel ( CBaseStream& rStream )
 			else {
 				rStream.Read ( subset.pVB, uiVertexSize * sub_hdr.uiVertexCount ) ;
 				rStream.Read ( subset.pIB, sizeof ( uint32_t ) * sub_hdr.uiTriCount * 3 ) ;
+			}
+
+			int8_t* pVertex = (int8_t*)subset.pVB ;
+			for ( uint32_t i = 0 ; i < subset.uiVertCount ; i++ ) {
+				float3* pPos = (float3*)pVertex ;
+				if ( pPos->x < pModel->ptMin.x )
+					pModel->ptMin.x = pPos->x ;
+				if ( pPos->y < pModel->ptMin.y )
+					pModel->ptMin.y = pPos->y ;
+				if ( pPos->z < pModel->ptMin.z )
+					pModel->ptMin.z = pPos->z ;
+
+				if ( pPos->x > pModel->ptMax.x )
+					pModel->ptMax.x = pPos->x ;
+				if ( pPos->y > pModel->ptMax.y )
+					pModel->ptMax.y = pPos->y ;
+				if ( pPos->z > pModel->ptMax.z )
+					pModel->ptMax.z = pPos->z ;
+
+				pVertex += uiVertexSize ;
 			}
 
 			subset.sMatName = (char*)sub_hdr.szMatName ;

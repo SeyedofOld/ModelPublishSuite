@@ -114,6 +114,15 @@
     <ClInclude Include="ModelEditorDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\Common\CBaseStream.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\CFileStream.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\CMemStream.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -170,6 +179,12 @@
     <ClCompile Include="ModelEditorDlg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\Common\CFileStream.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\CMemStream.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ModelEditor.rc">
@@ -179,9 +194,6 @@
   <ItemGroup>
     <None Include="res\ModelEditor.rc2">
       <Filter>Resource Files</Filter>
-    </None>
-    <None Include="..\..\..\Bin\common.fxh">
-      <Filter>Source Files\Shader</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -196,5 +208,6 @@
     <FxCompile Include="..\..\..\Bin\UberShader.fx">
       <Filter>Source Files\Shader</Filter>
     </FxCompile>
+    <FxCompile Include="..\..\..\Bin\common.fxh" />
   </ItemGroup>
 </Project>
