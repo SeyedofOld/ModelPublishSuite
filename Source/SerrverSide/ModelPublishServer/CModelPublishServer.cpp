@@ -705,6 +705,12 @@ void CModelPublishServer::OnGetInfo ( json::value& params, json::value& answer, 
 					char* pBuf = new char [ iSize ] ;
 					fseek ( pFile, 0, SEEK_SET ) ;
 					fread ( pBuf, iSize, 1, pFile ) ;
+					
+					fseek ( pFile, 0, SEEK_END ) ;
+
+					int iTotalFileSize = ftell ( pFile ) ;
+					int iTotalFizeSizeBase64 = Base64EncodeGetRequiredLength ( iTotalFileSize, 0 ) ;
+
 					fclose ( pFile ) ;
 
 					int iDestSize = Base64EncodeGetRequiredLength ( iSize, 0 ) ;
@@ -726,6 +732,9 @@ void CModelPublishServer::OnGetInfo ( json::value& params, json::value& answer, 
 					answer [ L"error" ] = json::value::boolean ( false ) ;
 					answer [ L"result_number" ] = json::value::number ( 1 ) ;
 					answer [ L"info" ] = json::value::string ( pszBase64Hdr ) ;
+
+					answer [ L"size" ] = iTotalFizeSizeBase64 ;
+
 					http_result = status_codes::OK ;
 				}
 
@@ -738,6 +747,12 @@ void CModelPublishServer::OnGetInfo ( json::value& params, json::value& answer, 
 				pszBase64Hdr = new wchar_t [ iSize + 1 ] ;
 				fseek ( pFile, 0, SEEK_SET ) ;
 				fread ( pszBase64Hdr, iSize, sizeof(wchar_t), pFile ) ;
+
+				fseek ( pFile, 0, SEEK_END ) ;
+
+				int iTotalFileSize = ftell ( pFile ) ;
+				int iTotalFizeSizeBase64 = Base64EncodeGetRequiredLength ( iTotalFileSize, 0 ) ;
+
 				fclose ( pFile ) ;
 
 				pszBase64Hdr [ iSize ] = 0 ;
@@ -745,6 +760,9 @@ void CModelPublishServer::OnGetInfo ( json::value& params, json::value& answer, 
 				answer [ L"error" ] = json::value::boolean ( false ) ;
 				answer [ L"result_number" ] = json::value::number ( 1 ) ;
 				answer [ L"info" ] = json::value::string ( pszBase64Hdr ) ;
+				answer [ L"size" ] = iTotalFizeSizeBase64 ;
+
+				wcout << answer.as_string() << endl ;
 				http_result = status_codes::OK ;
 			}
 

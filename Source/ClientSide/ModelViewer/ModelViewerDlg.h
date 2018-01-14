@@ -85,20 +85,20 @@ public:
 	bool Load3DScanFile ( CString& strPathName ) ;
 	bool Load3DScanFromUrl ( CString& strUrl ) ;
 
-	void DownloadInfo ( wstring strUrl );
-	void DownloadModel ( wstring strUrl );
-	void DownloadAd ( wstring strUrl );
+	void DownloadInfo ( wstring& strUrl ) ;
+	void DownloadModel ( wstring& strUrl ) ;
+	void DownloadAd ( wstring& strUrl ) ;
 
 	char**			m_ppszTextureNames ;
 	int				m_iTextureCount ;
+	int				m_iFileSize ;
+
+	std::wstring	m_strModel ;
+	std::wstring	m_strAd ;
 
 	afx_msg void OnSize ( UINT nType, int cx, int cy );
 	virtual LRESULT WindowProc ( UINT message, WPARAM wParam, LPARAM lParam );
 	afx_msg BOOL OnEraseBkgnd ( CDC* pDC );
 	void UpdateGui() ;
 
-	friend DWORD WINAPI DownloadAdProc ( void* pParam ) ;
-	friend DWORD WINAPI DownloadModelProc ( void* pParam ) ;
-
-	std::wstring m_ModelUrl, m_AdUrl ;
 };

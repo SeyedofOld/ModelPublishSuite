@@ -17,12 +17,14 @@
 #include "CModelWebServiceClient.h"
 #include "GlobalDefines.h"
 #include <thread>
+#include <functional>
 #include "CustomURLProtocolApp.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
+CModelViewerDlg* g_pDlg ;
 
 using namespace std ;
 
@@ -43,50 +45,6 @@ using namespace std ;
 #endif
 
 // CModelViewerDlg dialog
-
-DWORD WINAPI DownloadAdProc ( void* pParam )
-{
-	CModelViewerDlg* pDlg = (CModelViewerDlg*)pParam ;
-
-	CModelServiceWebClient client ;
-	char* p = NULL ;
-	int iSize = 0 ;
-	if ( client.GetAd ( (wchar_t*)pDlg->m_AdUrl.c_str (), MODEL_CLIENT_ID_PCWIN, &p, iSize, pDlg->m_strAdUrl ) ) {
-
-		pDlg->m_PointerPass [ 2 ].pData = p ;
-		pDlg->m_PointerPass [ 2 ].iSize = iSize ;
-
-		pDlg->PostMessage ( WM_USER_AD_DOWNLOADED, 2, 0 ) ;
-	}
-
-	return 0 ;
-}
-
-DWORD WINAPI DownloadModelProc ( void* pParam )
-{
-	CModelViewerDlg* pDlg = (CModelViewerDlg*)pParam ;
-	
-	pDlg->m_bDownloading = true ;
-	CModelServiceWebClient client ;
-	char* p = NULL ;
-
-	//AfxMessageBox ( "A" ) ;
-	//MessageBoxW ( NULL, pDlg->m_ModelUrl.c_str(), L"", MB_OK ) ;
-
-	if ( client.GetModel ( (wchar_t*)pDlg->m_ModelUrl.c_str (), MODEL_CLIENT_ID_PCWIN, &p ) ) {
-		pDlg->m_PointerPass [ 1 ].pData = p ;
-		pDlg->m_PointerPass [ 1 ].iSize = 100000000 ;
-
-		//AfxMessageBox ( "B" ) ;
-		pDlg->PostMessage ( WM_USER_MODEL_DOWNLOADED, 1, 0 ) ;
-	}
-	
-	pDlg->m_bDownloading = false ;
-
-	//AfxMessageBox ( "C" ) ;
-
-	return 0 ;
-}
 
 
 CModelViewerDlg::CModelViewerDlg(CWnd* pParent /*=NULL*/)
@@ -138,6 +96,7 @@ END_MESSAGE_MAP()
 BOOL CModelViewerDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
+	g_pDlg = this ;
 
 	// Set the icon for this dialog.  The framework does this automatically
 	//  when the application's main window is not a dialog
@@ -554,9 +513,13 @@ LRESULT CModelViewerDlg::WindowProc ( UINT message, WPARAM wParam, LPARAM lParam
 	ImGui_ImplWin32_WndProcHandler ( GetSafeHwnd (), message, wParam, lParam ) ;
 
 	if ( message == WM_USER_HTTP_PROGRESS ) {
-		m_fDownloadProgress = (float)lParam / 2000000.0f ;
-	
-	} else if ( message == WM_USER_MODEL_DOWNLOADED ) {
+		if ( m_iFileSize != 0 )
+			m_fDownloadProgress = (float)lParam / m_iFileSize ;
+		else
+			m_fDownloadProgress = 0.0f ;
+
+	} 
+	else if ( message == WM_USER_MODEL_DOWNLOADED ) {
 		TD_SCAN_MODEL* pModel = C3DScanFile::Load3DScanModelFromMemory ( m_PointerPass[1].pData, m_PointerPass[1].iSize ) ;
 		if ( pModel ) {
 			D3D_MODEL* pd3dModel = new D3D_MODEL ;
@@ -585,10 +548,20 @@ LRESULT CModelViewerDlg::WindowProc ( UINT message, WPARAM wParam, LPARAM lParam
 			}
 		}
 	
-		DownloadAd ( m_AdUrl ) ;
-
-	} else if ( message == WM_USER_AD_DOWNLOADED ) {
+		SAFE_DELETE ( m_PointerPass [ 1 ].pData ) ;
+		m_bDownloading = false ;
+		
+		DownloadAd ( m_strAd ) ;
+	} 
+	else if ( message == WM_USER_AD_DOWNLOADED ) {
 		D3DXCreateTextureFromFileInMemory ( C3DGfx::GetInstance ()->GetDevice (), m_PointerPass[2].pData, m_PointerPass[2].iSize, &m_pAdTex ) ;
+		SAFE_DELETE ( m_PointerPass [ 2 ].pData ) ;
+	}
+	else if ( message == WM_USER_MODEL_INFO ) {
+		m_iFileSize = lParam ;
+		SAFE_DELETE ( m_PointerPass [ 0 ].pData ) ;
+
+		DownloadModel ( m_strModel ) ;
 	}
 
 	if ( message == WUM_INTERACTION_MSG ) {
@@ -959,36 +932,16 @@ bool CModelViewerDlg::Load3DScanFile ( CString& strPathName )
 	return true ;
 }
 
-void CModelViewerDlg::DownloadInfo ( wstring strUrl )
-{
-	CModelServiceWebClient client ;
-	char* p = NULL ;
-	if ( client.GetModelInfo ( (wchar_t*)strUrl.c_str (), MODEL_CLIENT_ID_PCWIN, &p ) ) {
-		TDSCAN_FILE_HEADER hdr ;
-		memcpy ( &hdr, p, sizeof ( TDSCAN_FILE_HEADER ) ) ;
-	}
-}
-
-void CModelViewerDlg::DownloadModel ( wstring strUrl )
-{
-	//AfxMessageBox ( "55" ) ;
-	m_ModelUrl = strUrl ;
-	CreateThread ( NULL, 10000, DownloadModelProc, this, 0, NULL ) ;
-}
-
-void CModelViewerDlg::DownloadAd ( wstring strUrl )
-{
-	m_AdUrl = strUrl ;
-	CreateThread ( NULL, 10000, DownloadAdProc, this, 0, NULL ) ;
-}
 
 bool CModelViewerDlg::Load3DScanFromUrl ( CString& strUrl )
 {
-	strUrl.Replace ( "3dscan:", STORE_SCHEME":" ) ;
+	strUrl.Replace ( "3dscan://", STORE_SCHEME"://" ) ;
 
 	wchar_t szUrl [ 1000 ] ;
 	int iLen = MultiByteToWideChar ( CP_ACP, 0, strUrl.GetBuffer (), strUrl.GetLength (), szUrl, 1000 ) ;
 	szUrl [ iLen ] = 0 ;
+
+	//MessageBoxW ( NULL, szUrl, L"B", MB_ICONASTERISK ) ;
 
 	//AfxMessageBox ( strUrl ) ;
 
@@ -998,7 +951,10 @@ bool CModelViewerDlg::Load3DScanFromUrl ( CString& strUrl )
 	auto query = builder.query () ;
 	auto query_split = web::uri::split_query ( query ) ;
 
-	if ( 0 ) {
+	//MessageBoxW ( NULL, original.to_string ().c_str (), L"B", MB_ICONASTERISK ) ;
+
+	wstring strInfo ;
+	if ( 1 ) {
 		web::uri_builder builder_mdl ;
 		builder_mdl.set_scheme ( U(STORE_SCHEME) ) ;
 		builder_mdl.set_host ( builder.host () ) ;
@@ -1010,7 +966,8 @@ bool CModelViewerDlg::Load3DScanFromUrl ( CString& strUrl )
 		wstring strUrl2 = builder_mdl.to_string() ;
 		//thread *t1 = new thread ( &CModelViewerDlg::DownloadInfo, this, strUrl ) ;
 
-		DownloadInfo ( strUrl2 ) ;
+		strInfo = strUrl2 ;
+		//DownloadInfo ( strUrl2 ) ;
 	}
 	//AfxMessageBox ( "4" ) ;
 
@@ -1026,8 +983,10 @@ bool CModelViewerDlg::Load3DScanFromUrl ( CString& strUrl )
 		wstring strUrl2 = builder_mdl.to_string() ;
 
 		//thread* t2 = new thread  ( &CModelViewerDlg::DownloadModel, this, strUrl ) ;
-		//MessageBoxW ( NULL, strUrl2.c_str (), L"", MB_ICONASTERISK ) ;
-		DownloadModel ( strUrl2 ) ;
+		//MessageBoxW ( NULL, strUrl2.c_str (), L"A", MB_ICONASTERISK ) ;
+		//DownloadModel ( strUrl2 ) ;
+		m_strModel = strUrl2 ;
+		//DownloadModel ( strUrl2 ) ;
 	}
 	//AfxMessageBox ( "5" ) ;
 
@@ -1041,12 +1000,14 @@ bool CModelViewerDlg::Load3DScanFromUrl ( CString& strUrl )
 		builder_ad.append_query ( L"subsid", query_split [ L"subsid" ] ) ;
 
 		wstring strUrl2 = builder_ad.to_string () ;
-		m_AdUrl = strUrl2 ;
+		//m_AdUrl = strUrl2 ;
 
 		//thread* t3 = new thread ( &CModelViewerDlg::DownloadAd, this, strUrl ) ;
-		DownloadAd ( strUrl2 ) ;
+		//DownloadAd ( strUrl2 ) ;
+		m_strAd = strUrl2 ;
 	}
 	//AfxMessageBox ( "6" ) ;
+	DownloadInfo ( strInfo ) ;
 
 	//Sleep ( 20000 ) ;
 	return true ;
@@ -1140,3 +1101,102 @@ void CModelViewerDlg::ResetView ()
 		UpdateWorldMatrix() ;
 	}
 }
+
+void MyInfoCallback ( int iResult, char* pData, int iSize, int iFileSize )
+{
+	g_pDlg->m_PointerPass [ 0 ].pData = pData ;
+	g_pDlg->m_PointerPass [ 0 ].iSize = iSize ;
+
+	g_pDlg->PostMessage ( WM_USER_MODEL_INFO, 0, iFileSize ) ;
+}
+
+void MyModelCallback ( int iResult, char* pData, int iSize )
+{
+	g_pDlg->m_PointerPass [ 1 ].pData = pData ;
+	g_pDlg->m_PointerPass [ 1 ].iSize = iSize ;
+
+	g_pDlg->PostMessage ( WM_USER_MODEL_DOWNLOADED, 1, 0 ) ;
+}
+
+void MyAdCallback ( int iResult, char* pData, int iSize, std::string& strAdUrl )
+{
+	g_pDlg->m_PointerPass [ 2 ].pData = pData ;
+	g_pDlg->m_PointerPass [ 2 ].iSize = iSize ;
+
+	g_pDlg->m_strAdUrl = strAdUrl ;
+
+	g_pDlg->PostMessage ( WM_USER_AD_DOWNLOADED, 2, 0 ) ;
+}
+
+std::thread ModelThread ;
+std::thread AdThread ;
+
+void CModelViewerDlg::DownloadInfo ( wstring& strUrl )
+{
+	char* szClientId = new char [ 100 ] ;
+	strcpy ( szClientId, MODEL_CLIENT_ID_PCWIN ) ;
+
+	wchar_t* szUrl = new wchar_t [ strUrl.length () + 1 ] ;
+	wcscpy ( szUrl, strUrl.c_str () ) ;
+
+	std::function<void ( int iResult, char* pHdr, int iSize, int iFileSize )> myCallback = MyInfoCallback ;
+	ModelThread = std::thread ( [ = ]( wchar_t* pUrl, char* pClientId ) {
+		CModelServiceWebClient client ;
+		char* pData = NULL ;
+		int iSize = 0, iFileSize = 0 ;
+		int iRes = client.GetModelInfo ( pUrl, pClientId, &pData, &iSize, &iFileSize ) ;
+		if ( myCallback )
+			myCallback ( iRes, pData, iSize, iFileSize ) ;
+		SAFE_DELETE ( pUrl ) ;
+		SAFE_DELETE ( pClientId ) ;
+	}, szUrl, szClientId ) ;
+	ModelThread.detach () ;
+}
+
+void CModelViewerDlg::DownloadModel ( wstring& strUrl )
+{
+	m_bDownloading = true ;
+
+	char* szClientId = new char [ 100 ] ;
+	strcpy ( szClientId, MODEL_CLIENT_ID_PCWIN ) ;
+
+	wchar_t* szUrl = new wchar_t [ strUrl.length () + 1 ] ;
+	wcscpy ( szUrl, strUrl.c_str() ) ;
+
+	std::function<void ( int iResult, char* pszOrderId, int iSize )> myCallback = MyModelCallback ;
+	ModelThread = std::thread ( [ = ]( wchar_t* pUrl, char* pClientId ) {
+		CModelServiceWebClient client ;
+		char* pData = NULL ;
+		int iSize = 0 ;
+		int iRes = client.GetModel ( pUrl, pClientId, &pData, &iSize ) ;
+		if ( myCallback )
+			myCallback ( iRes, pData, iSize ) ;
+		SAFE_DELETE ( pUrl ) ;
+		SAFE_DELETE ( pClientId ) ;
+	}, szUrl, szClientId ) ;
+	ModelThread.detach() ;
+}
+
+void CModelViewerDlg::DownloadAd ( wstring& strUrl )
+{
+	char* szClientId = new char [ 100 ] ;
+	strcpy ( szClientId, MODEL_CLIENT_ID_PCWIN ) ;
+
+	wchar_t* szUrl = new wchar_t [ strUrl.length () + 1 ] ;
+	wcscpy ( szUrl, strUrl.c_str () ) ;
+
+	std::function<void ( int iResult, char* pData, int iSize, std::string& strAdUrl )> myCallback = MyAdCallback ;
+	AdThread = std::thread ( [ = ]( wchar_t* pUrl, char* pClientId ) {
+		CModelServiceWebClient client ;
+		char* pData = NULL ;
+		int iSize = 0 ;
+		std::string strAdUrl ;
+		int iRes = client.GetAd ( pUrl, pClientId, &pData, iSize, strAdUrl ) ;
+		if ( myCallback )
+			myCallback ( iRes, pData, iSize, strAdUrl ) ;
+		SAFE_DELETE ( pUrl ) ;
+		SAFE_DELETE ( pClientId ) ;
+	}, szUrl, szClientId ) ;
+	AdThread.detach () ;
+}
+
