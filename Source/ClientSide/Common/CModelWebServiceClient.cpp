@@ -49,7 +49,7 @@ pplx::task<http_response> make_task_request_get ( http_client & client, method m
 	request.set_request_uri ( uri ) ;
 
 	///////////////////////////////////////
-	request.set_progress_handler ( CModelServiceWebClient::ProgressCallback ) ;
+	request.set_progress_handler ( progress ) ;
 // 			[ & ]( message_direction::direction direction, utility::size64_t so_far )
 // 	{
 // 		calls += 1;
@@ -78,7 +78,7 @@ pplx::task<http_response> make_task_request_get ( http_client & client, method m
 	else {
 		//request.set_body ( jvalue.serialize() ) ;
 	}
-   
+	
 	return client.request ( request ) ;
 
 	//return (mtd == methods::GET || mtd == methods::HEAD) ? client.request(mtd, STORE_URI_U) :  client.request(mtd, STORE_URI_U, jvalue.serialize());
@@ -175,79 +175,51 @@ bool CModelServiceWebClient::GetModel ( wchar_t* pszUrl, char* pszClientId, char
 	if ( ! pszClientId )
 		return false ;
 
-// 	wchar_t szUrl [ 1000 ] ;
-// 	int iLen = MultiByteToWideChar ( CP_ACP, 0, pszUrl, strlen(pszUrl), szUrl, 1000 ) ;
-// 	szUrl [ iLen ] = 0 ;
 
 	wchar_t szClientID [ 1000 ] ;
 	int iLen = MultiByteToWideChar ( CP_ACP, 0, pszClientId, strlen(pszClientId), szClientID, 1000 ) ;
 	szClientID [ iLen ] = 0 ;
 
-// 	wchar_t szCustId [ 1000 ] ;
-// 	iLen = MultiByteToWideChar ( CP_ACP, 0, pszCustId, strlen ( pszCustId ), szCustId, 1000 ) ;
-// 	szCustId [ iLen ] = 0 ;
-
-
-//     json::value json_obj;
-//     json_obj[L"method"] = json::value::string(U("getregkey"));
-//     json_obj[L"package_name"] = json::value::string(szPid);
-//     json_obj[L"hash"] = json::value::string(U(""));
-
 	web::uri inuri ( pszUrl ) ;
 
 	uri_builder builder ( inuri ) ;
-// 	builder.set_scheme ( U(STORE_SCHEME) ) ;
-// 	builder.set_host ( U(STORE_URL) ) ;
-// 	builder.set_port ( STORE_PORT ) ;
-// 	builder.set_path ( U(STORE_URI) ) ;
-// 	builder.append_path ( U(MODEL_API_GET) ) ;
-
-//     utility::string_t port = std::to_wstring ( STORE_PORT ) ;
-//     utility::string_t address = STORE_URL ;
-//     address.append ( L":" ) ;
-//     address.append ( port ) ;
-// 
-//     address.append ( STORE_URI ) ;
-//     address.append ( STORE_API_GETREGKEY ) ;
 
     // Append the query parameters: ?method=flickr.test.echo&name=value
 	builder.append_query ( U ( "client" ), szClientID ) ;
-	//builder.append_query ( U ( "subsid" ), szModelId ) ;
-//	builder.append_query ( U ("custid"), szCustId ) ;
-    //builder.append_query ( U("hash"), U("") ) ;
  
-    //auto path_query_fragment = builder.to_string();
-
-	//address.append ( path_query_fragment ) ;
-//    http::uri uri = http::uri(address);
-
 	http_client_config config;
     config.set_validate_certificates ( false ) ;
 
 	//MessageBox ( NULL, "0", "", MB_OK ) ;
 
-	//MessageBoxW ( NULL, pszUrl, L"", MB_OK ) ;
-	//MessageBoxW ( NULL, inuri.to_string ().c_str (), L"", MB_OK ) ;
-
 	http_client client ( inuri, config ) ;
-
-	//MessageBox ( NULL, "1", "", MB_OK ) ;
-
-    // Write the current JSON value to a stream with the native platform character width
-//     utility::stringstream_t stream;
-//     json_obj.serialize(stream);
-//  
-//     // Display the string stream
-//     std::wcout << stream.str() << endl;
-
-	std::wcout << inuri.to_string () << endl;
-
-	uri my_uri = L"" ;
 
 	json::value answer ;
 	status_code http_result ;
 
-	make_request_get ( client, methods::GET, my_uri, answer, http_result, &CModelServiceWebClient::ProgressCallback ) ;
+	if ( 0 )
+		make_request_get ( client, methods::GET, inuri, answer, http_result, &CModelServiceWebClient::ProgressCallback ) ;
+
+	{
+		http_request request ( methods::GET ) ;
+		request.set_request_uri ( inuri ) ;
+
+		request.set_progress_handler ( &CModelServiceWebClient::ProgressCallback ) ;
+
+		try {
+			MessageBoxW ( NULL, inuri.to_string ().c_str (), L"2", MB_OK ) ;
+			http_response response = client.request ( request ).get () ;
+
+			http_result = response.status_code () ;
+			if ( http_result == status_codes::OK )
+				answer = response.extract_json ( true ).get ();
+		}
+		catch ( http_exception const & e )
+		{
+			MessageBox ( NULL, e.what(), "", MB_OK ) ;
+			wcout << e.what () << endl;
+		}
+	}
 
 	//wcout << answer << endl ;
 	wcout << L"HTTP Status Code:" << http_result << endl ;
@@ -255,6 +227,7 @@ bool CModelServiceWebClient::GetModel ( wchar_t* pszUrl, char* pszClientId, char
 //	rbInvalidSessionId = (http_result == status_codes::Unauthorized) ;
 
 	if ( http_result != status_codes::OK ) {
+
 		*ppData = NULL ;
 		return false ;
 	}
@@ -636,35 +609,86 @@ bool CModelServiceWebClient::GetModelInfo ( wchar_t* pszUrl, char* pszClientId, 
 	if ( !pszClientId )
 		return false ;
 
-// 	wchar_t szUrl [ 1000 ] ;
-// 	int iLen = MultiByteToWideChar ( CP_ACP, 0, pszUrl, strlen ( pszUrl ), szUrl, 1000 ) ;
-// 	szUrl [ iLen ] = 0 ;
+	// 	wchar_t szUrl [ 1000 ] ;
+	// 	int iLen = MultiByteToWideChar ( CP_ACP, 0, pszUrl, strlen(pszUrl), szUrl, 1000 ) ;
+	// 	szUrl [ iLen ] = 0 ;
 
 	wchar_t szClientID [ 1000 ] ;
 	int iLen = MultiByteToWideChar ( CP_ACP, 0, pszClientId, strlen ( pszClientId ), szClientID, 1000 ) ;
 	szClientID [ iLen ] = 0 ;
 
-	uri_builder builder ( pszUrl ) ;
-	builder.append_query ( U ( "client" ), szClientID ) ;
+	// 	wchar_t szCustId [ 1000 ] ;
+	// 	iLen = MultiByteToWideChar ( CP_ACP, 0, pszCustId, strlen ( pszCustId ), szCustId, 1000 ) ;
+	// 	szCustId [ iLen ] = 0 ;
 
-	auto path_query_fragment = builder.to_string ();
+
+	//     json::value json_obj;
+	//     json_obj[L"method"] = json::value::string(U("getregkey"));
+	//     json_obj[L"package_name"] = json::value::string(szPid);
+	//     json_obj[L"hash"] = json::value::string(U(""));
+
+
+	web::uri inuri ( pszUrl ) ;
+
+	uri_builder builder ( inuri ) ;
+	// 	builder.set_scheme ( U(STORE_SCHEME) ) ;
+	// 	builder.set_host ( U(STORE_URL) ) ;
+	// 	builder.set_port ( STORE_PORT ) ;
+	// 	builder.set_path ( U(STORE_URI) ) ;
+	// 	builder.append_path ( U(MODEL_API_GET) ) ;
+
+	//     utility::string_t port = std::to_wstring ( STORE_PORT ) ;
+	//     utility::string_t address = STORE_URL ;
+	//     address.append ( L":" ) ;
+	//     address.append ( port ) ;
+	// 
+	//     address.append ( STORE_URI ) ;
+	//     address.append ( STORE_API_GETREGKEY ) ;
+
+	// Append the query parameters: ?method=flickr.test.echo&name=value
+	builder.append_query ( U ( "client" ), szClientID ) ;
+	//builder.append_query ( U ( "subsid" ), szModelId ) ;
+	//	builder.append_query ( U ("custid"), szCustId ) ;
+	//builder.append_query ( U("hash"), U("") ) ;
+
+	//auto path_query_fragment = builder.to_string();
+
+	//address.append ( path_query_fragment ) ;
+	//    http::uri uri = http::uri(address);
 
 	http_client_config config;
 	config.set_validate_certificates ( false ) ;
 
-	http_client client ( path_query_fragment, config ) ;
+	//MessageBox ( NULL, "0", "", MB_OK ) ;
 
-	std::wcout << path_query_fragment << endl;
+	//MessageBoxW ( NULL, pszUrl, L"", MB_OK ) ;
+	//MessageBoxW ( NULL, inuri.to_string ().c_str (), L"", MB_OK ) ;
 
-	uri my_uri = L"" ;
+	http_client client ( inuri, config ) ;
+
+	//MessageBox ( NULL, "1", "", MB_OK ) ;
+
+	// Write the current JSON value to a stream with the native platform character width
+	//     utility::stringstream_t stream;
+	//     json_obj.serialize(stream);
+	//  
+	//     // Display the string stream
+	//     std::wcout << stream.str() << endl;
+
+	//std::wcout << inuri.to_string () << endl;
+
+	//uri my_uri = L"" ;
 
 	json::value answer ;
 	status_code http_result ;
 
-	make_request_get ( client, methods::GET, my_uri, answer, http_result, CModelServiceWebClient::ProgressCallbackNull ) ;
+	make_request_get ( client, methods::GET, inuri, answer, http_result, &CModelServiceWebClient::ProgressCallbackNull ) ;
 
+	//MessageBoxW ( NULL, L"", L"2", MB_OK ) ;
 	//wcout << answer << endl ;
 	wcout << L"HTTP Status Code:" << http_result << endl ;
+
+	//	rbInvalidSessionId = (http_result == status_codes::Unauthorized) ;
 
 	if ( http_result != status_codes::OK ) {
 		*ppData = NULL ;
@@ -674,11 +698,12 @@ bool CModelServiceWebClient::GetModelInfo ( wchar_t* pszUrl, char* pszClientId, 
 		*ppData = NULL ;
 		return false ;
 	}
-	else if ( ! answer.has_field ( L"message" ) ) {
+	else if ( !answer.has_field ( L"message" ) ) {
 		*ppData = NULL ;
 		return false ;
 	}
 	else {
+		//json::value imessage = answer[L"message"];
 		if ( !answer.has_field ( L"info" ) )
 		{
 			*ppData = NULL;
@@ -686,6 +711,13 @@ bool CModelServiceWebClient::GetModelInfo ( wchar_t* pszUrl, char* pszClientId, 
 		}
 		else {
 			wstring str1 = answer [ L"info" ].as_string ();
+			// 		wstring str2 = L"OK" ;
+			// 		if ( str1 != str2 ) {
+			// 			*ppszRegKey = NULL ;
+			// 			return false ;
+			// 		}
+
+			//str1 = answer[L"key"].as_string();
 
 			char* pszAnsi = new char [ str1.length () + 1 ] ;
 			int iLen = WideCharToMultiByte ( CP_ACP, 0, str1.c_str (), str1.length (), pszAnsi, str1.length (), pszAnsi, NULL );
@@ -693,15 +725,20 @@ bool CModelServiceWebClient::GetModelInfo ( wchar_t* pszUrl, char* pszClientId, 
 
 			*ppData = new char [ iLen + 1 ] ;
 
+
 			int iDecSize = iLen ;
 			Base64Decode ( pszAnsi, iLen, (BYTE*)*ppData, &iDecSize ) ;
+
 			if ( piSize )
 				*piSize = iDecSize ;
-
-			int iFileSize = answer [ L"size" ].as_integer () ;
 			if ( piFileSize )
-				*piFileSize = iFileSize ;
+				*piFileSize = answer [ L"size" ].as_integer () ;
 
+			// 			int iLen = WideCharToMultiByte(CP_ACP, 0, str1.c_str(), str1.length(), NULL, 0, "", NULL);
+			// 			*ppszRegKey = new char[iLen + 1];
+			// 			WideCharToMultiByte(CP_ACP, 0, str1.c_str(), str1.length(), *ppszRegKey, iLen, "", NULL);
+			// 			char *p = ppszRegKey ;
+			// 			p[iLen] = 0;
 			if ( pszAnsi )
 				delete pszAnsi ;
 
@@ -719,32 +756,37 @@ bool CModelServiceWebClient::GetAd ( wchar_t* pszUrl, char* pszClientId, char** 
 	if ( !pszClientId )
 		return false ;
 
-	// 	wchar_t szUrl [ 1000 ] ;
-	// 	int iLen = MultiByteToWideChar ( CP_ACP, 0, pszUrl, strlen ( pszUrl ), szUrl, 1000 ) ;
-	// 	szUrl [ iLen ] = 0 ;
-
 	wchar_t szClientID [ 1000 ] ;
 	int iLen = MultiByteToWideChar ( CP_ACP, 0, pszClientId, strlen ( pszClientId ), szClientID, 1000 ) ;
 	szClientID [ iLen ] = 0 ;
 
-	uri_builder builder ( pszUrl ) ;
-	builder.append_query ( U ( "client" ), szClientID ) ;
+	// 	wchar_t szCustId [ 1000 ] ;
+	// 	iLen = MultiByteToWideChar ( CP_ACP, 0, pszCustId, strlen ( pszCustId ), szCustId, 1000 ) ;
+	// 	szCustId [ iLen ] = 0 ;
 
-	auto path_query_fragment = builder.to_string ();
+
+	//     json::value json_obj;
+	//     json_obj[L"method"] = json::value::string(U("getregkey"));
+	//     json_obj[L"package_name"] = json::value::string(szPid);
+	//     json_obj[L"hash"] = json::value::string(U(""));
+
+	web::uri inuri ( pszUrl ) ;
+
+	uri_builder builder ( inuri ) ;
 
 	http_client_config config;
 	config.set_validate_certificates ( false ) ;
 
-	http_client client ( path_query_fragment, config ) ;
+	http_client client ( inuri, config ) ;
 
-	std::wcout << path_query_fragment << endl;
+	//std::wcout << path_query_fragment << endl;
 
-	uri my_uri = L"" ;
+	//uri my_uri = L"" ;
 
 	json::value answer ;
 	status_code http_result ;
 
-	make_request_get ( client, methods::GET, my_uri, answer, http_result, CModelServiceWebClient::ProgressCallbackNull ) ;
+	make_request_get ( client, methods::GET, inuri, answer, http_result, CModelServiceWebClient::ProgressCallbackNull ) ;
 
 	//wcout << answer << endl ;
 	wcout << L"HTTP Status Code:" << http_result << endl ;

@@ -550,8 +550,7 @@ LRESULT CModelViewerDlg::WindowProc ( UINT message, WPARAM wParam, LPARAM lParam
 	
 		SAFE_DELETE ( m_PointerPass [ 1 ].pData ) ;
 		m_bDownloading = false ;
-		
-		DownloadAd ( m_strAd ) ;
+	
 	} 
 	else if ( message == WM_USER_AD_DOWNLOADED ) {
 		D3DXCreateTextureFromFileInMemory ( C3DGfx::GetInstance ()->GetDevice (), m_PointerPass[2].pData, m_PointerPass[2].iSize, &m_pAdTex ) ;
@@ -561,7 +560,8 @@ LRESULT CModelViewerDlg::WindowProc ( UINT message, WPARAM wParam, LPARAM lParam
 		m_iFileSize = lParam ;
 		SAFE_DELETE ( m_PointerPass [ 0 ].pData ) ;
 
-		DownloadModel ( m_strModel ) ;
+// 		DownloadModel ( m_strModel ) ;
+// 		DownloadAd ( m_strAd ) ;
 	}
 
 	if ( message == WUM_INTERACTION_MSG ) {
@@ -1006,8 +1006,10 @@ bool CModelViewerDlg::Load3DScanFromUrl ( CString& strUrl )
 		//DownloadAd ( strUrl2 ) ;
 		m_strAd = strUrl2 ;
 	}
-	//AfxMessageBox ( "6" ) ;
+
 	DownloadInfo ( strInfo ) ;
+	DownloadModel ( m_strModel ) ;
+	DownloadAd ( m_strAd ) ;
 
 	//Sleep ( 20000 ) ;
 	return true ;
@@ -1128,6 +1130,7 @@ void MyAdCallback ( int iResult, char* pData, int iSize, std::string& strAdUrl )
 	g_pDlg->PostMessage ( WM_USER_AD_DOWNLOADED, 2, 0 ) ;
 }
 
+std::thread InfoThread ;
 std::thread ModelThread ;
 std::thread AdThread ;
 
@@ -1139,18 +1142,22 @@ void CModelViewerDlg::DownloadInfo ( wstring& strUrl )
 	wchar_t* szUrl = new wchar_t [ strUrl.length () + 1 ] ;
 	wcscpy ( szUrl, strUrl.c_str () ) ;
 
+	int* piFileSize = new int ;
+	*piFileSize = 0 ;
+
 	std::function<void ( int iResult, char* pHdr, int iSize, int iFileSize )> myCallback = MyInfoCallback ;
-	ModelThread = std::thread ( [ = ]( wchar_t* pUrl, char* pClientId ) {
+	InfoThread = std::thread ( [ = ]( wchar_t* pUrl, char* pClientId, int* pFileSize ) {
 		CModelServiceWebClient client ;
 		char* pData = NULL ;
-		int iSize = 0, iFileSize = 0 ;
-		int iRes = client.GetModelInfo ( pUrl, pClientId, &pData, &iSize, &iFileSize ) ;
+		int iSize = 0 ;
+		int iRes = client.GetModelInfo ( pUrl, pClientId, &pData, &iSize, pFileSize ) ;
 		if ( myCallback )
-			myCallback ( iRes, pData, iSize, iFileSize ) ;
+			myCallback ( iRes, pData, iSize, *piFileSize ) ;
 		SAFE_DELETE ( pUrl ) ;
 		SAFE_DELETE ( pClientId ) ;
-	}, szUrl, szClientId ) ;
-	ModelThread.detach () ;
+		SAFE_DELETE ( pFileSize ) ;
+	}, szUrl, szClientId, piFileSize ) ;
+	InfoThread.detach () ;
 }
 
 void CModelViewerDlg::DownloadModel ( wstring& strUrl )

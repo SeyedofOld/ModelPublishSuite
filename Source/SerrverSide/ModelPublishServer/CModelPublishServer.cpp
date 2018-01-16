@@ -31,7 +31,7 @@ using namespace sql ;
 char CModelPublishServer::m_szServerRootFolder [ MAX_PATH ] = { 0 } ;
 
 sql::Driver* CModelPublishServer::driver= NULL ;
-sql::Connection* CModelPublishServer::con = NULL ;
+//sql::Connection* CModelPublishServer::con = NULL ;
 
 CModelPublishServer::CModelPublishServer ()
 {
@@ -44,25 +44,25 @@ CModelPublishServer::CModelPublishServer(utility::string_t url) : m_listener(url
 	m_listener.support ( methods::POST, std::bind(&CModelPublishServer::HandlePost, this, std::placeholders::_1) ) ;
 
 	driver = get_driver_instance ();
-	con = driver->connect ( MYSQL_SERVER, MYSQL_USER, MYSQL_PASS ) ;
-
-	// Connect to the MySQL test database
-	con->setSchema ( STORE_DATABASE_NAME ) ;
+// 	con = driver->connect ( MYSQL_SERVER, MYSQL_USER, MYSQL_PASS ) ;
+// 
+// 	// Connect to the MySQL test database
+// 	con->setSchema ( STORE_DATABASE_NAME ) ;
 }
 
 void CModelPublishServer::OnGetModel ( json::value& params, json::value& answer, status_code& http_result )
 {
 // 	sql::Driver *driver;
-// 	sql::Connection *con;
+ 	sql::Connection *con;
 // 
 // 
 // 	try {
 // 		// Create a connection
 // 		driver = get_driver_instance();
-// 		con = driver->connect ( MYSQL_SERVER, MYSQL_USER, MYSQL_PASS ) ;
+ 		con = driver->connect ( MYSQL_SERVER, MYSQL_USER, MYSQL_PASS ) ;
 // 
 // 		// Connect to the MySQL test database
-// 		con->setSchema ( STORE_DATABASE_NAME ) ;
+ 		con->setSchema ( STORE_DATABASE_NAME ) ;
 // 	}
 // 	catch ( sql::SQLException &e ) {
 // 		cout << e.what() << endl ;
@@ -289,21 +289,21 @@ void CModelPublishServer::OnGetModel ( json::value& params, json::value& answer,
 //  	  cout << " (MySQL error code: " << e.getErrorCode();
 //  	  cout << ", SQLState: " << e.getSQLState() << " )" << endl;
 	//}
-	//delete con ;
+	delete con ;
 }
 
 void CModelPublishServer::OnGetAd ( json::value& params, json::value& answer, status_code& http_result )
 {
 // 	sql::Driver *driver;
-// 	sql::Connection *con;
+ 	sql::Connection *con;
 // 
 // 	try {
 // 		// Create a connection
 // 		driver = get_driver_instance ();
-// 		con = driver->connect ( MYSQL_SERVER, MYSQL_USER, MYSQL_PASS ) ;
+ 		con = driver->connect ( MYSQL_SERVER, MYSQL_USER, MYSQL_PASS ) ;
 // 
 // 		// Connect to the MySQL test database
-// 		con->setSchema ( STORE_DATABASE_NAME ) ;
+ 		con->setSchema ( STORE_DATABASE_NAME ) ;
 // 	}
 // 	catch ( sql::SQLException &e ) {
 // 		cout << e.what () << endl ;
@@ -528,28 +528,28 @@ void CModelPublishServer::OnGetAd ( json::value& params, json::value& answer, st
 	  //  	  cout << " (MySQL error code: " << e.getErrorCode();
 	  //  	  cout << ", SQLState: " << e.getSQLState() << " )" << endl;
 	  //}
-	//delete con ;
+	delete con ;
 }
 
 void CModelPublishServer::OnGetInfo ( json::value& params, json::value& answer, status_code& http_result )
 {
-// 	sql::Driver *driver;
-// 	sql::Connection *con;
-
-// 	try {
-// 		// Create a connection
-// 		driver = get_driver_instance ();
-// 		con = driver->connect ( MYSQL_SERVER, MYSQL_USER, MYSQL_PASS ) ;
-// 
-// 		// Connect to the MySQL test database
-// 		con->setSchema ( STORE_DATABASE_NAME ) ;
-// 	}
-// 	catch ( sql::SQLException &e ) {
-// 		cout << e.what () << endl ;
-// 		answer [ L"message" ] = json::value::string ( L"Database connectivity error!" ) ;
-// 		http_result = status_codes::InternalError ;
-// 		return ;
-// 	}
+	// 	sql::Driver *driver;
+	sql::Connection *con;
+	// 
+	// 	try {
+	// 		// Create a connection
+	// 		driver = get_driver_instance ();
+	con = driver->connect ( MYSQL_SERVER, MYSQL_USER, MYSQL_PASS ) ;
+	// 
+	// 		// Connect to the MySQL test database
+	con->setSchema ( STORE_DATABASE_NAME ) ;
+	// 	}
+	// 	catch ( sql::SQLException &e ) {
+	// 		cout << e.what () << endl ;
+	// 		answer [ L"message" ] = json::value::string ( L"Database connectivity error!" ) ;
+	// 		http_result = status_codes::InternalError ;
+	// 		return ;
+	// 	}
 
 	int iModelId = -1 ;
 
@@ -762,7 +762,7 @@ void CModelPublishServer::OnGetInfo ( json::value& params, json::value& answer, 
 				answer [ L"info" ] = json::value::string ( pszBase64Hdr ) ;
 				answer [ L"size" ] = iTotalFizeSizeBase64 ;
 
-				wcout << answer.as_string() << endl ;
+				//wcout << answer.as_string() << endl ;
 				http_result = status_codes::OK ;
 			}
 
@@ -780,7 +780,7 @@ void CModelPublishServer::OnGetInfo ( json::value& params, json::value& answer, 
 	  //  	  cout << " (MySQL error code: " << e.getErrorCode();
 	  //  	  cout << ", SQLState: " << e.getSQLState() << " )" << endl;
 	  //}
-	//delete con ;
+	delete con ;
 }
 
 
