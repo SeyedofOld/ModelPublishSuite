@@ -1,4 +1,4 @@
-
+//
 // ModelViewerDlg.cpp : implementation file
 //
 
@@ -19,6 +19,7 @@
 #define new DEBUG_NEW
 #endif
 
+#define WM_USER_MY_REDRAW (WM_USER+5555)
 
 // CModelViewerDlg dialog
 
@@ -56,11 +57,13 @@ CModelViewerDlg::CModelViewerDlg(CWnd* pParent /*=NULL*/)
 
 	m_ppszTextureNames = NULL ;
 	m_iTextureCount = 0 ;
+
+	m_bInit = false ;
 }
 
 void CModelViewerDlg::DoDataExchange(CDataExchange* pDX)
 {
-	CDialogEx::DoDataExchange(pDX);
+	CRenderDialog::DoDataExchange(pDX);
 }
 
 BEGIN_MESSAGE_MAP(CModelViewerDlg, CRenderDialog)
@@ -77,7 +80,7 @@ END_MESSAGE_MAP()
 
 BOOL CModelViewerDlg::OnInitDialog()
 {
-	CDialogEx::OnInitDialog();
+	CRenderDialog::OnInitDialog();
 
 	// Set the icon for this dialog.  The framework does this automatically
 	//  when the application's main window is not a dialog
@@ -132,6 +135,8 @@ BOOL CModelViewerDlg::OnInitDialog()
 
 	ModifyStyleEx ( 0, SS_NOTIFY ) ;
 
+	m_bInit = true ;
+
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
@@ -162,7 +167,7 @@ void CModelViewerDlg::OnPaint()
 	{
 // 		CPaintDC dc ( this ) ;
 // 		dc.SelectObject ( GetStockObject ( NULL_BRUSH ) ) ;
-		CDialogEx::OnPaint();
+		CRenderDialog::OnPaint();
 	}
 }
 
@@ -191,8 +196,6 @@ void CModelViewerDlg::OnBnClickedOk ()
 
 void CModelViewerDlg::Update()
 {
-	//m_SettingsGui.Update() ;
-
 	if ( GetAsyncKeyState ( VK_LEFT ) & 0x8000 )
 		m_fYaw -= 0.005f ;
 	if ( GetAsyncKeyState ( VK_RIGHT ) & 0x8000 )
@@ -350,7 +353,7 @@ void CModelViewerDlg::Render()
 	bool bDualView = false ;
 	bool bSingleView = true ;
 
-	C3DGfx::GetInstance ()->BeginFrame ();
+	C3DGfx::GetInstance()->BeginFrame ();
 
 	D3DXCOLOR clrClear ( m_clrClear.r, m_clrClear.g, m_clrClear.b, 0.0f ) ;
 	C3DGfx::GetInstance ()->Clear ( clrClear ) ;
@@ -407,7 +410,7 @@ void CModelViewerDlg::Render()
 
 	m_pShader->SetVector ( "g_vSunLightDir", &vLightDir ) ;
 	m_pShader->SetVector ( "g_f4SunLightDiffuse", (D3DXVECTOR4*)&m_clrLight ) ;
-	m_pShader->SetVector ( "g_vSunLightAmbient", &vAmbLight ) ;
+	m_pShader->SetVector ( "g_f4SunLightAmbient", &vAmbLight ) ;
 
 	if ( m_pd3dModel1 ) {
 		CD3DModelUtils::RenderD3DModel ( pDevice, *m_pd3dModel1 ) ;
@@ -422,12 +425,11 @@ void CModelViewerDlg::Render()
 
 void CModelViewerDlg::OnSize ( UINT nType, int cx, int cy )
 {
-	CDialogEx::OnSize ( nType, cx, cy );
+	CRenderDialog::OnSize ( nType, cx, cy );
 
-	// TODO: Add your message handler code here
 	SetRange ( 0.0f, 0.0f, D3DX_PI*2.0f, D3DX_PI ) ;
 
-	if ( C3DGfx::GetInstance () && C3DGfx::GetInstance ()->IsInitialized () ) {
+	if ( m_bInit /* C3DGfx::GetInstance () && C3DGfx::GetInstance ()->IsInitialized ()*/ ) {
 		if ( cx && cy ) {
 			m_pView->CreateRenderTarget ( cx, cy, false ) ;
 			D3DVIEWPORT9 vp = m_pView->GetViewport () ;
@@ -437,12 +439,12 @@ void CModelViewerDlg::OnSize ( UINT nType, int cx, int cy )
 
 			m_pView->GetCamera ()->SetAspect ( (float)cx / cy ) ;
 
-			ImGui::GetIO ().DisplaySize.x = (float)cx - 1 ;
-			ImGui::GetIO ().DisplaySize.y = (float)cy - 1 ;
+			ImGui::GetIO().DisplaySize.x = (float)cx - 1 ;
+			ImGui::GetIO().DisplaySize.y = (float)cy - 1 ;
 
+			Update () ;
+			Render () ;
 		}
-// 		if ( !m_pMesh )
-// 			D3DXCreateTeapot ( C3DGfx::GetInstance ()->GetDevice (), &m_pMesh, NULL ) ;
 	}
 }
 
@@ -525,8 +527,12 @@ LRESULT CModelViewerDlg::WindowProc ( UINT message, WPARAM wParam, LPARAM lParam
 				}
 			}
 		}
-
-
+	}
+	else if ( message == WM_USER_MY_REDRAW ) {
+		if ( m_bInit ) {
+			Update () ;
+			Render () ;
+		}
 	}
 
 	return CRenderDialog::WindowProc ( message, wParam, lParam );
@@ -540,7 +546,7 @@ BOOL CModelViewerDlg::OnEraseBkgnd ( CDC* pDC )
 	pDC->SelectObject ( GetStockObject ( NULL_BRUSH ) ) ;
 	return TRUE ;
 
-	return CDialogEx::OnEraseBkgnd ( pDC );
+	return CRenderDialog::OnEraseBkgnd ( pDC );
 }
 
 void CModelViewerDlg::UpdateGui ()

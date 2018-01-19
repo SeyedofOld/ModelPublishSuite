@@ -73,6 +73,8 @@ public:
 	char**			m_ppszTextureNames ;
 	int				m_iTextureCount ;
 
+	bool			m_bInit ;
+
 	afx_msg void OnSize ( UINT nType, int cx, int cy );
 	virtual LRESULT WindowProc ( UINT message, WPARAM wParam, LPARAM lParam );
 	afx_msg BOOL OnEraseBkgnd ( CDC* pDC );

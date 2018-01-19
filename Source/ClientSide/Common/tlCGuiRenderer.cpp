@@ -5,6 +5,7 @@
 
 IDirect3DDevice9*		CGuiRenderer::s_pDevice			= NULL;
 IDirect3DTexture9*		CGuiRenderer::s_pFontTexture	= NULL;
+IDirect3DTexture9*		CGuiRenderer::s_pWhiteTexture	= NULL;
 IDirect3DVertexBuffer9* CGuiRenderer::s_pVB				= NULL;
 IDirect3DIndexBuffer9*	CGuiRenderer::s_pIB				= NULL;
 ID3DXEffect*			CGuiRenderer::s_pShader			= NULL;
@@ -90,8 +91,11 @@ void CGuiRenderer::RenderCallback(ImDrawData* draw_data)
 			{
 				const RECT r = { (LONG)pcmd->ClipRect.x, (LONG)pcmd->ClipRect.y, (LONG)pcmd->ClipRect.z, (LONG)pcmd->ClipRect.w };
 				//s_pDevice->SetTexture(0, (LPDIRECT3DTEXTURE9)pcmd->TextureId);
-				s_pShader->SetTexture ( "g_txDiffuse", (LPDIRECT3DTEXTURE9)pcmd->TextureId ) ;
-				
+				if ( pcmd->TextureId )
+					s_pShader->SetTexture ( "g_txDiffuse", (LPDIRECT3DTEXTURE9)pcmd->TextureId ) ;
+				else
+					s_pShader->SetTexture ( "g_txDiffuse", s_pWhiteTexture ) ;
+
 				s_pDevice->SetScissorRect(&r);
 
 				UINT uiPassCount ;
@@ -174,6 +178,8 @@ bool CGuiRenderer::Initialize(IDirect3DDevice9* device, int width, int height)
 	if (!CreateFontTexture())
 		return false;
 
+	D3DXCreateTextureFromFile ( device, "White.png", &s_pWhiteTexture ) ;
+
 	//((ImGuiState*)ImGui::GetInternalState())->Style.Colors[ImGuiCol_WindowBg] = ImColor(255, 255, 0, 255);
 	//ImGui::PushStyleColor(ImGuiCol_WindowBg, ImColor(32, 32, 32, 255));
 
@@ -252,11 +258,11 @@ bool CGuiRenderer::CreateFontTexture()
 	// Build
 	unsigned char* pixels;
 	int width, height, bytes_per_pixel;
-	io.Fonts->GetTexDataAsAlpha8(&pixels, &width, &height, &bytes_per_pixel);
+	io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height, &bytes_per_pixel);
 
 	// Create DX9 texture
 	s_pFontTexture = NULL;
-	if (D3DXCreateTexture(s_pDevice, width, height, 1, 0/*D3DUSAGE_DYNAMIC*/, D3DFMT_A8, D3DPOOL_MANAGED, &s_pFontTexture) < 0)
+	if (D3DXCreateTexture(s_pDevice, width, height, 1, 0/*D3DUSAGE_DYNAMIC*/, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &s_pFontTexture) < 0)
 		return false;
 	D3DLOCKED_RECT tex_locked_rect;
 	if (s_pFontTexture->LockRect(0, &tex_locked_rect, NULL, 0) != D3D_OK)

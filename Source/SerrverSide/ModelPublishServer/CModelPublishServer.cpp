@@ -749,9 +749,9 @@ void CModelPublishServer::OnGetInfo ( json::value& params, json::value& answer, 
 				fread ( pszBase64Hdr, iSize, sizeof(wchar_t), pFile ) ;
 
 				fseek ( pFile, 0, SEEK_END ) ;
-
 				int iTotalFileSize = ftell ( pFile ) ;
-				int iTotalFizeSizeBase64 = Base64EncodeGetRequiredLength ( iTotalFileSize, 0 ) ;
+
+				int iTotalFizeSizeBase64 = iTotalFileSize ;
 
 				fclose ( pFile ) ;
 

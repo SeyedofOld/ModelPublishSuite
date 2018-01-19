@@ -226,5 +226,8 @@
       <Filter>Source Files\Shader</Filter>
     </FxCompile>
     <FxCompile Include="..\..\..\Bin\common.fxh" />
+    <FxCompile Include="..\..\..\Bin\Gui.fx">
+      <Filter>Source Files\Shader</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

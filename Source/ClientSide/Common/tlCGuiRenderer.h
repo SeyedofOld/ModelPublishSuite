@@ -20,7 +20,8 @@ private:
 
 	static IDirect3DVertexBuffer9*	s_pVB;
 	static IDirect3DIndexBuffer9*	s_pIB;
-    static IDirect3DTexture9*		s_pFontTexture;
+	static IDirect3DTexture9*		s_pFontTexture;
+	static IDirect3DTexture9*		s_pWhiteTexture;
 	static ID3DXEffect*				s_pShader ;
 
     static const UINT FVF		= (D3DFVF_XYZ|D3DFVF_DIFFUSE|D3DFVF_TEX1);

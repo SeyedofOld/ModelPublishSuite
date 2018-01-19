@@ -28,6 +28,7 @@ CModelViewerDlg* g_pDlg ;
 
 using namespace std ;
 
+#define WM_USER_MY_REDRAW (WM_USER+5555)
 
 #ifndef SAFE_DELETE
 /// For pointers allocated with new.
@@ -69,6 +70,12 @@ CModelViewerDlg::CModelViewerDlg(CWnd* pParent /*=NULL*/)
 	m_pAdTex = NULL ;
 
 	m_bDownloading = false ;
+
+	m_bShowRecent = false ;
+	m_pThumbTex = NULL ;
+
+	m_bInitialized = false ;
+
 // 	CustomURLProtocol prot ;
 // 	prot.setProtocolName ( L"3dscan" ) ;
 // 	prot.setAppPath ( L"ModelViewer.exe" ) ;
@@ -126,6 +133,7 @@ BOOL CModelViewerDlg::OnInitDialog()
 		&m_pShader,
 		NULL ) ;
 
+	D3DXCreateTextureFromFile ( C3DGfx::GetInstance ()->GetDevice (), "thumb.png", &m_pThumbTex ) ;
 
 	CGuiRenderer::Initialize ( C3DGfx::GetInstance()->GetDevice(), rc.Width(), rc.Height() ) ;
 
@@ -152,6 +160,8 @@ BOOL CModelViewerDlg::OnInitDialog()
 	ModifyStyleEx ( 0, SS_NOTIFY ) ;
 
 	CModelServiceWebClient::m_hCallbackWnd = GetSafeHwnd() ;
+
+	m_bInitialized = true ;
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -282,26 +292,6 @@ void CModelViewerDlg::ShowExampleMenuFile ()
 		char* p = NULL ;
 		Load3DScanFromUrl ( ( CString )"http://localhost:5617/3dscan/get?subsid=123dsff&clientid=pcc" ) ;
 		//Load3DScanFromUrl ( (CString)"http://51.254.82.69:5617/3dscan/get?subsid=123dsff&clientid=pcc" ) ;
-		//client.GetModel ( , "pcwin", &p ) ;
-
-		int mm = 1 ;
-// 		TD_SCAN_MODEL* pModel = C3DScanFile::Load3DScanModel ( dlg.GetPathName ().GetBuffer () ) ;
-// 		if ( pModel ) {
-// 			m_pModel1 = pModel ;
-// 			m_pd3dModel1 = new D3D_MODEL ;
-// 			if ( !CD3DModelUtils::CreateFromTDModel ( C3DGfx::GetInstance ()->GetDevice (), C3DGfx::GetInstance ()->GetEffectPool (), *m_pModel1, *m_pd3dModel1 ) ) {
-// 				delete m_pd3dModel1 ;
-// 				m_pd3dModel1 = NULL ;
-// 				delete m_pModel1 ;
-// 				m_pModel1 = NULL ;
-// 			}
-// 			else {
-// 				FillTextureList () ;
-// 				m_strFilename = dlg.GetPathName () ;
-// 				m_bFileOpened = true ;
-// 				m_bHasFilename = true ;
-// 			}
-// 		}
 	}
 
 	if ( ImGui::BeginMenu ( "Open Recent" ) ) {
@@ -448,7 +438,7 @@ void CModelViewerDlg::Render()
 
 	m_pShader->SetVector ( "g_vSunLightDir", &vLightDir ) ;
 	m_pShader->SetVector ( "g_f4SunLightDiffuse", (D3DXVECTOR4*)&m_clrLight ) ;
-	m_pShader->SetVector ( "g_vSunLightAmbient", &vAmbLight ) ;
+	m_pShader->SetVector ( "g_f4SunLightAmbient", &vAmbLight ) ;
 
 	if ( m_pd3dModel1 ) {
 		CD3DModelUtils::RenderD3DModel ( pDevice, *m_pd3dModel1 ) ;
@@ -492,9 +482,8 @@ void CModelViewerDlg::OnSize ( UINT nType, int cx, int cy )
 			ImGui::GetIO ().DisplaySize.x = (float)cx - 1 ;
 			ImGui::GetIO ().DisplaySize.y = (float)cy - 1 ;
 
+			PostMessage ( WM_USER_MY_REDRAW, 0, 0 ) ;
 		}
-// 		if ( !m_pMesh )
-// 			D3DXCreateTeapot ( C3DGfx::GetInstance ()->GetDevice (), &m_pMesh, NULL ) ;
 	}
 }
 
@@ -513,11 +502,16 @@ LRESULT CModelViewerDlg::WindowProc ( UINT message, WPARAM wParam, LPARAM lParam
 	ImGui_ImplWin32_WndProcHandler ( GetSafeHwnd (), message, wParam, lParam ) ;
 
 	if ( message == WM_USER_HTTP_PROGRESS ) {
-		if ( m_iFileSize != 0 )
-			m_fDownloadProgress = (float)lParam / m_iFileSize ;
+		if ( m_iFileSize != 0 ) {
+			m_fDownloadProgress = (float)lParam / m_iFileSize * 2.0f;
+			if ( m_fDownloadProgress > 1.0f )
+				m_fDownloadProgress = 1.0f ;
+		}
 		else
 			m_fDownloadProgress = 0.0f ;
-
+// 		CString s ;
+// 		s.Format ( "%d\n", lParam ) ;
+// 		OutputDebugString ( s ) ;
 	} 
 	else if ( message == WM_USER_MODEL_DOWNLOADED ) {
 		TD_SCAN_MODEL* pModel = C3DScanFile::Load3DScanModelFromMemory ( m_PointerPass[1].pData, m_PointerPass[1].iSize ) ;
@@ -553,7 +547,21 @@ LRESULT CModelViewerDlg::WindowProc ( UINT message, WPARAM wParam, LPARAM lParam
 	
 	} 
 	else if ( message == WM_USER_AD_DOWNLOADED ) {
-		D3DXCreateTextureFromFileInMemory ( C3DGfx::GetInstance ()->GetDevice (), m_PointerPass[2].pData, m_PointerPass[2].iSize, &m_pAdTex ) ;
+		D3DXCreateTextureFromFileInMemoryEx ( C3DGfx::GetInstance ()->GetDevice (), 
+			m_PointerPass[2].pData, 
+			m_PointerPass[2].iSize, 
+			0,
+			0,
+			1,
+			0,
+			D3DFMT_A8R8G8B8,
+			D3DPOOL_MANAGED,
+			D3DX_DEFAULT,
+			D3DX_DEFAULT,
+			0,
+			NULL,
+			NULL,
+			&m_pAdTex ) ;
 		SAFE_DELETE ( m_PointerPass [ 2 ].pData ) ;
 	}
 	else if ( message == WM_USER_MODEL_INFO ) {
@@ -563,6 +571,13 @@ LRESULT CModelViewerDlg::WindowProc ( UINT message, WPARAM wParam, LPARAM lParam
 // 		DownloadModel ( m_strModel ) ;
 // 		DownloadAd ( m_strAd ) ;
 	}
+	else if ( message == WM_USER_MY_REDRAW ) {
+		if ( m_bInitialized ) {
+			Update () ;
+			Render () ;
+		}
+	}
+
 
 	if ( message == WUM_INTERACTION_MSG ) {
 		INTERACTION_MSG_DATA& imd = *((INTERACTION_MSG_DATA*)lParam) ;
@@ -795,7 +810,7 @@ void CModelViewerDlg::UpdateGui ()
 		ImGui::PushStyleVar ( ImGuiStyleVar_Alpha, 0.5f ) ;
 		if ( ImGui::Begin ( "Bar", NULL, flags ) ) {
 			ImGui::SetWindowSize ( ImVec2 ( (float)rc.Width (), 50 ) ) ;
-			ImGui::SetWindowPos ( ImVec2(0, (float)rc.Height () - 50 ) )  ;
+			ImGui::SetWindowPos ( ImVec2(0, (float)rc.Height () - 35 ) )  ;
 			//ImGui::ProgressBar ( (float)( GetTickCount () % 10000 ) / 10000.0f ) ;
 			ImGui::ProgressBar ( m_fDownloadProgress ) ;
 			ImGui::End ();
@@ -804,6 +819,33 @@ void CModelViewerDlg::UpdateGui ()
 		ImGui::PopStyleColor () ;
 	}
 
+	flags = 0 ;
+	flags |= ImGuiWindowFlags_NoMove;
+	flags |= ImGuiWindowFlags_NoResize;
+	//flags |= ImGuiWindowFlags_NoCollapse;
+	//flags |= ImGuiWindowFlags_NoInputs;
+	flags |= ImGuiWindowFlags_NoTitleBar;
+	if ( m_bShowRecent )
+	if ( ImGui::Begin ( "Recent", NULL, ImVec2 ( 200, rc.Height () ), -1, flags ) ) {
+		ImGui::SetWindowPos ( ImVec2 ( 0, 0 ) ) ;
+		ImGui::SetWindowSize ( ImVec2 ( 160, rc.Height () ) ) ;
+		if ( ImGui::GetIO().MousePos.x > 160 )
+			m_bShowRecent = false ;
+
+		ImTextureID my_tex_id = m_pThumbTex ;
+		D3DSURFACE_DESC desc ;
+		m_pThumbTex->GetLevelDesc ( 0, &desc ) ;
+		float my_tex_w = desc.Width ;
+		float my_tex_h = desc.Height ;
+
+		static int pressed_count = 0;
+		for ( int i = 0 ; i < 8 ; i++ ) {
+			if ( ImGui::ImageButton ( my_tex_id, ImVec2 ( 128, 128 ), ImVec2 ( 0, 0 ), ImVec2 ( 128.0f / my_tex_w, 128.0f / my_tex_h ), 2, ImColor ( 0, 0, 0, 255 ) ) )
+				pressed_count += 1;
+		}
+
+		ImGui::End () ;
+	}
 
 	ImGui::EndFrame () ;
 }
@@ -1061,6 +1103,8 @@ LRESULT ImGui_ImplWin32_WndProcHandler ( HWND hwnd, UINT msg, WPARAM wParam, LPA
 	case WM_MOUSEMOVE:
 		io.MousePos.x = (signed short)( lParam );
 		io.MousePos.y = (signed short)( lParam >> 16 );
+		if ( io.MousePos.x < 50 && io.MousePos.y > 50 )
+			g_pDlg->m_bShowRecent = true ;
 		return 0;
 	case WM_KEYDOWN:
 	case WM_SYSKEYDOWN:

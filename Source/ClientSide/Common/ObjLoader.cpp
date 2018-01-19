@@ -259,7 +259,7 @@ INT LoadObj2 ( LPCTSTR sFileName, MY_OBJ* pObj )
 					face.VertIndex [ i ] = v - 1; // NOTE: This is to make the indices 0-based.
 				//fvc++;
 
-				if ( cur_subset->bHasNormal || cur_subset->bHasUv ) {
+				if ( /*cur_subset->bHasNormal ||*/ cur_subset->bHasUv ) {
 					while ( *s != '/' )
 						s++;
 					s++;
@@ -273,6 +273,7 @@ INT LoadObj2 ( LPCTSTR sFileName, MY_OBJ* pObj )
 						//ftc++;
 					}
 				}
+
 				if ( cur_subset->bHasNormal ) {
 					while ( *s != '/' )
 						s++;

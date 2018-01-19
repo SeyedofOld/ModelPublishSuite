@@ -172,10 +172,19 @@ bool CD3DModelUtils::RenderD3DModel ( IDirect3DDevice9* pDevice, D3D_MODEL& d3dM
 			for ( UINT iPass = 0 ; iPass < uiPassCount ; iPass++ ) {
 				d3dMtl.pShader->BeginPass ( iPass ) ;
 
-				pDevice->DrawPrimitiveUP ( D3DPT_TRIANGLELIST,
+// 				pDevice->DrawPrimitiveUP ( D3DPT_TRIANGLELIST,
+// 					subset.pBase->uiTriCount,
+// 					subset.pBase->pVB,
+// 					C3DScanFileUtils::GetVertexSize (subset.pBase->uiVertexFmt) ) ;
+
+				pDevice->DrawIndexedPrimitiveUP ( D3DPT_TRIANGLELIST,
+					0,
+					subset.pBase->uiVertCount,
 					subset.pBase->uiTriCount,
+					subset.pBase->pIB,
+					D3DFMT_INDEX32,
 					subset.pBase->pVB,
-					C3DScanFileUtils::GetVertexSize (subset.pBase->uiVertexFmt) ) ;
+					C3DScanFileUtils::GetVertexSize ( subset.pBase->uiVertexFmt ) ) ;
 
 				d3dMtl.pShader->EndPass() ;
 			}

@@ -43,7 +43,9 @@ uint32_t CFileStream::Tell()
 
 void CFileStream::Close ()
 {
-	fclose ( m_pFile ) ;
+	if ( m_pFile )
+		fclose ( m_pFile ) ;
+	m_pFile = NULL ;
 }
 
 uint32_t CFileStream::Read ( void* pBuf, uint32_t uiSize )

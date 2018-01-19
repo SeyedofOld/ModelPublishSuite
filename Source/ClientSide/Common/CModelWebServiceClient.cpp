@@ -197,9 +197,10 @@ bool CModelServiceWebClient::GetModel ( wchar_t* pszUrl, char* pszClientId, char
 	json::value answer ;
 	status_code http_result ;
 
-	if ( 0 )
+	if ( 1 )
 		make_request_get ( client, methods::GET, inuri, answer, http_result, &CModelServiceWebClient::ProgressCallback ) ;
 
+	if ( 0 )
 	{
 		http_request request ( methods::GET ) ;
 		request.set_request_uri ( inuri ) ;
@@ -207,7 +208,7 @@ bool CModelServiceWebClient::GetModel ( wchar_t* pszUrl, char* pszClientId, char
 		request.set_progress_handler ( &CModelServiceWebClient::ProgressCallback ) ;
 
 		try {
-			MessageBoxW ( NULL, inuri.to_string ().c_str (), L"2", MB_OK ) ;
+			//MessageBoxW ( NULL, inuri.to_string ().c_str (), L"2", MB_OK ) ;
 			http_response response = client.request ( request ).get () ;
 
 			http_result = response.status_code () ;
@@ -216,7 +217,7 @@ bool CModelServiceWebClient::GetModel ( wchar_t* pszUrl, char* pszClientId, char
 		}
 		catch ( http_exception const & e )
 		{
-			MessageBox ( NULL, e.what(), "", MB_OK ) ;
+			//MessageBox ( NULL, e.what(), "", MB_OK ) ;
 			wcout << e.what () << endl;
 		}
 	}
@@ -461,11 +462,11 @@ void CModelServiceWebClient::ProgressCallback ( web::http::message_direction::di
 	static int64_t s = 0 ;
 	s += so_far ;
 
-	if ( m_hCallbackWnd ) {
+	if ( m_hCallbackWnd && direction == message_direction::download ) {
 		::PostMessage ( m_hCallbackWnd, WM_USER_HTTP_PROGRESS, 0, (LPARAM)so_far ) ;
 	}
 
-	Sleep ( 10 ) ;
+	//Sleep ( 10 ) ;
 }
 
 /*

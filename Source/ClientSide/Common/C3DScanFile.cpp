@@ -95,7 +95,7 @@ TD_SCAN_MODEL* C3DScanFile::Load3DScanModel ( CBaseStream& rStream )
 			if ( !subset.pVB )
 				goto load_error ;
 
-			subset.pIB = new uint32_t [ sizeof ( uint32_t ) * sub_hdr.uiTriCount * 3 ] ;
+			subset.pIB = new uint32_t [ /*sizeof ( uint32_t ) * */sub_hdr.uiTriCount * 3 ] ;
 			if ( !subset.pIB )
 				goto load_error;
 

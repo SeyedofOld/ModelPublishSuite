@@ -96,6 +96,11 @@ public:
 	std::wstring	m_strModel ;
 	std::wstring	m_strAd ;
 
+	bool			m_bShowRecent ;
+	IDirect3DTexture9* m_pThumbTex ;
+
+	bool			m_bInitialized ;
+
 	afx_msg void OnSize ( UINT nType, int cx, int cy );
 	virtual LRESULT WindowProc ( UINT message, WPARAM wParam, LPARAM lParam );
 	afx_msg BOOL OnEraseBkgnd ( CDC* pDC );

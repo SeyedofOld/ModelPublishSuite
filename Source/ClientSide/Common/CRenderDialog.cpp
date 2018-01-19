@@ -37,7 +37,6 @@ CRenderDialog::~CRenderDialog()
 
 
 BEGIN_MESSAGE_MAP(CRenderDialog, /*CStatic*/CDialogEx)
-	ON_CONTROL_REFLECT(STN_CLICKED, &CRenderDialog::OnStnClicked)
 	ON_WM_MOUSEMOVE()
 	ON_WM_LBUTTONDOWN()
 	ON_WM_LBUTTONUP()
@@ -53,11 +52,6 @@ END_MESSAGE_MAP()
 // CRenderPanel message handlers
 
 
-
-void CRenderDialog::OnStnClicked()
-{
-	// TODO: Add your control notification handler code here
-}
 
 
 CRenderDialog::VECTOR2 CRenderDialog::ScreenToRenderPort( VECTOR2 pt )
@@ -104,8 +98,8 @@ CPoint CRenderDialog::RenderPortToScreenPixel ( VECTOR2 ptPos )
 
 BOOL CRenderDialog::OnWndMsg(UINT message, WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 {
-	if (/*message == WM_NCHITTEST ||*/ message == WM_NCLBUTTONDOWN || message == WM_NCLBUTTONDBLCLK)
-		return ::DefWindowProc(m_hWnd, message, wParam, lParam);
+	if ( /*message == WM_NCHITTEST ||*/ message == WM_NCLBUTTONDOWN || message == WM_NCLBUTTONDBLCLK)
+		return CDialogEx::DefWindowProc(message, wParam, lParam);
 
 	if ( message == WM_MOUSEHOVER ) {
 
@@ -244,7 +238,7 @@ void CRenderDialog::OnMouseMove(UINT nFlags, CPoint point)
 
 	}
 
-	CWnd::OnMouseMove(nFlags, point);
+	CDialogEx::OnMouseMove(nFlags, point);
 }
 
 void CRenderDialog::OnLButtonDown(UINT nFlags, CPoint point)
@@ -258,7 +252,7 @@ void CRenderDialog::OnLButtonDown(UINT nFlags, CPoint point)
 	SendMessage ( WUM_INTERACTION_MSG , 0 , (LPARAM)&imd ) ;
 
 
-	CWnd::OnLButtonDown(nFlags, point);
+	CDialogEx::OnLButtonDown(nFlags, point);
 }
 
 void CRenderDialog::OnLButtonUp(UINT nFlags, CPoint point)
@@ -281,7 +275,7 @@ void CRenderDialog::OnLButtonUp(UINT nFlags, CPoint point)
 		m_bDragging = FALSE ;
 	}
 
-	CWnd::OnLButtonUp(nFlags, point);
+	CDialogEx::OnLButtonUp(nFlags, point);
 }
 
 void CRenderDialog::OnRButtonDown(UINT nFlags, CPoint point)
@@ -295,7 +289,7 @@ void CRenderDialog::OnRButtonDown(UINT nFlags, CPoint point)
 	::SendMessage ( m_hwndCallback , WUM_INTERACTION_MSG , 0 , (LPARAM)&imd ) ;
 	SendMessage ( WUM_INTERACTION_MSG , 0 , (LPARAM)&imd ) ;
 
-	CWnd::OnRButtonDown(nFlags, point);
+	CDialogEx::OnRButtonDown(nFlags, point);
 }
 
 void CRenderDialog::OnRButtonUp(UINT nFlags, CPoint point)
@@ -317,7 +311,7 @@ void CRenderDialog::OnRButtonUp(UINT nFlags, CPoint point)
 		m_bDragging = FALSE ;
 	}
 
-	CWnd::OnRButtonUp(nFlags, point);
+	CDialogEx::OnRButtonUp(nFlags, point);
 }
 
 BOOL CRenderDialog::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
@@ -331,7 +325,7 @@ BOOL CRenderDialog::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 	::SendMessage ( m_hwndCallback , WUM_INTERACTION_MSG , 0 , (LPARAM)&imd ) ;
 	SendMessage ( WUM_INTERACTION_MSG , 0 , (LPARAM)&imd ) ;
 
-	return CWnd::OnMouseWheel(nFlags, zDelta, pt);
+	return CDialogEx::OnMouseWheel(nFlags, zDelta, pt);
 }
 
 void CRenderDialog::PreSubclassWindow()
@@ -361,5 +355,5 @@ BOOL CRenderDialog::OnEraseBkgnd(CDC* pDC)
 {
 	return TRUE ;
 
-	return CWnd::OnEraseBkgnd(pDC);
+	return CDialogEx::OnEraseBkgnd(pDC);
 }

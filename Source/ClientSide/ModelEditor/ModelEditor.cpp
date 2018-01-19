@@ -74,6 +74,8 @@ BOOL CModelViewerApp::InitInstance()
 	m_pMainWnd = m_pDlg;
 	m_pMainWnd->ShowWindow ( SW_SHOW ) ;
 
+	//DisableProcessWindowsGhosting();
+
 	//INT_PTR nResponse = dlg.DoModal();
 // 	if (nResponse == IDOK)
 // 	{
@@ -109,5 +111,4 @@ BOOL CModelViewerApp::OnIdle ( LONG lCount )
 	m_pDlg->Render() ;
 
 	return TRUE ;
-	//return CWinApp::OnIdle ( lCount );
 }

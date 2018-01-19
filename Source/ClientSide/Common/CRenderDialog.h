@@ -80,9 +80,6 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 public:
-	afx_msg void OnStnClicked();
-//	afx_msg void OnPaint();
-
 	void SetBitmap ( CBitmap *pBitmap ) { m_pBitmap = pBitmap ; }
 	VECTOR2 ScreenToRenderPort ( CPoint pt ) ;
 	VECTOR2 ScreenToRenderPort ( VECTOR2 pt ) ;

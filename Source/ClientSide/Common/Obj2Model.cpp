@@ -167,7 +167,7 @@ bool ConvertObjTo3DModel ( MY_OBJ& obj, TD_SCAN_MODEL& model )
 			} // Poly
 
 			subset.pIB = new uint32_t [ subset.uiTriCount * 3 ];
-			for ( uint32_t iIndex = 0 ; iIndex < subset.uiTriCount ; iIndex++ )
+			for ( uint32_t iIndex = 0 ; iIndex < subset.uiTriCount * 3 ; iIndex++ )
 				subset.pIB [ iIndex ] = iIndex ;
 
 
