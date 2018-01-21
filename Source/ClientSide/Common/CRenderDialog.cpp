@@ -98,8 +98,8 @@ CPoint CRenderDialog::RenderPortToScreenPixel ( VECTOR2 ptPos )
 
 BOOL CRenderDialog::OnWndMsg(UINT message, WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 {
-	if ( /*message == WM_NCHITTEST ||*/ message == WM_NCLBUTTONDOWN || message == WM_NCLBUTTONDBLCLK)
-		return CDialogEx::DefWindowProc(message, wParam, lParam);
+// 	if ( /*message == WM_NCHITTEST ||*/ message == WM_NCLBUTTONDOWN || message == WM_NCLBUTTONDBLCLK)
+// 		return CDialogEx::DefWindowProc(message, wParam, lParam);
 
 	if ( message == WM_MOUSEHOVER ) {
 

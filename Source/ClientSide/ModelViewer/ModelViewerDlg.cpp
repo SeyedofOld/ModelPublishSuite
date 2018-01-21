@@ -28,8 +28,6 @@ CModelViewerDlg* g_pDlg ;
 
 using namespace std ;
 
-#define WM_USER_MY_REDRAW (WM_USER+5555)
-
 #ifndef SAFE_DELETE
 /// For pointers allocated with new.
 #define SAFE_DELETE(p)			{ if(p) { delete (p);     (p)=NULL; } }
@@ -117,7 +115,7 @@ BOOL CModelViewerDlg::OnInitDialog()
 	C3DGfx::CreateInstance () ;
 	C3DGfx::GetInstance ()->Initialize ( GetSafeHwnd (), rc.Width(), rc.Height(), D3DFMT_A8R8G8B8, FALSE, 0, FALSE );
 
-	m_Camera.Initialize ( D3DXToRadian ( 45.0f ), 4.0f / 3.0f, 0.01f, 1000.0f );
+	m_Camera.Initialize ( D3DXToRadian ( 45.0f ), 4.0f / 3.0f, 0.1f, 10090.0f );
 	m_Camera.SetMode ( CCamera::MODE_TARGET );
 	m_Camera.SetPosition ( 0.0f, 0.0f, -10.0f );
 	m_Camera.SetTarget ( 0.0f, 0.0f, 0.0f );
@@ -481,8 +479,6 @@ void CModelViewerDlg::OnSize ( UINT nType, int cx, int cy )
 
 			ImGui::GetIO ().DisplaySize.x = (float)cx - 1 ;
 			ImGui::GetIO ().DisplaySize.y = (float)cy - 1 ;
-
-			PostMessage ( WM_USER_MY_REDRAW, 0, 0 ) ;
 		}
 	}
 }
@@ -571,13 +567,6 @@ LRESULT CModelViewerDlg::WindowProc ( UINT message, WPARAM wParam, LPARAM lParam
 // 		DownloadModel ( m_strModel ) ;
 // 		DownloadAd ( m_strAd ) ;
 	}
-	else if ( message == WM_USER_MY_REDRAW ) {
-		if ( m_bInitialized ) {
-			Update () ;
-			Render () ;
-		}
-	}
-
 
 	if ( message == WUM_INTERACTION_MSG ) {
 		INTERACTION_MSG_DATA& imd = *((INTERACTION_MSG_DATA*)lParam) ;

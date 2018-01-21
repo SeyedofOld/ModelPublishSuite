@@ -19,8 +19,6 @@
 #define new DEBUG_NEW
 #endif
 
-#define WM_USER_MY_REDRAW (WM_USER+5555)
-
 // CModelViewerDlg dialog
 
 #ifndef SAFE_DELETE
@@ -94,7 +92,7 @@ BOOL CModelViewerDlg::OnInitDialog()
 	C3DGfx::CreateInstance () ;
 	C3DGfx::GetInstance ()->Initialize ( GetSafeHwnd (), rc.Width(), rc.Height(), D3DFMT_A8R8G8B8, FALSE, 0, FALSE );
 
-	m_Camera.Initialize ( D3DXToRadian ( 45.0f ), 4.0f / 3.0f, 0.01f, 1000.0f );
+	m_Camera.Initialize ( D3DXToRadian ( 45.0f ), 4.0f / 3.0f, 0.1f, 19000.0f );
 	m_Camera.SetMode ( CCamera::MODE_TARGET );
 	m_Camera.SetPosition ( 0.0f, 0.0f, -10.0f );
 	m_Camera.SetTarget ( 0.0f, 0.0f, 0.0f );
@@ -441,9 +439,6 @@ void CModelViewerDlg::OnSize ( UINT nType, int cx, int cy )
 
 			ImGui::GetIO().DisplaySize.x = (float)cx - 1 ;
 			ImGui::GetIO().DisplaySize.y = (float)cy - 1 ;
-
-			Update () ;
-			Render () ;
 		}
 	}
 }
@@ -481,13 +476,13 @@ LRESULT CModelViewerDlg::WindowProc ( UINT message, WPARAM wParam, LPARAM lParam
 			}
 			
 			if ( imd.ButtonStatus.bRButton ) {
-				float fDelta = - fDeltaY * 2.0f ;
+				float fDelta = - fDeltaY * 12.0f ;
 				m_Camera.SetPosition ( m_Camera.GetPosition () + m_Camera.GetDirection () * fDelta ) ;
 			}
 
 			if ( imd.ButtonStatus.bMButton ) {
 				D3DXMATRIX matView = m_Camera.GetViewMatrix() ;
-				float fScale = 1.0f ;
+				float fScale = 5.0f ;
 				D3DXVECTOR3 vUp = D3DXVECTOR3 ( matView._21, matView._22, matView._23 ) ;
 				D3DXVECTOR3 vRight = D3DXVECTOR3 ( matView._11, matView._12, matView._13 ) ;
 
@@ -526,12 +521,6 @@ LRESULT CModelViewerDlg::WindowProc ( UINT message, WPARAM wParam, LPARAM lParam
 					pSubset->bSelected = ! pSubset->bSelected ;
 				}
 			}
-		}
-	}
-	else if ( message == WM_USER_MY_REDRAW ) {
-		if ( m_bInit ) {
-			Update () ;
-			Render () ;
 		}
 	}
 

@@ -256,7 +256,7 @@ bool C3DScanFile::Save3DScanModel ( char* pszFilename, TD_SCAN_MODEL* pModel, ui
 		memset ( &part_hdr, 0, sizeof ( TDSCAN_FILE_PART ) ) ;
 		memcpy ( part_hdr.szSign, "PART", sizeof ( "PART" ) ) ;
 		strncpy ( (char*)part_hdr.szName, part.sName.c_str (), sizeof(part_hdr.szName) ) ;
-		part_hdr.iFirstSubset = uiFileOfs + sizeof ( TD_MODEL_PART ) ;
+		part_hdr.iFirstSubset = uiFileOfs + sizeof ( TDSCAN_FILE_PART ) ;
 		part_hdr.iNextPartOfs = -1 ;
 
 		uint32_t uiPartOfs = uiFileOfs ;
