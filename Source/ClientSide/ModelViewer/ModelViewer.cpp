@@ -10,6 +10,7 @@
 #define new DEBUG_NEW
 #endif
 
+wchar_t g_szExeName [ MAX_PATH ] ;
 
 // CModelViewerApp
 
@@ -103,7 +104,6 @@ BOOL CModelViewerApp::InitInstance()
 // 	}
 
 	{ // Set current directory to where the exe exists
-		wchar_t g_szExeName [ MAX_PATH ] ;
 		wcscpy ( g_szExeName, pStr [ 0 ] ) ;
 
 		wchar_t szDrive [ MAX_PATH ], szDir [ MAX_PATH ]  ;

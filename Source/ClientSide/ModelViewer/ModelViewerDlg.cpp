@@ -25,6 +25,7 @@
 #endif
 
 CModelViewerDlg* g_pDlg ;
+extern wchar_t g_szExeName [ MAX_PATH ] ;
 
 using namespace std ;
 
@@ -158,6 +159,21 @@ BOOL CModelViewerDlg::OnInitDialog()
 	ModifyStyleEx ( 0, SS_NOTIFY ) ;
 
 	CModelServiceWebClient::m_hCallbackWnd = GetSafeHwnd() ;
+
+	{ // Set current directory to where the exe exists
+		wchar_t szDrive [ MAX_PATH ], szDir [ MAX_PATH ]  ;
+		_wsplitpath ( g_szExeName, szDrive, szDir, NULL, NULL ) ;
+
+		wchar_t szFolder [ MAX_PATH ] ;
+		wcscpy ( szFolder, szDrive ) ;
+		wcscat ( szFolder, szDir ) ;
+
+		SetCurrentDirectoryW ( szFolder ) ;
+		wcscat ( szFolder, L"Cache\\" ) ;
+
+		m_Cache.SetCacheRoot ( szFolder ) ;
+		m_Cache.Initialize () ;
+	}
 
 	m_bInitialized = true ;
 
@@ -537,10 +553,11 @@ LRESULT CModelViewerDlg::WindowProc ( UINT message, WPARAM wParam, LPARAM lParam
 				m_bHasFilename = false ;
 			}
 		}
-	
+
+		m_Cache.AddModelToCache ( m_strSubsid, m_PointerPass [ 1 ].pData, m_PointerPass [ 1 ].iSize, NULL, 0, NULL, 0 ) ;
+
 		SAFE_DELETE ( m_PointerPass [ 1 ].pData ) ;
 		m_bDownloading = false ;
-	
 	} 
 	else if ( message == WM_USER_AD_DOWNLOADED ) {
 		D3DXCreateTextureFromFileInMemoryEx ( C3DGfx::GetInstance ()->GetDevice (), 
@@ -982,6 +999,19 @@ bool CModelViewerDlg::Load3DScanFromUrl ( CString& strUrl )
 	auto query = builder.query () ;
 	auto query_split = web::uri::split_query ( query ) ;
 
+	{
+		void* pThumbData = NULL ;
+		int iThumbSize = 0 ;
+		if ( m_Cache.LoadModel ( query_split[L"subsid"], &m_PointerPass [ 1 ].pData, &m_PointerPass [ 1 ].iSize, &m_PointerPass [ 2 ].pData, &m_PointerPass [ 2 ].iSize, &pThumbData, &iThumbSize ) ) {
+
+			PostMessage ( WM_USER_MODEL_DOWNLOADED ) ;
+			PostMessage ( WM_USER_AD_DOWNLOADED ) ;
+
+			m_bDownloading = false ;
+			return true ;
+		}
+	}
+
 	//MessageBoxW ( NULL, original.to_string ().c_str (), L"B", MB_ICONASTERISK ) ;
 
 	wstring strInfo ;
@@ -993,6 +1023,8 @@ bool CModelViewerDlg::Load3DScanFromUrl ( CString& strUrl )
 		builder_mdl.set_path ( U ( MODEL_SERVICE_PATH ) ) ;
 		builder_mdl.append_path ( U ( MODEL_API_GET_INFO ) ) ;
 		builder_mdl.append_query ( L"subsid", query_split [ L"subsid" ] ) ;
+
+		m_strSubsid = query_split [ L"subsid" ] ;
 
 		wstring strUrl2 = builder_mdl.to_string() ;
 		//thread *t1 = new thread ( &CModelViewerDlg::DownloadInfo, this, strUrl ) ;

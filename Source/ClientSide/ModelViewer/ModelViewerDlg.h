@@ -9,6 +9,8 @@
 #include "tlC3DViewContext.h"
 #include "D3DModel.h"
 #include "CRenderDialog.h"
+#include "CModelCache.h"
+
 
 // CModelViewerDlg dialog
 class CModelViewerDlg : public CRenderDialog
@@ -72,6 +74,7 @@ public:
 	float			m_fDownloadProgress ;
 
 	POINTER_PASS	m_PointerPass [ 3 ] ;
+	CModelCache		m_Cache ;
 
 public:
 	void Update() ;
@@ -92,6 +95,8 @@ public:
 	char**			m_ppszTextureNames ;
 	int				m_iTextureCount ;
 	int				m_iFileSize ;
+
+	std::wstring	m_strSubsid ;
 
 	std::wstring	m_strModel ;
 	std::wstring	m_strAd ;
