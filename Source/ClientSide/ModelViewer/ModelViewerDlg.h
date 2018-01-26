@@ -51,6 +51,7 @@ public:
 	CGuiRenderer	m_GuiRenderer ;
 	CSettingsGui	m_SettingsGui ;
 	C3DViewContext*  m_pView ;
+	C3DViewContext*  m_pThumbView ;
 	
 	bool			m_bFileOpened ;
 	bool			m_bHasFilename ;
@@ -86,11 +87,15 @@ public:
 	void ResetView ();
 
 	bool Load3DScanFile ( CString& strPathName ) ;
+	bool Load3DScanFile ( std::wstring& strPathName ) ;
 	bool Load3DScanFromUrl ( CString& strUrl ) ;
 
 	void DownloadInfo ( wstring& strUrl ) ;
 	void DownloadModel ( wstring& strUrl ) ;
 	void DownloadAd ( wstring& strUrl ) ;
+
+	void GenerateThumnail ( void** ppData, int* piSize ) ;
+	void FillThumbArray() ;
 
 	char**			m_ppszTextureNames ;
 	int				m_iTextureCount ;
@@ -111,4 +116,7 @@ public:
 	afx_msg BOOL OnEraseBkgnd ( CDC* pDC );
 	void UpdateGui() ;
 
-};
+	IDirect3DTexture9**	m_ppThumbnails ;
+	int					m_iThumbCount ;
+	std::wstring*		m_pstrModelFiles ;
+} ;

@@ -73,7 +73,15 @@ CModelViewerDlg::CModelViewerDlg(CWnd* pParent /*=NULL*/)
 	m_bShowRecent = false ;
 	m_pThumbTex = NULL ;
 
+	m_ppThumbnails = NULL ;
+	m_iTextureCount = 0 ;
+	m_pstrModelFiles = NULL ;
+
 	m_bInitialized = false ;
+
+	m_PointerPass [ 0 ].pData = NULL ;
+	m_PointerPass [ 1 ].pData = NULL ;
+	m_PointerPass [ 2 ].pData = NULL ;
 
 // 	CustomURLProtocol prot ;
 // 	prot.setProtocolName ( L"3dscan" ) ;
@@ -138,21 +146,48 @@ BOOL CModelViewerDlg::OnInitDialog()
 
 	//m_SettingsGui.Initialize() ;
 	//CGuiRenderer::Update ( 0.01f ) ;
-	D3DVIEWPORT9 vp ;
-	vp.Width = rc.Width() ;
-	vp.Height = rc.Height() ;
-	vp.MinZ = 0.0f ;
-	vp.MaxZ = 1.0f ;
-	vp.X = 0 ;
-	vp.Y = 0 ;
-	m_pView = new C3DViewContext ( L"View1",
-		GetSafeHwnd (),
-		vp,
-		NULL,
-		&m_Camera,
-		false,
-		false,
-		true ) ;
+	{
+		D3DVIEWPORT9 vp ;
+		vp.Width = rc.Width () ;
+		vp.Height = rc.Height () ;
+		vp.MinZ = 0.0f ;
+		vp.MaxZ = 1.0f ;
+		vp.X = 0 ;
+		vp.Y = 0 ;
+		m_pView = new C3DViewContext ( L"View1",
+			GetSafeHwnd (),
+			vp,
+			NULL,
+			&m_Camera,
+			false,
+			false,
+			true ) ;
+	}
+
+	{
+		D3DVIEWPORT9 vp ;
+		vp.Width = 256 ;
+		vp.Height = 256 ;
+		vp.MinZ = 0.0f ;
+		vp.MaxZ = 1.0f ;
+		vp.X = 0 ;
+		vp.Y = 0 ;
+		m_pThumbView = new C3DViewContext ( L"View1",
+			GetSafeHwnd (),
+			vp,
+			NULL,
+			new CCamera,
+			true,
+			true,
+			true ) ;
+
+		m_pThumbView->CreateRenderTarget ( 256, 256 ) ;
+
+		m_pThumbView->GetCamera()->Initialize ( D3DXToRadian ( 60.0f ), 1.0f / 1.0f, 0.1f, 10000.0f );
+		m_pThumbView->GetCamera()->SetMode ( CCamera::MODE_TARGET );
+		m_pThumbView->GetCamera()->SetPosition ( 0.0f, 0.0f, -10.0f );
+		m_pThumbView->GetCamera()->SetTarget ( 0.0f, 0.0f, 0.0f );
+	}
 
 	//SetWindowPos ( NULL, 0, 0, 1200, 675, SWP_NOMOVE ) ;
 
@@ -173,6 +208,9 @@ BOOL CModelViewerDlg::OnInitDialog()
 
 		m_Cache.SetCacheRoot ( szFolder ) ;
 		m_Cache.Initialize () ;
+
+		//m_Cache.EnableCacheRead ( false ) ;
+		FillThumbArray() ;
 	}
 
 	m_bInitialized = true ;
@@ -551,10 +589,19 @@ LRESULT CModelViewerDlg::WindowProc ( UINT message, WPARAM wParam, LPARAM lParam
 				FillTextureList () ;
 				m_bFileOpened = true ;
 				m_bHasFilename = false ;
+
+				if ( lParam == 0 ) {
+					void* pThumbData = NULL ;
+					int iThumbSize = 0 ;
+					GenerateThumnail ( &pThumbData, &iThumbSize ) ;
+
+					if ( m_Cache.AddModelToCache ( m_strSubsid, m_PointerPass [ 1 ].pData, m_PointerPass [ 1 ].iSize, NULL, 0, pThumbData, iThumbSize ) ) {
+					}
+					FillThumbArray () ;
+				}
 			}
 		}
 
-		m_Cache.AddModelToCache ( m_strSubsid, m_PointerPass [ 1 ].pData, m_PointerPass [ 1 ].iSize, NULL, 0, NULL, 0 ) ;
 
 		SAFE_DELETE ( m_PointerPass [ 1 ].pData ) ;
 		m_bDownloading = false ;
@@ -575,6 +622,11 @@ LRESULT CModelViewerDlg::WindowProc ( UINT message, WPARAM wParam, LPARAM lParam
 			NULL,
 			NULL,
 			&m_pAdTex ) ;
+
+		if ( lParam == 0 ) {
+			m_Cache.AddAdToCache ( m_strSubsid, m_PointerPass [ 2 ].pData, m_PointerPass [ 2 ].iSize ) ;
+		}
+
 		SAFE_DELETE ( m_PointerPass [ 2 ].pData ) ;
 	}
 	else if ( message == WM_USER_MODEL_INFO ) {
@@ -832,21 +884,28 @@ void CModelViewerDlg::UpdateGui ()
 	//flags |= ImGuiWindowFlags_NoInputs;
 	flags |= ImGuiWindowFlags_NoTitleBar;
 	if ( m_bShowRecent )
-	if ( ImGui::Begin ( "Recent", NULL, ImVec2 ( 200, rc.Height () ), -1, flags ) ) {
+	if ( ImGui::Begin ( "Recent", NULL, ImVec2 ( 200.0f, (float)rc.Height () ), -1, flags ) ) {
 		ImGui::SetWindowPos ( ImVec2 ( 0, 0 ) ) ;
-		ImGui::SetWindowSize ( ImVec2 ( 160, rc.Height () ) ) ;
-		if ( ImGui::GetIO().MousePos.x > 160 )
+		ImGui::SetWindowSize ( ImVec2 ( 280.0f, (float)rc.Height () ) ) ;
+		if ( ImGui::GetIO().MousePos.x > 280 )
 			m_bShowRecent = false ;
 
-		ImTextureID my_tex_id = m_pThumbTex ;
-		D3DSURFACE_DESC desc ;
-		m_pThumbTex->GetLevelDesc ( 0, &desc ) ;
-		float my_tex_w = desc.Width ;
-		float my_tex_h = desc.Height ;
 
 		static int pressed_count = 0;
-		for ( int i = 0 ; i < 8 ; i++ ) {
-			if ( ImGui::ImageButton ( my_tex_id, ImVec2 ( 128, 128 ), ImVec2 ( 0, 0 ), ImVec2 ( 128.0f / my_tex_w, 128.0f / my_tex_h ), 2, ImColor ( 0, 0, 0, 255 ) ) )
+		for ( int i = 0 ; i < m_iThumbCount ; i++ ) {
+
+			ImTextureID my_tex_id = m_ppThumbnails [ i ] ;
+			if ( my_tex_id == NULL ) 
+				my_tex_id = m_pThumbTex ;
+
+			D3DSURFACE_DESC desc ;
+			((IDirect3DTexture9*)my_tex_id)->GetLevelDesc ( 0, &desc ) ;
+			float my_tex_w = (float)desc.Width ;
+			float my_tex_h = (float)desc.Height ;
+
+			if ( ImGui::ImageButton ( my_tex_id, ImVec2 ( 256, 256 ), ImVec2 ( 0, 0 ), ImVec2 ( 256.0f / my_tex_w, 256.0f / my_tex_h ), 2, ImColor ( 0, 0, 0, 255 ) ) ) {
+				Load3DScanFile ( m_pstrModelFiles [ i ] ) ;
+			}
 				pressed_count += 1;
 		}
 
@@ -981,17 +1040,22 @@ bool CModelViewerDlg::Load3DScanFile ( CString& strPathName )
 }
 
 
+bool CModelViewerDlg::Load3DScanFile ( std::wstring& strPathName )
+{
+	char szFile [ MAX_PATH ] ;
+	int iLen = WideCharToMultiByte ( CP_ACP, 0, strPathName.c_str (), strPathName.length (), szFile, MAX_PATH, "", NULL ) ;
+	szFile [ iLen ] = 0 ;
+	
+	return Load3DScanFile ( (CString)szFile ) ;
+}
+
 bool CModelViewerDlg::Load3DScanFromUrl ( CString& strUrl )
 {
-	strUrl.Replace ( "3dscan://", STORE_SCHEME"://" ) ;
+	strUrl.Replace ( "3dscan://", MODEL_SERVICE_SCHEME"://" ) ;
 
 	wchar_t szUrl [ 1000 ] ;
 	int iLen = MultiByteToWideChar ( CP_ACP, 0, strUrl.GetBuffer (), strUrl.GetLength (), szUrl, 1000 ) ;
 	szUrl [ iLen ] = 0 ;
-
-	//MessageBoxW ( NULL, szUrl, L"B", MB_ICONASTERISK ) ;
-
-	//AfxMessageBox ( strUrl ) ;
 
 	web::uri original ( szUrl );
 
@@ -999,44 +1063,47 @@ bool CModelViewerDlg::Load3DScanFromUrl ( CString& strUrl )
 	auto query = builder.query () ;
 	auto query_split = web::uri::split_query ( query ) ;
 
+	m_strSubsid = query_split [ L"subsid" ] ;
+
+	bool bDownloadModel = true ;
+	bool bDownloadInfo	= true ;
+	bool bDownloadAd	= true ;
+
 	{
 		void* pThumbData = NULL ;
 		int iThumbSize = 0 ;
 		if ( m_Cache.LoadModel ( query_split[L"subsid"], &m_PointerPass [ 1 ].pData, &m_PointerPass [ 1 ].iSize, &m_PointerPass [ 2 ].pData, &m_PointerPass [ 2 ].iSize, &pThumbData, &iThumbSize ) ) {
 
-			PostMessage ( WM_USER_MODEL_DOWNLOADED ) ;
-			PostMessage ( WM_USER_AD_DOWNLOADED ) ;
+			PostMessage ( WM_USER_MODEL_DOWNLOADED, 1, 1 ) ;
+			PostMessage ( WM_USER_AD_DOWNLOADED, 2, 1 ) ;
 
-			m_bDownloading = false ;
-			return true ;
+			bDownloadModel = false ;
+			bDownloadInfo = false ;
 		}
+		if ( m_PointerPass [ 2 ].pData && m_PointerPass [ 2 ].iSize )
+			bDownloadAd = false ;
 	}
 
-	//MessageBoxW ( NULL, original.to_string ().c_str (), L"B", MB_ICONASTERISK ) ;
-
 	wstring strInfo ;
-	if ( 1 ) {
+	if ( bDownloadInfo ) {
 		web::uri_builder builder_mdl ;
-		builder_mdl.set_scheme ( U(STORE_SCHEME) ) ;
+		builder_mdl.set_scheme ( U(MODEL_SERVICE_SCHEME) ) ;
 		builder_mdl.set_host ( builder.host () ) ;
 		builder_mdl.set_port ( builder.port () ) ;
 		builder_mdl.set_path ( U ( MODEL_SERVICE_PATH ) ) ;
 		builder_mdl.append_path ( U ( MODEL_API_GET_INFO ) ) ;
 		builder_mdl.append_query ( L"subsid", query_split [ L"subsid" ] ) ;
 
-		m_strSubsid = query_split [ L"subsid" ] ;
-
 		wstring strUrl2 = builder_mdl.to_string() ;
-		//thread *t1 = new thread ( &CModelViewerDlg::DownloadInfo, this, strUrl ) ;
 
 		strInfo = strUrl2 ;
-		//DownloadInfo ( strUrl2 ) ;
+		
+		DownloadInfo ( strInfo ) ;
 	}
-	//AfxMessageBox ( "4" ) ;
 
-	if ( 1 ) {
+	if ( bDownloadModel ) {
 		web::uri_builder builder_mdl ;
-		builder_mdl.set_scheme ( U ( STORE_SCHEME ) ) ;
+		builder_mdl.set_scheme ( U ( MODEL_SERVICE_SCHEME ) ) ;
 		builder_mdl.set_host ( builder.host () ) ;
 		builder_mdl.set_port ( builder.port () ) ;
 		builder_mdl.set_path ( U ( MODEL_SERVICE_PATH ) ) ;
@@ -1045,17 +1112,14 @@ bool CModelViewerDlg::Load3DScanFromUrl ( CString& strUrl )
 
 		wstring strUrl2 = builder_mdl.to_string() ;
 
-		//thread* t2 = new thread  ( &CModelViewerDlg::DownloadModel, this, strUrl ) ;
-		//MessageBoxW ( NULL, strUrl2.c_str (), L"A", MB_ICONASTERISK ) ;
-		//DownloadModel ( strUrl2 ) ;
 		m_strModel = strUrl2 ;
-		//DownloadModel ( strUrl2 ) ;
-	}
-	//AfxMessageBox ( "5" ) ;
 
-	if ( 1 ) {
+		DownloadModel ( m_strModel ) ;
+	}
+
+	if ( bDownloadAd ) {
 		web::uri_builder builder_ad ;
-		builder_ad.set_scheme ( U ( STORE_SCHEME ) ) ;
+		builder_ad.set_scheme ( U ( MODEL_SERVICE_SCHEME ) ) ;
 		builder_ad.set_host ( builder.host () ) ;
 		builder_ad.set_port ( builder.port () ) ;
 		builder_ad.set_path ( U ( MODEL_SERVICE_PATH ) ) ;
@@ -1063,18 +1127,12 @@ bool CModelViewerDlg::Load3DScanFromUrl ( CString& strUrl )
 		builder_ad.append_query ( L"subsid", query_split [ L"subsid" ] ) ;
 
 		wstring strUrl2 = builder_ad.to_string () ;
-		//m_AdUrl = strUrl2 ;
-
-		//thread* t3 = new thread ( &CModelViewerDlg::DownloadAd, this, strUrl ) ;
-		//DownloadAd ( strUrl2 ) ;
 		m_strAd = strUrl2 ;
+
+		DownloadAd ( m_strAd ) ;
 	}
 
-	DownloadInfo ( strInfo ) ;
-	DownloadModel ( m_strModel ) ;
-	DownloadAd ( m_strAd ) ;
 
-	//Sleep ( 20000 ) ;
 	return true ;
 }
 
@@ -1124,8 +1182,12 @@ LRESULT ImGui_ImplWin32_WndProcHandler ( HWND hwnd, UINT msg, WPARAM wParam, LPA
 	case WM_MOUSEMOVE:
 		io.MousePos.x = (signed short)( lParam );
 		io.MousePos.y = (signed short)( lParam >> 16 );
-		if ( io.MousePos.x < 50 && io.MousePos.y > 50 )
-			g_pDlg->m_bShowRecent = true ;
+		if ( io.MousePos.x < 50 && io.MousePos.y > 50 ) {
+			if ( ! g_pDlg->m_bShowRecent ) {
+				g_pDlg->m_bShowRecent = true ;
+
+			}
+		}
 		return 0;
 	case WM_KEYDOWN:
 	case WM_SYSKEYDOWN:
@@ -1270,5 +1332,99 @@ void CModelViewerDlg::DownloadAd ( wstring& strUrl )
 		SAFE_DELETE ( pClientId ) ;
 	}, szUrl, szClientId ) ;
 	AdThread.detach () ;
+}
+
+void CModelViewerDlg::GenerateThumnail ( void** ppData, int* piSize ) 
+{
+	if ( ! m_pd3dModel1 ) 
+		return ;
+
+	CCamera* pCamera = m_pThumbView->GetCamera() ;
+
+	float dy = 1.0f / tanf ( pCamera->GetFovY () / 2.0f ) ;
+	float zy = dy * ( m_pModel1->ptMax.y - m_pModel1->ptMin.y ) * 1.25f / 2.0f ;
+
+	float dx = 1.0f / tanf ( m_Camera.GetFovX () / 2.0f ) ;
+	float zx = dx * ( m_pModel1->ptMax.x - m_pModel1->ptMin.x ) * 1.25f / 2.0f ;
+
+	float z = zy ;
+	if ( zx > zy )
+		z = zx ;
+
+	pCamera->SetDistance ( z ) ;
+
+	m_pThumbView->SelectView() ;
+	C3DGfx::GetInstance()->Clear ( 0x20202020 ) ;
+	IDirect3DDevice9* pDevice = C3DGfx::GetInstance ()->GetDevice () ;
+
+	matrix matI ;
+	D3DXMatrixIdentity ( &matI ) ;
+
+	m_pShader->SetMatrix ( "g_matView", &pCamera->GetViewMatrix () ) ;
+	m_pShader->SetMatrix ( "g_matProj", &pCamera->GetProjectionMatrix () ) ;
+	m_pShader->SetMatrix ( "g_matWorld", &matI ) ;
+
+	vector4 vLightDir ( 0.0f, 0.0f, 0.0f, 1.0f ) ;
+	D3DXVec4Normalize ( &vLightDir, &vLightDir ) ;
+	vector4 vAmbLight ( 0.5f, 0.5f, 0.5f, 0.0f ) ;
+
+	m_pShader->SetVector ( "g_vSunLightDir", &vLightDir ) ;
+	m_pShader->SetVector ( "g_f4SunLightDiffuse", (D3DXVECTOR4*)&m_clrLight ) ;
+	m_pShader->SetVector ( "g_f4SunLightAmbient", &vAmbLight ) ;
+
+	CD3DModelUtils::RenderD3DModel ( pDevice, *m_pd3dModel1 ) ;
+
+	ID3DXBuffer* pBuf = NULL ;
+	D3DXSaveSurfaceToFileInMemory ( &pBuf,
+		D3DXIFF_PNG,
+		m_pThumbView->GetRenderTarget(),
+		NULL,
+		NULL ) ;
+
+	if ( pBuf ) {
+		*piSize = pBuf->GetBufferSize () ;
+		*ppData = new uint8_t [ pBuf->GetBufferSize () ]  ;
+		CopyMemory ( *ppData, pBuf->GetBufferPointer (), pBuf->GetBufferSize () ) ;
+
+// 		D3DXSaveSurfaceToFile ( "thumb_.png",
+// 		 	D3DXIFF_PNG,
+// 		 	m_pThumbView->GetRenderTarget (),
+// 		 	NULL,
+// 		 	NULL ) ;
+
+		pBuf->Release () ;
+	}
+
+}
+
+void CModelViewerDlg::FillThumbArray ()
+{
+	if ( m_ppThumbnails ) {
+		for ( int i = 0 ; i < m_iThumbCount ; i++ ) {
+			if ( m_ppThumbnails [ i ] )
+				m_ppThumbnails [ i ]->Release () ;
+		}
+		delete m_ppThumbnails ;
+		m_ppThumbnails = NULL ;
+		m_iTextureCount = 0 ;
+	}
+
+	if ( m_pstrModelFiles )
+		delete m_pstrModelFiles ;
+	m_pstrModelFiles = NULL ;
+
+	m_iThumbCount = m_Cache.GetEntryCount() ;
+	m_ppThumbnails = new IDirect3DTexture9* [ m_iThumbCount ] ;
+	ZeroMemory ( m_ppThumbnails, m_iThumbCount * sizeof ( void* ) ) ;
+
+	m_pstrModelFiles = new std::wstring [ m_iThumbCount ] ;
+
+	for ( int i = 0 ; i < m_iThumbCount ; i++ ) {
+		CModelCache::CACHE_ENTRY entry ;
+		m_Cache.GetEntry ( i, entry ) ;
+
+		D3DXCreateTextureFromFileW ( C3DGfx::GetInstance ()->GetDevice (), entry.szThumbFile, &m_ppThumbnails [ i ] ) ;
+		m_pstrModelFiles [ i ] = entry.szModelFile ;
+	}
 }
 

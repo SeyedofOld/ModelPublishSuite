@@ -5,6 +5,7 @@
 
 class CModelCache
 {
+public:
 #include <pshpack8.h>
 	struct CACHE_ENTRY {
 		wchar_t		szSibscriptionId [ MAX_PATH ] ;
@@ -25,12 +26,15 @@ public:
 	bool Initialize() ;
 
 	bool AddModelToCache ( std::wstring& strSubsid, void* pModelFileData, int iModelFileSize, void* pAdFileData, int iAdFileSize, void* pThumbFileData, int iThumbFileSize ) ;
+	bool AddAdToCache ( std::wstring& strSubsid, void* pAdFileData, int iAdFileSize ) ;
 	bool LoadModel ( std::wstring& strSubsid, void** ppModelFileData, int* piModelFileSize, void** ppAdFileData, int* piAdFileSize, void** ppThumbFileData, int* piThumFileSize ) ;
 
 	void EnableCache ( bool bEnable ) ;
 	void EnableCacheRead ( bool bEnable ) ;
 	void EnableCacheStore ( bool bEnable ) ;
 	void SetCacheRoot ( wchar_t* pszRoot ) ;
+	int GetEntryCount() { return (int)m_CacheTable.size() ; }
+	bool GetEntry ( int iEntry, CACHE_ENTRY& rEntry ) ;
 
 private:
 	int SearchInCache ( std::wstring& strSubsid ) ;

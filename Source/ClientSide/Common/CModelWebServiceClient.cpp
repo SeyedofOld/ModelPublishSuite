@@ -21,6 +21,7 @@ using namespace http;
 using namespace http::client;
 using namespace web::json ;
 
+
 HWND CModelServiceWebClient::m_hCallbackWnd = NULL ;
 
 #ifdef _WIN32
@@ -83,25 +84,18 @@ pplx::task<http_response> make_task_request_get ( http_client & client, method m
 
 	//return (mtd == methods::GET || mtd == methods::HEAD) ? client.request(mtd, STORE_URI_U) :  client.request(mtd, STORE_URI_U, jvalue.serialize());
 }
- 
-pplx::task<http_response> make_task_request_post ( http_client & client, method mtd, json::value const & jvalue, char* pszSessionId )
+
+pplx::task<http_response> make_task_request_post ( http_client& client, method mtd, json::value const& send_val, web::http::progress_handler progress )
 {
 	http_request request ( mtd ) ;
-	request.set_request_uri ( U(MODEL_API_GET) ) ;
+	request.set_request_uri ( U(MODEL_API_UPLOAD_MODEL) ) ;
 
-	wchar_t szSid [ 1000 ] ;
-	int iLen = MultiByteToWideChar ( CP_ACP, 0, pszSessionId, strlen(pszSessionId), szSid, 1000 ) ;
-	szSid [ iLen ] = 0 ;
-
-	wstring strValue = L"Token " ;
-	strValue += szSid ;
-
-	request.headers().add ( L"Authorization", strValue.c_str() ) ;
+// 	request.headers().add ( L"Authorization", strValue.c_str() ) ;
 
 	if ( (mtd == methods::GET || mtd == methods::HEAD) ) {
 	}
 	else {
-		request.set_body ( jvalue.serialize() ) ;
+		request.set_body ( send_val.serialize() ) ;
 	}
    
 	return client.request ( request ) ;
@@ -142,9 +136,10 @@ void make_request_get ( http_client & client, method mtd, uri &uri, json::value&
 	.wait();
 }
 
-void make_request_post ( http_client & client, method mtd, json::value const & jvalue, char* pszSessionId, json::value& result, status_code& http_result )
+
+void make_request_post ( http_client& client, method mtd, json::value const& val_send, json::value& result, status_code& http_result, web::http::progress_handler progress )
 {
-	make_task_request_post(client, mtd, jvalue, pszSessionId)
+	make_task_request_post ( client, mtd, val_send, progress )
       .then([&](http_response response)
       {
          if (response.status_code() == status_codes::OK)
@@ -236,7 +231,7 @@ bool CModelServiceWebClient::GetModel ( wchar_t* pszUrl, char* pszClientId, char
 		*ppData = NULL ;
 		return false ;
 	}
-	else if ( ! answer.has_field(L"message") ) {
+	else if ( ! answer.has_field(L"error_message") ) {
 		*ppData = NULL ;
 		return false ;
 	}
@@ -699,7 +694,7 @@ bool CModelServiceWebClient::GetModelInfo ( wchar_t* pszUrl, char* pszClientId, 
 		*ppData = NULL ;
 		return false ;
 	}
-	else if ( !answer.has_field ( L"message" ) ) {
+	else if ( !answer.has_field ( L"error_message" ) ) {
 		*ppData = NULL ;
 		return false ;
 	}
@@ -800,7 +795,7 @@ bool CModelServiceWebClient::GetAd ( wchar_t* pszUrl, char* pszClientId, char** 
 		*ppData = NULL ;
 		return false ;
 	}
-	else if ( !answer.has_field ( L"message" ) ) {
+	else if ( !answer.has_field ( L"error_message" ) ) {
 		*ppData = NULL ;
 		return false ;
 	}
@@ -847,3 +842,71 @@ bool CModelServiceWebClient::GetAd ( wchar_t* pszUrl, char* pszClientId, char** 
 	return false ;
 }
 
+bool CModelServiceWebClient::UploadModel ( wchar_t* pszUrl, char* pData, int iSize )
+{
+	if ( ! pszUrl || ! pData )
+		return false ;
+
+	web::uri inuri ( pszUrl ) ;
+
+	uri_builder builder ( inuri ) ;
+
+	http_client_config config;
+	config.set_validate_certificates ( false ) ;
+
+	http_client client ( inuri, config ) ;
+
+	json::value send ;
+	{
+		int iEncSize = Base64EncodeGetRequiredLength ( iSize, 0 ) ;
+
+		char* pszAnsi = new char [ iEncSize + 1 ] ;
+
+		Base64Encode ( (BYTE*)pData, iSize, (LPSTR)pszAnsi, &iEncSize ) ;
+
+		wchar_t* pszUni = new wchar_t [ iEncSize + 1 ] ;
+		int iLen = MultiByteToWideChar ( CP_ACP, 0, pszAnsi, iEncSize, pszUni, iEncSize ) ;
+		pszUni [ iLen ] = 0 ;
+
+		send [ L"model" ] = json::value::string ( pszUni ) ;
+
+		delete ( pszAnsi ) ;
+		delete ( pszUni ) ;
+	}
+
+	json::value answer ;
+	status_code http_result ;
+
+	if ( 1 )
+		make_request_post ( client, methods::GET, send, answer, http_result, &CModelServiceWebClient::UploadCallback ) ;
+
+	//wcout << answer << endl ;
+	wcout << L"HTTP Status Code:" << http_result << endl ;
+
+	//	rbInvalidSessionId = (http_result == status_codes::Unauthorized) ;
+
+	if ( http_result != status_codes::OK ) {
+
+		return false ;
+	}
+	else if ( answer.is_null () ) {
+		return false ;
+	}
+	else if ( !answer.has_field ( L"error_message" ) ) {
+		return false ;
+	}
+	else {
+		//json::value imessage = answer[L"message"];
+		if ( !answer.has_field ( L"model_id" ) )
+		{
+			return false;
+		}
+		else {
+			wstring str1 = answer [ L"model_id" ].as_string ();
+
+			return true;
+		}
+	}
+
+	return false ;
+}

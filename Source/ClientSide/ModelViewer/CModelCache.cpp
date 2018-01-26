@@ -147,6 +147,16 @@ void CModelCache::SetCacheRoot ( wchar_t* pszRoot )
 		wcscpy ( m_szCacheRoot, pszRoot ) ;
 }
 
+bool CModelCache::GetEntry ( int iEntry, CACHE_ENTRY& rEntry ) 
+{
+	if ( iEntry < 0 || iEntry >= m_CacheTable.size () )
+		return false ;
+
+	rEntry = m_CacheTable [ iEntry ] ;
+
+	return true ;
+}
+
 bool CModelCache::AddModelToCache ( std::wstring& strSubsid, void* pModelFileData, int iModelFileSize, void* pAdFileData, int iAdFileSize, void* pThumbFileData, int iThumbFileSize )
 {
 	if ( m_hCacheFile == INVALID_HANDLE_VALUE )
@@ -186,10 +196,8 @@ bool CModelCache::AddModelToCache ( std::wstring& strSubsid, void* pModelFileDat
 	ZeroMemory ( &entry, sizeof(CACHE_ENTRY) ) ;
 	wcscpy ( entry.szSibscriptionId, strSubsid.c_str() ) ;
 	wcscpy ( entry.szModelFile, szModelFile ) ;
-	if ( pAdFileData )
-		wcscpy ( entry.szAdFile, szAdFile ) ;
-	if ( pThumbFileData )
-		wcscpy ( entry.szThumbFile, szThumbFile ) ;
+	wcscpy ( entry.szAdFile, szAdFile ) ;
+	wcscpy ( entry.szThumbFile, szThumbFile ) ;
 	GetLocalTime ( &entry.DateTime ) ;
 
 	m_CacheTable.push_back ( entry ) ;
@@ -237,4 +245,26 @@ bool CModelCache::LoadModel ( std::wstring& strSubsid, void** ppModelFileData, i
 	}
 
 	return false ;
+}
+
+bool CModelCache::AddAdToCache ( std::wstring& strSubsid, void* pAdFileData, int iAdFileSize )
+{
+	if ( m_hCacheFile == INVALID_HANDLE_VALUE )
+		return false ;
+	if ( ! pAdFileData )
+		return false ;
+
+	if ( ! m_bEnableCacheStore )
+		return false ;
+
+	int iSearchResult = SearchInCache ( strSubsid ) ;
+	if ( iSearchResult == -1 )
+		return false ;
+
+	CACHE_ENTRY& entry = m_CacheTable [ iSearchResult ] ;
+
+	if ( ! SaveMemToFile ( entry.szAdFile, pAdFileData, iAdFileSize ) )
+		return false ;
+
+	return true ;
 }

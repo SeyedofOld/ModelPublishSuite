@@ -70,7 +70,7 @@ int main ( int argc, char* argv[] )
 
 	uri_builder builder;
 	builder.set_scheme ( U ( "http" ) ) ;
-	builder.set_host ( U ( STORE_URL ) ) ;
+	builder.set_host ( U ( MODEL_SERVICE_SERVER ) ) ;
 	//builder.set_port ( STORE_PORT ) ;
 	builder.set_path ( U ( MODEL_SERVICE_PATH ) ) ;
 
