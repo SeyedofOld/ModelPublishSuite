@@ -149,7 +149,7 @@ void CModelCache::SetCacheRoot ( wchar_t* pszRoot )
 
 bool CModelCache::GetEntry ( int iEntry, CACHE_ENTRY& rEntry ) 
 {
-	if ( iEntry < 0 || iEntry >= m_CacheTable.size () )
+	if ( iEntry < 0 || iEntry >= (int)m_CacheTable.size () )
 		return false ;
 
 	rEntry = m_CacheTable [ iEntry ] ;

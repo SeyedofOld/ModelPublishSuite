@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\version.props" />
   <PropertyGroup Label="Globals">
     <ProjectGuid>{79C9BBEC-D7C9-4BA3-B2B3-5C3A14A9F24A}</ProjectGuid>
@@ -13,7 +13,7 @@
     <WinRTProject>false</WinRTProject>
     <TargetXP>false</TargetXP>
     <ProjectName>cpprestsdk140.static</ProjectName>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
     <PackagesRoot>$(SolutionDir)packages</PackagesRoot>
   </PropertyGroup>
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Config.Definitions.props" />
@@ -89,6 +89,12 @@
       <AdditionalDependencies>Winhttp.lib;httpapi.lib;bcrypt.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration Condition="'$(Configuration)'=='Release'">UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
+    <Lib>
+      <TargetMachine Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">MachineX86</TargetMachine>
+    </Lib>
+    <Lib>
+      <TargetMachine Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MachineX86</TargetMachine>
+    </Lib>
   </ItemDefinitionGroup>
   <Import Project="..\common.vcxitems" Label="Shared" Condition="Exists('..\common.vcxitems')" />
   <Import Project="..\win32.vcxitems" Label="Shared" Condition="Exists('..\win32.vcxitems')" />
