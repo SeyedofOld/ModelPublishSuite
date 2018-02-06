@@ -76,6 +76,7 @@ CModelViewerDlg::CModelViewerDlg(CWnd* pParent /*=NULL*/)
 	m_ppThumbnails = NULL ;
 	m_iTextureCount = 0 ;
 	m_pstrModelFiles = NULL ;
+	m_iThumbCount = 0 ;
 
 	m_bInitialized = false ;
 
@@ -1093,6 +1094,7 @@ bool CModelViewerDlg::Load3DScanFromUrl ( CString& strUrl )
 		builder_mdl.set_path ( U ( MODEL_SERVICE_PATH ) ) ;
 		builder_mdl.append_path ( U ( MODEL_API_GET_INFO ) ) ;
 		builder_mdl.append_query ( L"subsid", query_split [ L"subsid" ] ) ;
+		builder_mdl.append_query ( L"magic", U (MODEL_API_MAGIC) ) ;
 
 		wstring strUrl2 = builder_mdl.to_string() ;
 
@@ -1109,6 +1111,7 @@ bool CModelViewerDlg::Load3DScanFromUrl ( CString& strUrl )
 		builder_mdl.set_path ( U ( MODEL_SERVICE_PATH ) ) ;
 		builder_mdl.append_path ( U ( MODEL_API_GET ) ) ;
 		builder_mdl.append_query ( L"subsid", query_split [ L"subsid" ] ) ;
+		builder_mdl.append_query ( L"magic", U ( MODEL_API_MAGIC ) ) ;
 
 		wstring strUrl2 = builder_mdl.to_string() ;
 
@@ -1125,6 +1128,7 @@ bool CModelViewerDlg::Load3DScanFromUrl ( CString& strUrl )
 		builder_ad.set_path ( U ( MODEL_SERVICE_PATH ) ) ;
 		builder_ad.append_path ( U ( MODEL_API_GET_AD ) ) ;
 		builder_ad.append_query ( L"subsid", query_split [ L"subsid" ] ) ;
+		builder_ad.append_query ( L"magic", U ( MODEL_API_MAGIC ) ) ;
 
 		wstring strUrl2 = builder_ad.to_string () ;
 		m_strAd = strUrl2 ;
@@ -1410,21 +1414,24 @@ void CModelViewerDlg::FillThumbArray ()
 	}
 
 	if ( m_pstrModelFiles )
-		delete m_pstrModelFiles ;
+		delete []m_pstrModelFiles ;
 	m_pstrModelFiles = NULL ;
 
-	m_iThumbCount = m_Cache.GetEntryCount() ;
-	m_ppThumbnails = new IDirect3DTexture9* [ m_iThumbCount ] ;
-	ZeroMemory ( m_ppThumbnails, m_iThumbCount * sizeof ( void* ) ) ;
+	m_iThumbCount = m_Cache.GetEntryCount () ;
 
-	m_pstrModelFiles = new std::wstring [ m_iThumbCount ] ;
+	if ( m_iThumbCount ) {
+			m_ppThumbnails = new IDirect3DTexture9* [ m_iThumbCount ] ;
+		ZeroMemory ( m_ppThumbnails, m_iThumbCount * sizeof ( void* ) ) ;
 
-	for ( int i = 0 ; i < m_iThumbCount ; i++ ) {
-		CModelCache::CACHE_ENTRY entry ;
-		m_Cache.GetEntry ( i, entry ) ;
+		m_pstrModelFiles = new std::wstring [ m_iThumbCount ] ;
 
-		D3DXCreateTextureFromFileW ( C3DGfx::GetInstance ()->GetDevice (), entry.szThumbFile, &m_ppThumbnails [ i ] ) ;
-		m_pstrModelFiles [ i ] = entry.szModelFile ;
+		for ( int i = 0 ; i < m_iThumbCount ; i++ ) {
+			CModelCache::CACHE_ENTRY entry ;
+			m_Cache.GetEntry ( i, entry ) ;
+
+			D3DXCreateTextureFromFileW ( C3DGfx::GetInstance ()->GetDevice (), entry.szThumbFile, &m_ppThumbnails [ i ] ) ;
+			m_pstrModelFiles [ i ] = entry.szModelFile ;
+		}
 	}
 }
 

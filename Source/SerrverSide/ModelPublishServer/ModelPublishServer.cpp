@@ -77,7 +77,7 @@ int main ( int argc, char* argv[] )
 	auto path_query_fragment = builder.to_string ();
 
 	InitializeServer ( path_query_fragment ) ;
-	std::cout << "Press ENTER to exit." << std::endl;
+	std::cout << "Press ENTER to exit." << std::endl << std::endl ;
 
 	std::string line;
 	std::getline ( std::cin, line );

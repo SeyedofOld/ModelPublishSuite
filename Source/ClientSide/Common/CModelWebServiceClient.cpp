@@ -258,7 +258,6 @@ bool CModelServiceWebClient::GetModel ( wchar_t* pszUrl, char* pszClientId, char
 
 			*ppData = new char [ iLen + 1 ] ;
 
-
 			int iDecSize = iLen ;
 			Base64Decode ( pszAnsi, iLen, (BYTE*)*ppData, &iDecSize ) ;
 
