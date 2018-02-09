@@ -85,8 +85,8 @@ CModelViewerDlg::CModelViewerDlg(CWnd* pParent /*=NULL*/)
 	m_PointerPass [ 2 ].pData = NULL ;
 
 // 	CustomURLProtocol prot ;
-// 	prot.setProtocolName ( L"3dscan" ) ;
-// 	prot.setAppPath ( L"ModelViewer.exe" ) ;
+// 	prot.setProtocolName ( L"3dscan2" ) ;
+// 	prot.setAppPath ( L"ModelViewer2.exe" ) ;
 // 	prot.setCompanyName ( L"Seyedof" ) ;
 // 	prot.CreateCustomProtocol () ;
 }
@@ -1186,7 +1186,7 @@ LRESULT ImGui_ImplWin32_WndProcHandler ( HWND hwnd, UINT msg, WPARAM wParam, LPA
 	case WM_MOUSEMOVE:
 		io.MousePos.x = (signed short)( lParam );
 		io.MousePos.y = (signed short)( lParam >> 16 );
-		if ( io.MousePos.x < 50 && io.MousePos.y > 50 ) {
+		if ( io.MousePos.x < 50 && io.MousePos.y > 50 && ! io.MouseDown [ 0 ] ) {
 			if ( ! g_pDlg->m_bShowRecent ) {
 				g_pDlg->m_bShowRecent = true ;
 
