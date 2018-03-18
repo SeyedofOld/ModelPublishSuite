@@ -333,6 +333,8 @@ bool C3DScanFile::Save3DScanModel ( char* pszFilename, TD_SCAN_MODEL* pModel, ui
 
 	if ( pModel->Materials.size() )
 		hdr.iMaterialLibOfs = uiFileOfs ;
+	else
+		hdr.iMaterialLibOfs = -1 ;
 
 	// Save Materials
 	for ( uint32_t iMat = 0 ; iMat < pModel->Materials.size() ; iMat++ ) {
@@ -368,7 +370,10 @@ bool C3DScanFile::Save3DScanModel ( char* pszFilename, TD_SCAN_MODEL* pModel, ui
 		uiFileOfs += sizeof ( TDSCAN_FILE_MATERIAL ) ;
 	}
 
-	hdr.iTexLibOfs = uiFileOfs ;
+	if ( pModel->Textures.size () )
+		hdr.iTexLibOfs = uiFileOfs ;
+	else
+		hdr.iTexLibOfs = -1 ;
 
 	// Save Textures
 	for ( uint32_t iTex = 0 ; iTex < pModel->Textures.size () ; iTex++ ) {

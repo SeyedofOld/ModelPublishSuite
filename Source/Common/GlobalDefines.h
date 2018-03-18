@@ -2,7 +2,8 @@
 
 // Server defines
 //#define STORE_URL					"localhost"
-#define MODEL_SERVICE_SERVER					"51.254.82.69"
+//#define MODEL_SERVICE_SERVER					"51.254.82.69"
+#define MODEL_SERVICE_SERVER					"18.220.78.255"
 //#define STORE_PORT					5617
 //#define STORE_PORT					443
 //#define STORE_SCHEME				"https"
