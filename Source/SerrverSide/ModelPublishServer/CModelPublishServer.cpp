@@ -10,11 +10,13 @@
 #include <cppconn/statement.h>
 
 #include <atlenc.h>
+#include <rpcdce.h>
 
 #include "GlobalDefines.h"
 
 #include <map>
 #include <set>
+
 
 using namespace std;
 
@@ -69,7 +71,7 @@ void CModelPublishServer::OnGetModel ( json::value& params, json::value& answer,
  		con = driver->connect ( MYSQL_SERVER, MYSQL_USER, MYSQL_PASS ) ;
 // 
 // 		// Connect to the MySQL test database
- 		con->setSchema ( STORE_DATABASE_NAME ) ;
+ 		con->setSchema ( SERVICE_DATABASE_NAME ) ;
 // 	}
 // 	catch ( sql::SQLException &e ) {
 // 		cout << e.what() << endl ;
@@ -224,7 +226,7 @@ void CModelPublishServer::OnGetModel ( json::value& params, json::value& answer,
 
 			FILE* pFile = fopen ( strBase64FileName.c_str(), "rb" ) ;
 			if ( ! pFile ) {
-				string strModelFileName = strFullFilePathName + MODEL_FILE_EXTENSION ;
+				string strModelFileName = strFullFilePathName /*+ MODEL_FILE_EXTENSION*/ ;
 				pFile = fopen ( strModelFileName.c_str (), "rb" ) ;
 
 				if ( ! pFile ) {
@@ -322,7 +324,7 @@ void CModelPublishServer::OnGetAd ( json::value& params, json::value& answer, st
 	con = driver->connect ( MYSQL_SERVER, MYSQL_USER, MYSQL_PASS ) ;
 	// 
 	// 		// Connect to the MySQL test database
-	con->setSchema ( STORE_DATABASE_NAME ) ;
+	con->setSchema ( SERVICE_DATABASE_NAME ) ;
 	// 	}
 	// 	catch ( sql::SQLException &e ) {
 	// 		cout << e.what() << endl ;
@@ -474,8 +476,8 @@ void CModelPublishServer::OnGetAd ( json::value& params, json::value& answer, st
 			wchar_t* pszBase64Ad = NULL ;
 
 			FILE* pFile = fopen ( strBase64FileName.c_str (), "rb" ) ;
-			if ( !pFile ) {
-				string strModelFileName = strFullFilePathName + AD_FILE_EXTENSION ;
+			if ( ! pFile ) {
+				string strModelFileName = strFullFilePathName /*+ AD_FILE_EXTENSION*/ ;
 				pFile = fopen ( strModelFileName.c_str (), "rb" ) ;
 
 				if ( ! pFile ) {
@@ -573,7 +575,7 @@ void CModelPublishServer::OnGetInfo ( json::value& params, json::value& answer, 
 	con = driver->connect ( MYSQL_SERVER, MYSQL_USER, MYSQL_PASS ) ;
 	// 
 	// 		// Connect to the MySQL test database
-	con->setSchema ( STORE_DATABASE_NAME ) ;
+	con->setSchema ( SERVICE_DATABASE_NAME ) ;
 	// 	}
 	// 	catch ( sql::SQLException &e ) {
 	// 		cout << e.what() << endl ;
@@ -922,7 +924,7 @@ void CModelPublishServer::HandleGet ( http_request request )
 	request.reply ( http_result, answer ) ;
 }
 
-void CModelPublishServer::HandlePost ( http_request request )
+void CModelPublishServer::HandlePost ( http_request& request )
 {
 	wcout << L"Post Request Arrived:" << endl /*<< request.to_string () << endl*/ ;
 
@@ -944,6 +946,8 @@ void CModelPublishServer::HandlePost ( http_request request )
 
 		json::value jsonParams2 ;//= request.extract_json(true).get() ;
 								 //ucout << jsonParams.serialize() << endl ;
+		json::value jsonBody = request.extract_json (true).get () ;
+
 
 		if ( path_comps.size () > 0 ) {
 
@@ -951,8 +955,20 @@ void CModelPublishServer::HandlePost ( http_request request )
 
 			if ( strMethod == U ( MODEL_API_UPLOAD_MODEL ) ) {
 
-				if ( query_comps.find ( L"model" ) != query_comps.end () )
-					jsonParams2 [ L"model" ] = json::value::string ( query_comps [ L"model" ] ) ;
+				if ( jsonBody.has_field ( L"model" ) )
+					jsonParams2 [ L"model" ] = jsonBody [ L"model" ] ;
+
+				if ( jsonBody.has_field ( L"user" ) )
+					jsonParams2 [ L"user" ] = jsonBody [ L"user" ] ;
+
+				if ( jsonBody.has_field ( L"pass" ) )
+					jsonParams2 [ L"pass" ] = jsonBody [ L"pass" ] ;
+
+				if ( jsonBody.has_field ( L"name" ) )
+					jsonParams2 [ L"name" ] = jsonBody [ L"name" ] ;
+
+				if ( jsonBody.has_field ( L"desc" ) )
+					jsonParams2 [ L"desc" ] = jsonBody [ L"desc" ] ;
 
 				OnUploadModel ( jsonParams2, answer, http_result ) ;
 			}
@@ -990,7 +1006,6 @@ void CModelPublishServer::OnUploadModel ( json::value& params, json::value& answ
 	// 	sql::Driver *driver;
 	sql::Connection *con;
 
-
 	if ( !driver ) {
 		answer [ L"error_message" ] = json::value::string ( L"Database error!" ) ;
 		answer [ L"error_code" ] = json::value::number ( MS_ERROR_DB ) ;
@@ -1004,7 +1019,7 @@ void CModelPublishServer::OnUploadModel ( json::value& params, json::value& answ
 	con = driver->connect ( MYSQL_SERVER, MYSQL_USER, MYSQL_PASS ) ;
 	// 
 	// 		// Connect to the MySQL test database
-	con->setSchema ( STORE_DATABASE_NAME ) ;
+	con->setSchema ( SERVICE_DATABASE_NAME ) ;
 	// 	}
 	// 	catch ( sql::SQLException &e ) {
 	// 		cout << e.what() << endl ;
@@ -1012,34 +1027,126 @@ void CModelPublishServer::OnUploadModel ( json::value& params, json::value& answ
 	// 		http_result = status_codes::InternalError ;
 	// 		return ;
 	// 	}
-	if ( !con ) {
+	if ( ! con ) {
 		answer [ L"error_message" ] = json::value::string ( L"Database connection error!" ) ;
 		answer [ L"error_code" ] = json::value::number ( MS_ERROR_DB ) ;
 		http_result = status_codes::InternalError ;
 	}
 
-	int iModelId = -1 ;
-
-	{ // Fetch session id from database
+	int iUserId = -1 ;
+	{ // Fetch user id from database
 		sql::Statement *stmt;
 		sql::ResultSet *res;
 
-		wstring strPname = params.at ( L"subsid" ).as_string () ;
-		char szModelId [ 256 ] ;
-		int iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), strPname.length (), szModelId, 256, "", NULL ) ;
-		szModelId [ iLen ] = 0 ;
+		wstring strPname = params.at ( L"user" ).as_string () ;
+		char szUser [ 256 ] ;
+		int iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), strPname.length (), szUser, 256, "", NULL ) ;
+		szUser [ iLen ] = 0 ;
 
-		// 		char szSessionId [ 256 ] ;
-		// 		int iLen = WideCharToMultiByte ( CP_ACP, 0, sessionId.c_str(), sessionId.length(), szSessionId, 256, "", NULL ) ;
-		// 		szSessionId [ iLen ] = 0 ;
+		strPname = params.at ( L"pass" ).as_string () ;
+		char szPass [ 256 ] ;
+		iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), strPname.length (), szPass, 256, "", NULL ) ;
+		szPass [ iLen ] = 0 ;
+
 
 		// Make query string
 		char szQuery [ 5000 ] ;
 
-		sprintf_s ( szQuery, 5000, "SELECT * FROM tbl_subscription WHERE HashId='%s'", szModelId ) ;
+		sprintf_s ( szQuery, 5000, "SELECT * FROM tbl_owner_desc WHERE Username='%s' AND Password='%s'", szUser, szPass ) ;
 		cout << szQuery << endl ;
 
 		// Run query
+		stmt = con->createStatement () ;
+		res = stmt->executeQuery ( szQuery ) ;
+
+		if ( res->rowsCount () == 0 ) {
+			answer [ L"error_message" ] = json::value::string ( L"Invalid username or password!" ) ;
+			answer [ L"error_code" ] = json::value::number ( MS_ERROR_INVALID_USER_PASS ) ;
+			http_result = status_codes::Forbidden ;
+		}
+
+		while ( res->next () ) {
+			iUserId = res->getInt ( "id" ) ;
+			//		cout << "\t... MySQL replies: ";
+			// Access column data by alias or column name 
+			//cout << res->getString("_message") << endl;
+			//cout << "\t... MySQL says it again: ";
+			// Access column data by numeric offset, 1 is the first column 
+			//cout << res->getString(1) << endl;
+		}
+		delete res;
+		delete stmt;
+	}
+
+	int iFileId = -1 ;
+
+	if ( iUserId != -1 ) { // Insert model into database
+
+
+		sql::Statement *stmt;
+		sql::ResultSet *res;
+
+		string strFullFilePathName ;
+		int iDataSize = 0 ;
+
+		{
+			wstring str1 = params.at ( L"model" ).as_string () ;
+
+			char* pszAnsi = new char [ str1.length () + 1 ] ;
+			int iLen = WideCharToMultiByte ( CP_ACP, 0, str1.c_str (), str1.length (), pszAnsi, str1.length (), pszAnsi, NULL );
+			pszAnsi [ iLen ] = 0 ;
+
+			char* pData = new char [ iLen + 1 ] ;
+
+			int iDecSize = iLen ;
+			Base64Decode ( pszAnsi, iLen, (BYTE*)pData, &iDecSize ) ;
+
+			iDataSize = iDecSize ;
+
+			UUID uuid ;
+			UuidCreate ( &uuid );
+			char *uuid_str;
+			UuidToStringA ( &uuid, (RPC_CSTR*)&uuid_str );
+
+			strFullFilePathName = uuid_str ;
+			strFullFilePathName += ".3dscan" ;
+
+			string strFile = m_szServerRootFolder + (string)MODEL_FILE_PATH + strFullFilePathName ;
+
+			RpcStringFreeA ( (RPC_CSTR*)&uuid_str );
+
+			FILE* pFile = fopen ( strFile.c_str (), "wb" ) ;
+			fwrite ( pData, iDecSize, 1, pFile ) ;
+			fclose ( pFile ) ;
+
+			cout << strFullFilePathName << endl ;
+
+			delete pData ;
+		}
+
+		// Make query string
+		char szQuery [ 5000 ] ;
+
+		string strBase64FileName = strFullFilePathName + ".base64" ;
+
+		sprintf_s ( szQuery, 5000, "INSERT INTO tbl_file_address (FilePathName, Base64FilePathName, Size) VALUES('%s','%s',%d);", strFullFilePathName.c_str (), strBase64FileName.c_str (), iDataSize ) ;
+		cout << szQuery << endl ;
+
+		// Run query
+		stmt = con->createStatement () ;
+		int iInsert = stmt->executeUpdate ( szQuery ) ;
+
+		if ( iInsert == 0 ) {
+			answer [ L"error_message" ] = json::value::string ( L"Subscription id not found!" ) ;
+			answer [ L"error_code" ] = json::value::number ( MS_ERROR_SUBSCRIPTION_NOT_FOUND ) ;
+			http_result = status_codes::NotFound ;
+		}
+
+		delete stmt;
+
+		sprintf_s ( szQuery, 5000, "SELECT LAST_INSERT_ID() AS id" ) ;
+		cout << szQuery << endl ;
+
 		stmt = con->createStatement () ;
 		res = stmt->executeQuery ( szQuery ) ;
 
@@ -1050,192 +1157,75 @@ void CModelPublishServer::OnUploadModel ( json::value& params, json::value& answ
 		}
 
 		while ( res->next () ) {
-			iModelId = res->getInt ( "ModelId" ) ;
-			//		cout << "\t... MySQL replies: ";
-			// Access column data by alias or column name 
-			//cout << res->getString("_message") << endl;
-			//cout << "\t... MySQL says it again: ";
-			// Access column data by numeric offset, 1 is the first column 
-			//cout << res->getString(1) << endl;
+			iFileId = res->getInt ( "id" ) ;
 		}
-		delete res;
-		delete stmt;
 
+		delete stmt;
+		delete res;
 	}
 
-	int iFileId = -1 ;
-	if ( iModelId != -1 ) { // Fetch product id from database
+	int iModelId = -1 ;
+	if ( iFileId != -1 ) { // 
 
 		sql::Statement *stmt ;
 		sql::ResultSet *res ;
 
+		wstring strPname = params.at ( L"name" ).as_string () ;
+		char szModelName [ 256 ] ;
+		int iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), strPname.length (), szModelName, 256, "", NULL ) ;
+		szModelName [ iLen ] = 0 ;
+
+		strPname = params.at ( L"desc" ).as_string () ;
+		char szModelDesc [ 256 ] ;
+		iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), strPname.length (), szModelDesc, 256, "", NULL ) ;
+		szModelDesc [ iLen ] = 0 ;
+
 		// Make query string
 		char szQuery [ 5000 ] ;
 
-		//wstring strPname = params.at(L"package_name").as_string() ;
-		//  		char szPaclageName [ 256 ] ;
-		//  		int iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str(), strPname.length(), szPaclageName, 256, "", NULL ) ;
-		//  		szPaclageName [ iLen ] = 0 ;
-
-		sprintf_s ( szQuery, 5000, "SELECT * FROM tbl_model_desc WHERE id=%d", iModelId ) ;
+		sprintf_s ( szQuery, 5000, "INSERT INTO tbl_model_desc (PCFileId, MobileFileId, ModelName, ModelDesc) VALUES(%d, %d, '%s', '%s')", iFileId, iFileId, szModelName, szModelDesc ) ;
 		cout << szQuery << endl ;
 
 		// Run query
 		stmt = con->createStatement () ;
-		res = stmt->executeQuery ( szQuery ) ;
+		int iInsert = stmt->executeUpdate ( szQuery ) ;
 
-		if ( res->rowsCount () == 0 ) {
+		if ( iInsert == 0 ) {
 			answer [ L"error_message" ] = json::value::string ( L"Model id not found!" ) ;
 			answer [ L"error_code" ] = json::value::number ( MS_ERROR_MODEL_NOT_FOUND ) ;
 			http_result = status_codes::NotFound ;
+		} 
+		else {
+			delete stmt;
+
+			sprintf_s ( szQuery, 5000, "SELECT LAST_INSERT_ID() AS id" ) ;
+			cout << szQuery << endl ;
+
+			stmt = con->createStatement () ;
+			res = stmt->executeQuery ( szQuery ) ;
+
+			if ( res->rowsCount () == 0 ) {
+				answer [ L"error_message" ] = json::value::string ( L"Model id not found!" ) ;
+				answer [ L"error_code" ] = json::value::number ( MS_ERROR_MODEL_NOT_FOUND ) ;
+				http_result = status_codes::NotFound ;
+			}
+			else {
+				while ( res->next () ) {
+					iModelId = res->getInt ( "id" ) ;
+				}
+				if ( iModelId != -1 ) { // Success
+					answer [ L"error_message" ] = json::value::string ( L"Success" ) ;
+					answer [ L"error_code" ] = json::value::number ( MS_ERROR_OK ) ;
+					answer [ L"model_id" ] = json::value::number ( iModelId ) ;
+					http_result = status_codes::OK ;
+				}
+			}
+
+			delete res;
 		}
 
-		while ( res->next () ) {
-			iFileId = res->getInt ( "PCFileId" ) ;
-		}
-		delete res;
 		delete stmt;
 	}
 
-	if ( iFileId != -1 ) {
-		sql::Statement *stmt;
-		sql::ResultSet *res;
-
-		// Make query string
-		char szQuery [ 5000 ] ;
-
-		sprintf_s ( szQuery, 5000, "SELECT * FROM tbl_file_address WHERE id=%d", iFileId ) ;
-		cout << szQuery << endl ;
-
-		// Run query
-		stmt = con->createStatement () ;
-		res = stmt->executeQuery ( szQuery ) ;
-
-		if ( res->rowsCount () == 0 ) {
-			answer [ L"error_message" ] = json::value::string ( L"Model file address not found!" ) ;
-			answer [ L"error_code" ] = json::value::number ( MS_ERROR_FILE_ADDRESS_NOT_FOUND ) ;
-			http_result = status_codes::NotFound ;
-		}
-
-		while ( res->next () ) {
-
-			string strPathName = "" ;//= res->getString ( "UserId" ) ;
-
-			std::istream* blob_stream = res->getBlob ( "FilePathName" );
-
-			char* pPathName = NULL;
-
-			if ( blob_stream ) {
-				try {
-					blob_stream->seekg ( 0, std::ios::end );
-					uint32_t blobSize = (uint32_t)blob_stream->tellg ();
-					blob_stream->seekg ( 0, std::ios::beg );
-					pPathName = new char [ blobSize + 1 ];
-					blob_stream->read ( pPathName, blobSize );
-					pPathName [ blobSize ] = 0;
-					//blob_stream->getline(key, 600);
-				}
-				catch ( ... ) {
-
-				}
-				//std::string retrievedPassword(pws); // also, should handle case where Password length > PASSWORD_LENGTH
-				if ( pPathName ) {
-					strPathName = pPathName;
-					delete pPathName;
-				}
-			}
-
-			//json::value msg ;
-			//answer [ L"message" ] = msg ;
-
-			string strFullFilePathName ;
-			strFullFilePathName = m_szServerRootFolder ;
-			strFullFilePathName += MODEL_FILE_PATH ;
-			strFullFilePathName += strPathName.c_str () ;
-
-			string strBase64FileName = strFullFilePathName + ".base64" ;
-
-			wchar_t* pszModelBase64 = NULL ;
-
-			FILE* pFile = fopen ( strBase64FileName.c_str (), "rb" ) ;
-			if ( !pFile ) {
-				string strModelFileName = strFullFilePathName + MODEL_FILE_EXTENSION ;
-				pFile = fopen ( strModelFileName.c_str (), "rb" ) ;
-
-				if ( !pFile ) {
-					answer [ L"error_message" ] = json::value::string ( L"Could not open model file!" ) ;
-					answer [ L"error_code" ] = json::value::number ( MS_ERROR_COULD_NOT_OPEN_FILE ) ;
-					http_result = status_codes::NotFound ;
-				}
-				else { // Open original binary model
-
-					fseek ( pFile, 0, SEEK_END ) ;
-					int iSize = ftell ( pFile ) ;
-
-					char* pBuf = new char [ iSize ] ;
-					fseek ( pFile, 0, SEEK_SET ) ;
-					fread ( pBuf, iSize, 1, pFile ) ;
-					fclose ( pFile ) ;
-
-					int iDestSize = Base64EncodeGetRequiredLength ( iSize, 0 ) ;
-					int iEncLen = iDestSize ;
-
-					PSTR pDest = new CHAR [ iDestSize + 1 ] ;
-					Base64Encode ( (BYTE*)pBuf, iSize, pDest, &iEncLen ) ;
-					pDest [ iEncLen ] = 0 ;
-
-					string s = pDest ;
-
-					pszModelBase64 = new wchar_t [ iEncLen + 1 ] ;
-					int iLen = MultiByteToWideChar ( CP_ACP, 0, s.c_str (), s.length (), pszModelBase64, iEncLen ) ;
-					pszModelBase64 [ iLen ] = 0 ;
-
-					pFile = fopen ( strBase64FileName.c_str (), "wb" ) ;
-					fwrite ( pszModelBase64, sizeof ( wchar_t ), iLen, pFile ) ;
-					fclose ( pFile ) ;
-
-
-					if ( pBuf )
-						delete pBuf ;
-
-					answer [ L"error_message" ] = json::value::string ( L"Success" ) ;
-					answer [ L"error_code" ] = json::value::number ( MS_ERROR_OK ) ;
-					answer [ L"model" ] = json::value::string ( pszModelBase64 ) ;
-					http_result = status_codes::OK ;
-				}
-
-			}
-			else { // Opened base64 file
-
-				fseek ( pFile, 0, SEEK_END ) ;
-				int iSize = ftell ( pFile ) ;
-
-				pszModelBase64 = new wchar_t [ iSize + 1 ] ;
-				fseek ( pFile, 0, SEEK_SET ) ;
-				fread ( pszModelBase64, iSize, 1, pFile ) ;
-				fclose ( pFile ) ;
-
-				pszModelBase64 [ iSize ] = 0 ;
-
-				answer [ L"error_message" ] = json::value::string ( L"Success" ) ;
-				answer [ L"error_code" ] = json::value::number ( MS_ERROR_OK ) ;
-				answer [ L"model" ] = json::value::string ( pszModelBase64 ) ;
-				http_result = status_codes::OK ;
-			}
-
-			if ( pszModelBase64 )
-				delete pszModelBase64 ;
-
-		}
-		delete res ;
-		delete stmt ;
-
-	} //catch (sql::SQLException &e) {
-	  //  	  cout << "# ERR: SQLException in " << __FILE__ ;
-	  //  	  cout << "(" << __FUNCTION__ << ") on line " << __LINE__ << endl;
-	  //  	  cout << "# ERR: " << e.what();
-	  //  	  cout << " (MySQL error code: " << e.getErrorCode();
-	  //  	  cout << ", SQLState: " << e.getSQLState() << " )" << endl;
-	  //}
 	delete con ;
 }

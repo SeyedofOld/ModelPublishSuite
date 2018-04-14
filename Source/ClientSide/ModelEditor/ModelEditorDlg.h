@@ -39,6 +39,13 @@ public:
 	afx_msg void OnBnClickedOk ();
 
 public:
+	struct POINTER_PASS {
+		void* pData ;
+		int32_t iSize ;
+	};
+	POINTER_PASS m_PointerPass [ 1 ] ;
+
+public:
 	ID3DXEffect*	m_pShader ;
 	CCamera			m_Camera ;
 	CGuiRenderer	m_GuiRenderer ;
@@ -60,6 +67,9 @@ public:
 	float4_rgba		m_clrClear ;
 	float4_rgba		m_clrLight ; 
 
+	int				m_iFileSize ;
+	float			m_fUploadProgress ;
+
 public:
 	void Update() ;
 	void ShowExampleMenuFile();
@@ -79,4 +89,7 @@ public:
 	virtual LRESULT WindowProc ( UINT message, WPARAM wParam, LPARAM lParam );
 	afx_msg BOOL OnEraseBkgnd ( CDC* pDC );
 	void UpdateGui() ;
+private:
+	void UploadModel ( CString& strFilename, CString& strUser, CString& strPass, CString& strName, CString& strDesc );
+	void UploadModelGui ();
 };

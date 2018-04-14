@@ -7,6 +7,7 @@
 #define WM_USER_MODEL_INFO			WM_USER+150
 #define WM_USER_MODEL_DOWNLOADED	WM_USER+200
 #define WM_USER_AD_DOWNLOADED		WM_USER+300
+#define WM_USER_MODEL_UPLOAD		WM_USER+400
 
 class CModelServiceWebClient 
 {
@@ -22,7 +23,7 @@ public:
 	static void UploadCallback ( web::http::message_direction::direction direction, utility::size64_t so_far ) {} ;
 	static void UploadCallbackNull ( web::http::message_direction::direction direction, utility::size64_t so_far ) {} ;
 
-	static bool UploadModel ( wchar_t* pszUrl, char* pData, int iSize ) ;
+	static bool UploadModel ( wchar_t* pszUrl, char* pszCliendId, char* pszUser, char* pszPass, char* pData, int iSize, char* pszName, char* pszDesc ) ;
 
 	static HWND m_hCallbackWnd ;
 

@@ -5,6 +5,7 @@
 #include "cpprest/asyncrt_utils.h"
 
 #include <cppconn/driver.h>
+#include <cppconn/connection.h>
 #include <cppconn/exception.h>
 #include <cppconn/resultset.h>
 #include <cppconn/statement.h>
@@ -21,8 +22,8 @@ public:
 	CModelPublishServer () ;
     CModelPublishServer(utility::string_t url);
 
-	pplx::task<void> open() { return m_listener.open(); }
-    pplx::task<void> close() { return m_listener.close(); }
+	inline pplx::task<void> open() { return m_listener.open(); }
+    inline pplx::task<void> close() { return m_listener.close(); }
 
 	static void OnGetModel ( json::value& params, json::value& answer, status_code& http_result ) ;
 	static void OnGetAd ( json::value& params, json::value& answer, status_code& http_result ) ;
@@ -34,7 +35,7 @@ public:
 
 private:
     void HandleGet ( http_request message ) ;
-    void HandlePost ( http_request message ) ;
+    void HandlePost ( http_request& message ) ;
     
 	http_listener m_listener ;
 	static char	m_szServerRootFolder [ MAX_PATH ] ;

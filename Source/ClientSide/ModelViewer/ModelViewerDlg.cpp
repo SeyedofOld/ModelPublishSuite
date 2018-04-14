@@ -1299,6 +1299,7 @@ void CModelViewerDlg::DownloadModel ( wstring& strUrl )
 	strcpy ( szClientId, MODEL_CLIENT_ID_PCWIN ) ;
 
 	wchar_t* szUrl = new wchar_t [ strUrl.length () + 1 ] ;
+
 	wcscpy ( szUrl, strUrl.c_str() ) ;
 
 	std::function<void ( int iResult, char* pszOrderId, int iSize )> myCallback = MyModelCallback ;

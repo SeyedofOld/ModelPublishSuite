@@ -85,22 +85,80 @@ pplx::task<http_response> make_task_request_get ( http_client & client, method m
 	//return (mtd == methods::GET || mtd == methods::HEAD) ? client.request(mtd, STORE_URI_U) :  client.request(mtd, STORE_URI_U, jvalue.serialize());
 }
 
-pplx::task<http_response> make_task_request_post ( http_client& client, method mtd, json::value const& send_val, web::http::progress_handler progress )
+pplx::task<http_response> make_task_request_post ( http_client& client, method mtd, uri const &uri, json::value const& send_val, web::http::progress_handler progress )
 {
 	http_request request ( mtd ) ;
-	request.set_request_uri ( U(MODEL_API_UPLOAD_MODEL) ) ;
+	request.set_request_uri ( uri ) ;
+	request.set_body ( send_val.serialize() ) ;
 
-// 	request.headers().add ( L"Authorization", strValue.c_str() ) ;
+	///////////////////////////////////////
+	request.set_progress_handler ( progress ) ;
+	// 			[ & ]( message_direction::direction direction, utility::size64_t so_far )
+	// 	{
+	// 		calls += 1;
+	// 		if ( direction == message_direction::upload )
+	// 			upsize = so_far;
+	// 		else
+	// 			downsize = so_far;
+	// 	} );
+	// 
+	// 	auto response = client.request ( request ).get ();
+	// 	http_asserts::assert_response_equals ( response, status_codes::OK );
+	// 
+	// 	response.content_ready ().wait ();
+
+	// 	wchar_t szSid [ 1000 ] ;
+	// 	int iLen = MultiByteToWideChar ( CP_ACP, 0, pszSessionId, strlen(pszSessionId), szSid, 1000 ) ;
+	// 	szSid [ iLen ] = 0 ;
+	// 
+	// 	wstring strValue = L"Token " ;
+	// 	strValue += szSid ;
+	// 
+	// 	request.headers().add ( L"Authorization", strValue.c_str() ) ;
+
+	if ( ( mtd == methods::GET || mtd == methods::HEAD ) ) {
+	}
+	else {
+		//request.set_body ( jvalue.serialize() ) ;
+	}
+
+	return client.request ( request ) ;
+	/*
+	http_request request ( mtd ) ;
+	request.set_request_uri ( uri ) ;
+
+	///////////////////////////////////////
+	request.set_progress_handler ( progress ) ;
+	// 			[ & ]( message_direction::direction direction, utility::size64_t so_far )
+	// 	{
+	// 		calls += 1;
+	// 		if ( direction == message_direction::upload )
+	// 			upsize = so_far;
+	// 		else
+	// 			downsize = so_far;
+	// 	} );
+	// 
+	// 	auto response = client.request ( request ).get ();
+	// 	http_asserts::assert_response_equals ( response, status_codes::OK );
+	// 
+	// 	response.content_ready ().wait ();
+
+	// 	wchar_t szSid [ 1000 ] ;
+	// 	int iLen = MultiByteToWideChar ( CP_ACP, 0, pszSessionId, strlen(pszSessionId), szSid, 1000 ) ;
+	// 	szSid [ iLen ] = 0 ;
+	// 
+	// 	wstring strValue = L"Token " ;
+	// 	strValue += szSid ;
+	// 
+	// 	request.headers().add ( L"Authorization", strValue.c_str() ) ;
 
 	if ( (mtd == methods::GET || mtd == methods::HEAD) ) {
 	}
 	else {
-		request.set_body ( send_val.serialize() ) ;
+		//request.set_body ( jvalue.serialize() ) ;
 	}
-   
-	return client.request ( request ) ;
 
-	//return (mtd == methods::GET || mtd == methods::HEAD) ? client.request(mtd, STORE_URI_U) :  client.request(mtd, STORE_URI_U, jvalue.serialize());
+	return client.request ( request ) ;*/
 }
  
 void make_request_get ( http_client & client, method mtd, uri &uri, json::value& result, status_code& http_result, web::http::progress_handler progress )
@@ -137,30 +195,60 @@ void make_request_get ( http_client & client, method mtd, uri &uri, json::value&
 }
 
 
-void make_request_post ( http_client& client, method mtd, json::value const& val_send, json::value& result, status_code& http_result, web::http::progress_handler progress )
+void make_request_post ( http_client& client, method mtd, uri& uri, json::value const& val_send, json::value& result, status_code& http_result, web::http::progress_handler progress )
 {
-	make_task_request_post ( client, mtd, val_send, progress )
-      .then([&](http_response response)
-      {
-         if (response.status_code() == status_codes::OK)
-         {
-            return response.extract_json();
-         }
-         return pplx::task_from_result(json::value());
-      })
-      .then([&result](pplx::task<json::value> previousTask)
-      {
-         try {
-			 display_field_map_json(previousTask.get());
-			 copy_result ( previousTask.get(), result ) ;
-			cout<<endl;
-         }
-         catch (http_exception const & e)
-         {
-            wcout << e.what() << endl;
-         }
-      })
-      .wait();
+	make_task_request_post ( client, mtd, uri, val_send, progress )
+		.then ( [ & ]( http_response response )
+	{
+		//wcout << response.extract_json(true).get () << endl ;
+
+		http_result = response.status_code () ;
+		if ( response.status_code () == status_codes::OK ) {
+			return response.extract_json ( true );
+		}
+
+		return pplx::task_from_result ( json::value () );
+	} )
+		.then ( [ &result ]( pplx::task<json::value> previousTask )
+	{
+		try {
+			//display_field_map_json(previousTask.get());
+			//auto ali = previousTask.get() ;
+			//display_field_map_json(ali);
+			result = previousTask.get () ;
+			//display_field_map_json(result);
+			//copy_result ( previousTask.get(), result ) ;
+			//cout<<endl;
+		}
+		catch ( http_exception const & e )
+		{
+			wcout << e.what () << endl;
+		}
+	} )
+		.wait ();
+
+// 	make_task_request_post ( client, mtd, val_send, progress )
+//       .then([&](http_response response)
+//       {
+//          if (response.status_code() == status_codes::OK)
+//          {
+//             return response.extract_json();
+//          }
+//          return pplx::task_from_result(json::value());
+//       })
+//       .then([&result](pplx::task<json::value> previousTask)
+//       {
+//          try {
+// 			 display_field_map_json(previousTask.get());
+// 			 copy_result ( previousTask.get(), result ) ;
+// 			cout<<endl;
+//          }
+//          catch (http_exception const & e)
+//          {
+//             wcout << e.what() << endl;
+//          }
+//       })
+//       .wait();
 }
 
 bool CModelServiceWebClient::GetModel ( wchar_t* pszUrl, char* pszClientId, char** ppData, int* piSize, int iInstanceId )
@@ -841,21 +929,17 @@ bool CModelServiceWebClient::GetAd ( wchar_t* pszUrl, char* pszClientId, char** 
 	return false ;
 }
 
-bool CModelServiceWebClient::UploadModel ( wchar_t* pszUrl, char* pData, int iSize )
+bool CModelServiceWebClient::UploadModel ( wchar_t* pszUrl, char* pszClientId, char* pszUser, char* pszPass, char* pData, int iSize, char* pszName, char* pszDesc ) 
 {
-	if ( ! pszUrl || ! pData )
+	if ( ! pszUrl || ! pData || ! pszUser || ! pszPass || ! pszName || ! pszDesc || ! pszClientId )
 		return false ;
 
-	web::uri inuri ( pszUrl ) ;
-
-	uri_builder builder ( inuri ) ;
-
-	http_client_config config;
-	config.set_validate_certificates ( false ) ;
-
-	http_client client ( inuri, config ) ;
+	wchar_t szClientID [ 1000 ] ;
+	int iLen = MultiByteToWideChar ( CP_ACP, 0, pszClientId, strlen ( pszClientId ), szClientID, 1000 ) ;
+	szClientID [ iLen ] = 0 ;
 
 	json::value send ;
+
 	{
 		int iEncSize = Base64EncodeGetRequiredLength ( iSize, 0 ) ;
 
@@ -873,11 +957,62 @@ bool CModelServiceWebClient::UploadModel ( wchar_t* pszUrl, char* pData, int iSi
 		delete ( pszUni ) ;
 	}
 
+	{
+		wchar_t* pszUni = new wchar_t [ strlen(pszUser) + 1 ] ;
+		int iLen = MultiByteToWideChar ( CP_ACP, 0, pszUser, strlen(pszUser), pszUni, strlen(pszUser) ) ;
+		pszUni [ strlen(pszUser) ] = 0 ;
+
+		send [ L"user" ] = json::value::string ( pszUni ) ;
+		delete ( pszUni ) ;
+	}
+
+	{
+		wchar_t* pszUni = new wchar_t [ strlen ( pszPass ) + 1 ] ;
+		int iLen = MultiByteToWideChar ( CP_ACP, 0, pszPass, strlen ( pszPass ), pszUni, strlen ( pszPass ) ) ;
+		pszUni [ strlen ( pszPass ) ] = 0 ;
+
+		send [ L"pass" ] = json::value::string ( pszUni ) ;
+		delete ( pszUni ) ;
+	}
+
+	{
+		wchar_t* pszUni = new wchar_t [ strlen ( pszName ) + 1 ] ;
+		int iLen = MultiByteToWideChar ( CP_ACP, 0, pszName, strlen ( pszName ), pszUni, strlen ( pszName ) ) ;
+		pszUni [ strlen ( pszName ) ] = 0 ;
+
+		send [ L"name" ] = json::value::string ( pszUni ) ;
+		delete ( pszUni ) ;
+	}
+
+	{
+		wchar_t* pszUni = new wchar_t [ strlen ( pszDesc ) + 1 ] ;
+		int iLen = MultiByteToWideChar ( CP_ACP, 0, pszDesc, strlen ( pszDesc ), pszUni, strlen ( pszDesc ) ) ;
+		pszUni [ strlen ( pszDesc ) ] = 0 ;
+
+		send [ L"desc" ] = json::value::string ( pszUni ) ;
+		delete ( pszUni ) ;
+	}
+
+	web::uri inuri ( pszUrl ) ;
+
+	uri_builder builder ( inuri ) ;
+
+	builder.append_query ( U ( "client" ), szClientID ) ;
+
+	http_client_config config;
+	config.set_validate_certificates ( false ) ;
+
+	inuri = builder.to_uri () ;
+
+	//MessageBox ( NULL, "0", "", MB_OK ) ;
+
+	http_client client ( inuri, config ) ;
+
 	json::value answer ;
 	status_code http_result ;
 
 	if ( 1 )
-		make_request_post ( client, methods::GET, send, answer, http_result, &CModelServiceWebClient::UploadCallback ) ;
+		make_request_post ( client, methods::POST, inuri, send, answer, http_result, &CModelServiceWebClient::UploadCallback ) ;
 
 	//wcout << answer << endl ;
 	wcout << L"HTTP Status Code:" << http_result << endl ;

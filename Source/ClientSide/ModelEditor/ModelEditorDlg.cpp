@@ -14,10 +14,15 @@
 #include "CD3DModelUtils.h"
 #include "C3DModelUtils.h"
 #include "FreeImage.h"
+#include "CModelWebServiceClient.h"
+#include "GlobalDefines.h"
+#include <string>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
+
+using namespace std ;
 
 // CModelViewerDlg dialog
 
@@ -36,6 +41,7 @@
 #define SAFE_RELEASE(p)			{ if(p) { (p)->Release(); (p)=NULL; } }
 #endif
 
+CModelViewerDlg* g_pDlg = NULL ;
 
 CModelViewerDlg::CModelViewerDlg(CWnd* pParent /*=NULL*/)
 	: CRenderDialog(IDD_MODELEDITOR_DIALOG, pParent) 
@@ -55,6 +61,8 @@ CModelViewerDlg::CModelViewerDlg(CWnd* pParent /*=NULL*/)
 
 	m_ppszTextureNames = NULL ;
 	m_iTextureCount = 0 ;
+
+	g_pDlg = this ;
 
 	m_bInit = false ;
 }
@@ -132,6 +140,8 @@ BOOL CModelViewerDlg::OnInitDialog()
 	//SetWindowPos ( NULL, 0, 0, 1200, 675, SWP_NOMOVE ) ;
 
 	ModifyStyleEx ( 0, SS_NOTIFY ) ;
+
+	CModelServiceWebClient::m_hCallbackWnd = GetSafeHwnd () ;
 
 	m_bInit = true ;
 
@@ -306,6 +316,10 @@ void CModelViewerDlg::ShowExampleMenuFile ()
 
 	ImGui::Separator ();
 
+	if ( ImGui::MenuItem ( "Upload Model", "", false, m_bFileOpened ) ) {
+		UploadModelGui() ;
+	}
+
 /*	if ( ImGui::BeginMenu ( "Options" ) ) {
 		static bool enabled = true;
 		ImGui::MenuItem ( "Enabled", "", &enabled );
@@ -456,7 +470,19 @@ LRESULT CModelViewerDlg::WindowProc ( UINT message, WPARAM wParam, LPARAM lParam
 		//CGuiRenderer::WndProc ( GetSafeHwnd(), message, wParam, lParam ) ;
 	ImGui_ImplWin32_WndProcHandler ( GetSafeHwnd (), message, wParam, lParam ) ;
 
-	if ( message == WUM_INTERACTION_MSG ) {
+	if ( message == WM_USER_HTTP_PROGRESS ) {
+		if ( m_iFileSize != 0 ) {
+			m_fUploadProgress = (float)lParam / m_iFileSize * 2.0f;
+			if ( m_fUploadProgress > 1.0f )
+				m_fUploadProgress = 1.0f ;
+		}
+		else
+			m_fUploadProgress = 0.0f ;
+		// 		CString s ;
+		// 		s.Format ( "%d\n", lParam ) ;
+		// 		OutputDebugString ( s ) ;
+	}
+	else if ( message == WUM_INTERACTION_MSG ) {
 		INTERACTION_MSG_DATA& imd = *((INTERACTION_MSG_DATA*)lParam) ;
 
 		static VECTOR2 s_ptStart ( 0.0f, 0.0f ) ;
@@ -687,6 +713,111 @@ void CModelViewerDlg::UpdateGui ()
 	}
 
 	ImGui::EndFrame () ;
+}
+
+void CModelViewerDlg::UploadModelGui()
+{
+	CString strUser, strPass ;
+	strUser = L"ali" ;
+	strPass = L"1234" ;
+
+	CString strName, strDesc ;
+	strName = L"Test Model" ;
+	strDesc = L"This is just a test model!" ;
+
+	UploadModel ( m_strFilename, strUser, strPass, strName, strDesc ) ;
+}
+
+void MyUploadCallback ( int iResult, int iSize, int iFileSize )
+{
+	g_pDlg->m_PointerPass [ 0 ].pData = NULL ;
+	g_pDlg->m_PointerPass [ 0 ].iSize = iSize ;
+
+	g_pDlg->PostMessage ( WM_USER_MODEL_UPLOAD, 0, iFileSize ) ;
+}
+
+std::thread UploadThread ;
+
+void CModelViewerDlg::UploadModel ( CString& strFilename, CString& strUser, CString& strPass, CString& strName, CString& strDesc  )
+{
+	web::uri_builder builder_mdl ;
+	builder_mdl.set_scheme ( U ( MODEL_SERVICE_SCHEME ) ) ;
+	builder_mdl.set_host ( U ( MODEL_SERVICE_SERVER ) ) ;
+	builder_mdl.set_path ( U ( MODEL_SERVICE_PATH ) ) ;
+	builder_mdl.append_path ( U ( MODEL_API_UPLOAD_MODEL ) ) ;
+	builder_mdl.append_query ( L"magic", U ( MODEL_API_MAGIC ) ) ;
+
+
+
+//  	wchar_t szUrl [ 1000 ] ;
+//  	int iLen = MultiByteToWideChar ( CP_ACP, 0, strUrl.GetBuffer (), strUrl.GetLength (), szUrl, 1000 ) ;
+//  	szUrl [ iLen ] = 0 ;
+
+	wstring strUrl = builder_mdl.to_string () ;
+
+	//m_strModel = strUrl ;
+
+	char* szClientId = new char [ 100 ] ;
+	strcpy ( szClientId, MODEL_CLIENT_ID_PCWIN ) ;
+
+	wchar_t* szUrl = new wchar_t [ strUrl.length () + 1 ] ;
+	wcscpy ( szUrl, strUrl.c_str () ) ;
+
+
+	{
+		FILE* pFile = fopen ( strFilename.GetBuffer(), "rb" ) ;
+		fseek ( pFile, 0, SEEK_END ) ;
+		m_iFileSize = ftell ( pFile ) ;
+		fclose ( pFile ) ;
+	}
+
+//  	int* piFileSize = new int ;
+//  	*piFileSize = m_iFileSize ;
+
+	char* pszUser = new char [ strUser.GetLength () + 1 ] ;
+	strcpy ( pszUser, strUser.GetBuffer () ) ;
+
+	char* pszPass = new char [ strPass.GetLength () + 1 ] ;
+	strcpy ( pszPass, strPass.GetBuffer () ) ;
+
+	char* pszName = new char [ strName.GetLength () + 1 ] ;
+	strcpy ( pszName, strName.GetBuffer () ) ;
+
+	char* pszDesc = new char [ strDesc.GetLength () + 1 ] ;
+	strcpy ( pszDesc, strDesc.GetBuffer () ) ;
+
+	char* pszFile = new char [ strFilename.GetLength () + 1 ] ;
+	strcpy ( pszFile, strFilename.GetBuffer () ) ;
+
+	//std::function<void ( int iResult, int iSize, int iFileSize )> myCallback = MyUploadCallback ;
+	UploadThread = std::thread ( [=]( wchar_t* pUrl, char* pClientId, char* pszUser, char* pszPass, char* pszName, char* pszDesc, char* pszFilename ) {
+		
+		FILE* pFile = fopen ( pszFilename, "rb" ) ;
+		fseek ( pFile, 0, SEEK_END ) ;
+		int iSize = ftell ( pFile ) ;
+		char* pData = new char [ iSize ] ; 
+		fseek ( pFile, 0, SEEK_SET ) ;
+		fread ( pData, iSize, 1, pFile ) ;
+		fclose ( pFile ) ;
+
+		int *piSize = new int ;
+		*piSize = iSize ;
+
+		CModelServiceWebClient client ;
+		bool bRes = client.UploadModel ( pUrl, pClientId, pszUser, pszPass, pData, *piSize, pszName, pszDesc ) ;
+//  		if ( myCallback )
+//  			myCallback ( 10, *piSize, *piSize ) ;
+		SAFE_DELETE ( pUrl ) ;
+		SAFE_DELETE ( pClientId ) ;
+		SAFE_DELETE ( pszUser ) ;
+		SAFE_DELETE ( pszPass ) ;
+		SAFE_DELETE ( pszName ) ;
+		SAFE_DELETE ( pszDesc ) ;
+		SAFE_DELETE ( pszFilename ) ;
+		SAFE_DELETE ( pData ) ;
+
+	}, szUrl, szClientId, pszUser, pszPass, pszName, pszDesc, pszFile ) ;
+	UploadThread.detach () ;
 }
 
 void CModelViewerDlg::UpdateWorldMatrix ()

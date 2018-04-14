@@ -90,7 +90,10 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)Bin\</OutDir>
-    <IncludePath>$(SolutionDir)Source\Libraries\cpprestsdk-master\Release\include\;$(SolutionDir)Source\Common\;S(SolutionDir)Source\Common\C:\Program Files\MySQL\Connector.C++ 1.1\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)Source\Libraries\cpprestsdk-master\Release\include\;$(SolutionDir)Source\Common\;S(SolutionDir)Source\Common\;C:\Program Files\MySQL\Connector.C++ 1.1\include;$(IncludePath)</IncludePath>
+    <IntDir>$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)_x64</TargetName>
+    <LibraryPath>$(SolutionDir)Source\Libraries\cpprestsdk-master\Binaries\x64\Release\;C:\Program Files\MySQL\Connector.C++ 1.1\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -103,7 +106,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>libcpprest140d_2_10.lib;Ws2_32.lib;Httpapi.lib;$(SolutionDir)packages\zlib.v140.windesktop.msvcstl.static.rt-dyn.1.2.8.8\lib\native\v140\windesktop\msvcstl\static\rt-dyn\Win32\Debug\zlibstaticd.lib;%(AdditionalDependencies);opt/mysqlcppconn.lib</AdditionalDependencies>
+      <AdditionalDependencies>libcpprest140d_2_10.lib;Ws2_32.lib;Httpapi.lib;$(SolutionDir)packages\zlib.v140.windesktop.msvcstl.static.rt-dyn.1.2.8.8\lib\native\v140\windesktop\msvcstl\static\rt-dyn\Win32\Debug\zlibstaticd.lib;%(AdditionalDependencies);opt/mysqlcppconn.lib;rpcrt4.lib;</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -116,7 +119,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>libcpprest140d_2_10.lib;Ws2_32.lib;Httpapi.lib;%(AdditionalDependencies);opt/mysqlcppconn-static.lib</AdditionalDependencies>
+      <AdditionalDependencies>libcpprest140d_2_10.lib;Ws2_32.lib;Httpapi.lib;%(AdditionalDependencies);opt/mysqlcppconn-static.lib;rpcrt4.lib;</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -133,7 +136,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>libcpprest140_2_10.lib;Ws2_32.lib;Httpapi.lib;$(SolutionDir)packages\zlib.v140.windesktop.msvcstl.static.rt-dyn.1.2.8.8\lib\native\v140\windesktop\msvcstl\static\rt-dyn\Win32\Release\zlibstatic.lib;%(AdditionalDependencies);opt/mysqlcppconn.lib</AdditionalDependencies>
+      <AdditionalDependencies>libcpprest140_2_10.lib;Ws2_32.lib;Httpapi.lib;$(SolutionDir)packages\zlib.v140.windesktop.msvcstl.static.rt-dyn.1.2.8.8\lib\native\v140\windesktop\msvcstl\static\rt-dyn\Win32\Release\zlibstatic.lib;%(AdditionalDependencies);opt/mysqlcppconn.lib;rpcrt4.lib;</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -150,10 +153,11 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>libcpprest140_2_10.lib;Ws2_32.lib;Httpapi.lib;%(AdditionalDependencies);opt/mysqlcppconn-static.lib</AdditionalDependencies>
+      <AdditionalDependencies>libcpprest140_2_10.lib;Ws2_32.lib;Httpapi.lib;%(AdditionalDependencies);opt/mysqlcppconn.lib;$(SolutionDir)packages\zlib.v140.windesktop.msvcstl.static.rt-dyn.1.2.8.8\lib\native\v140\windesktop\msvcstl\static\rt-dyn\x64\Release\zlibstatic.lib;rpcrt4.lib;</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <Text Include="..\..\..\Bin\config.txt" />
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>

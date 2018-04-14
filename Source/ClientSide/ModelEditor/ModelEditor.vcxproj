@@ -77,23 +77,23 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)Bin\</OutDir>
-    <IncludePath>$(SolutionDir)Source\ClientSide\Common\;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)Source\Libraries\lz4-dev\lib\;$(SolutionDir)Source\Libraries\FreeImage\include\;C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;C:\Program Files\Microsoft DirectX SDK (June 2010)\Include;D:\Program Files\Microsoft DirectX SDK %28June 2010%29\Include</IncludePath>
-    <LibraryPath>C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib\x86;C:\Program Files\Microsoft DirectX SDK %28June 2010%29\Lib\x86;D:\Program Files\Microsoft DirectX SDK %28June 2010%29\Lib\x86;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(SolutionDir)Source\Libraries\lz4-dev\lib\$(Platform)_$(Configuration)\;$(SolutionDir)Source\Libraries\FreeImage\lib\$(Platform)\</LibraryPath>
+    <IncludePath>$(SolutionDir)Source\ClientSide\Common\;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)Source\Libraries\lz4-dev\lib\;$(SolutionDir)Source\Libraries\FreeImage\include\;C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;C:\Program Files\Microsoft DirectX SDK (June 2010)\Include;D:\Program Files\Microsoft DirectX SDK %28June 2010%29\Include;$(SolutionDir)Source\Libraries\cpprestsdk-master\Release\include\;$(SolutionDir)Source\Common\;</IncludePath>
+    <LibraryPath>C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib\x86;C:\Program Files\Microsoft DirectX SDK %28June 2010%29\Lib\x86;D:\Program Files\Microsoft DirectX SDK %28June 2010%29\Lib\x86;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(SolutionDir)Source\Libraries\lz4-dev\lib\$(Platform)_$(Configuration)\;$(SolutionDir)Source\Libraries\FreeImage\lib\$(Platform)\;$(SolutionDir)Source\Libraries\cpprestsdk-master\Binaries\Win32\Debug\</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)Source\ClientSide\Common\;C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;C:\Program Files\Microsoft DirectX SDK (June 2010)\Include;D:\Program Files\Microsoft DirectX SDK %28June 2010%29\Include;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)Source\Libraries\lz4-dev\lib\;$(SolutionDir)Source\Libraries\FreeImage\include\</IncludePath>
+    <IncludePath>$(SolutionDir)Source\ClientSide\Common\;C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;C:\Program Files\Microsoft DirectX SDK (June 2010)\Include;D:\Program Files\Microsoft DirectX SDK %28June 2010%29\Include;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)Source\Libraries\lz4-dev\lib\;$(SolutionDir)Source\Libraries\FreeImage\include\;$(SolutionDir)Source\Libraries\cpprestsdk-master\Release\include\;$(SolutionDir)Source\Common\;</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib\x64;C:\Program Files\Microsoft DirectX SDK %28June 2010%29\Lib\x64;D:\Program Files\Microsoft DirectX SDK %28June 2010%29\Lib\x64;$(SolutionDir)Source\Libraries\lz4-dev\lib\$(Platform)_$(Configuration)\;$(SolutionDir)Source\Libraries\FreeImage\lib\$(Platform)\</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)Bin\</OutDir>
-    <IncludePath>$(SolutionDir)Source\ClientSide\Common\;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)Source\Libraries\lz4-dev\lib\;$(SolutionDir)Source\Libraries\FreeImage\include\;C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;C:\Program Files\Microsoft DirectX SDK (June 2010)\Include;D:\Program Files\Microsoft DirectX SDK %28June 2010%29\Include</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(SolutionDir)Source\Libraries\lz4-dev\lib\$(Platform)_$(Configuration)\;$(SolutionDir)Source\Libraries\FreeImage\lib\$(Platform)\;C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib\x86;C:\Program Files\Microsoft DirectX SDK %28June 2010%29\Lib\x86;D:\Program Files\Microsoft DirectX SDK %28June 2010%29\Lib\x86</LibraryPath>
+    <IncludePath>$(SolutionDir)Source\ClientSide\Common\;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)Source\Libraries\lz4-dev\lib\;$(SolutionDir)Source\Libraries\FreeImage\include\;C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;C:\Program Files\Microsoft DirectX SDK (June 2010)\Include;D:\Program Files\Microsoft DirectX SDK %28June 2010%29\Include;$(SolutionDir)Source\Libraries\cpprestsdk-master\Release\include\;$(SolutionDir)Source\Common\;</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(SolutionDir)Source\Libraries\lz4-dev\lib\$(Platform)_$(Configuration)\;$(SolutionDir)Source\Libraries\FreeImage\lib\$(Platform)\;C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib\x86;C:\Program Files\Microsoft DirectX SDK %28June 2010%29\Lib\x86;D:\Program Files\Microsoft DirectX SDK %28June 2010%29\Lib\x86;$(SolutionDir)Source\Libraries\cpprestsdk-master\Binaries\Win32\Release\</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)Source\ClientSide\Common\;C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;C:\Program Files\Microsoft DirectX SDK (June 2010)\Include;D:\Program Files\Microsoft DirectX SDK %28June 2010%29\Include;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)Source\Libraries\lz4-dev\lib\;$(SolutionDir)Source\Libraries\FreeImage\include\</IncludePath>
+    <IncludePath>$(SolutionDir)Source\ClientSide\Common\;C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;C:\Program Files\Microsoft DirectX SDK (June 2010)\Include;D:\Program Files\Microsoft DirectX SDK %28June 2010%29\Include;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)Source\Libraries\lz4-dev\lib\;$(SolutionDir)Source\Libraries\FreeImage\include\;$(SolutionDir)Source\Libraries\cpprestsdk-master\Release\include\;$(SolutionDir)Source\Common\;</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib\x64;C:\Program Files\Microsoft DirectX SDK %28June 2010%29\Lib\x64;D:\Program Files\Microsoft DirectX SDK %28June 2010%29\Lib\x64;$(SolutionDir)Source\Libraries\lz4-dev\lib\$(Platform)_$(Configuration)\;$(SolutionDir)Source\Libraries\FreeImage\lib\$(Platform)\</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -101,14 +101,14 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)_CRT_SECURE_NO_WARNINGS;_NO_ASYNCRTIMP;</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <DisableSpecificWarnings>4005;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3d9.lib;d3dx9d.lib;liblz4_static.lib;FreeImage.lib</AdditionalDependencies>
+      <AdditionalDependencies>d3d9.lib;d3dx9d.lib;liblz4_static.lib;FreeImage.lib;libcpprest140d_2_10.lib;Ws2_32.lib;Httpapi.lib;WinHttp.lib;crypt32.lib;bcrypt.lib;$(SolutionDir)packages\zlib.v140.windesktop.msvcstl.static.rt-dyn.1.2.8.8\lib\native\v140\windesktop\msvcstl\static\rt-dyn\Win32\Debug\zlibstaticd.lib</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -126,14 +126,14 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_WINDOWS;_DEBUG;%(PreprocessorDefinitions)_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDOWS;_DEBUG;%(PreprocessorDefinitions)_CRT_SECURE_NO_WARNINGS;_NO_ASYNCRTIMP;</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <DisableSpecificWarnings>4005;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3d9.lib;d3dx9d.lib;liblz4_static.lib;FreeImage.lib</AdditionalDependencies>
+      <AdditionalDependencies>d3d9.lib;d3dx9d.lib;liblz4_static.lib;FreeImage.lib;Ws2_32.lib;Httpapi.lib;WinHttp.lib;crypt32.lib;bcrypt.lib;</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -153,7 +153,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)_CRT_SECURE_NO_WARNINGS;_NO_ASYNCRTIMP;</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <DisableSpecificWarnings>4005;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
@@ -162,7 +162,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3d9.lib;d3dx9.lib;liblz4_static.lib;FreeImage.lib</AdditionalDependencies>
+      <AdditionalDependencies>d3d9.lib;d3dx9.lib;liblz4_static.lib;FreeImage.lib;libcpprest140_2_10.lib;Ws2_32.lib;Httpapi.lib;WinHttp.lib;crypt32.lib;bcrypt.lib;$(SolutionDir)packages\zlib.v140.windesktop.msvcstl.static.rt-dyn.1.2.8.8\lib\native\v140\windesktop\msvcstl\static\rt-dyn\Win32\Release\zlibstatic.lib</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -182,7 +182,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>_WINDOWS;NDEBUG;%(PreprocessorDefinitions)_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDOWS;NDEBUG;%(PreprocessorDefinitions)_CRT_SECURE_NO_WARNINGS;_NO_ASYNCRTIMP;</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <DisableSpecificWarnings>4005;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
@@ -191,7 +191,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3d9.lib;d3dx9.lib;liblz4_static.lib;FreeImage.lib</AdditionalDependencies>
+      <AdditionalDependencies>d3d9.lib;d3dx9.lib;liblz4_static.lib;FreeImage.lib;Ws2_32.lib;Httpapi.lib;WinHttp.lib;crypt32.lib;bcrypt.lib;</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -217,6 +217,7 @@
     <ClInclude Include="..\Common\CD3DModelUtils.h" />
     <ClInclude Include="..\Common\CFileStream.h" />
     <ClInclude Include="..\Common\CMemStream.h" />
+    <ClInclude Include="..\Common\CModelWebServiceClient.h" />
     <ClInclude Include="..\Common\CRenderDialog.h" />
     <ClInclude Include="..\Common\D3DModel.h" />
     <ClInclude Include="..\Common\imgui\imconfig.h" />
@@ -275,6 +276,12 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\Common\CMemStream.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\Common\CModelWebServiceClient.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
