@@ -38,10 +38,12 @@ Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "3dscanSuite", "Source\Setup
 EndProject
 Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "3dscanViewer", "Source\Setup\3dscanViewer.vdproj", "{DCE1F44A-06AC-4253-BA6A-C3ACDA8AD333}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UploadTool", "Source\ClientSide\UploadTool\UploadTool.vcxproj", "{ED0731D9-02DE-41C2-AF9D-C2B834C6BBB6}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		Source\Libraries\cpprestsdk-master\Release\src\build\win32.vcxitems*{79c9bbec-d7c9-4ba3-b2b3-5c3a14a9f24a}*SharedItemsImports = 4
 		Source\Libraries\cpprestsdk-master\Release\src\build\common.vcxitems*{79c9bbec-d7c9-4ba3-b2b3-5c3a14a9f24a}*SharedItemsImports = 4
+		Source\Libraries\cpprestsdk-master\Release\src\build\win32.vcxitems*{79c9bbec-d7c9-4ba3-b2b3-5c3a14a9f24a}*SharedItemsImports = 4
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
@@ -138,6 +140,16 @@ Global
 		{DCE1F44A-06AC-4253-BA6A-C3ACDA8AD333}.Release|x64.Build.0 = Release
 		{DCE1F44A-06AC-4253-BA6A-C3ACDA8AD333}.Release|x86.ActiveCfg = Release
 		{DCE1F44A-06AC-4253-BA6A-C3ACDA8AD333}.Release|x86.Build.0 = Release
+		{ED0731D9-02DE-41C2-AF9D-C2B834C6BBB6}.Debug|ARM.ActiveCfg = Debug|Win32
+		{ED0731D9-02DE-41C2-AF9D-C2B834C6BBB6}.Debug|x64.ActiveCfg = Debug|x64
+		{ED0731D9-02DE-41C2-AF9D-C2B834C6BBB6}.Debug|x64.Build.0 = Debug|x64
+		{ED0731D9-02DE-41C2-AF9D-C2B834C6BBB6}.Debug|x86.ActiveCfg = Debug|Win32
+		{ED0731D9-02DE-41C2-AF9D-C2B834C6BBB6}.Debug|x86.Build.0 = Debug|Win32
+		{ED0731D9-02DE-41C2-AF9D-C2B834C6BBB6}.Release|ARM.ActiveCfg = Release|Win32
+		{ED0731D9-02DE-41C2-AF9D-C2B834C6BBB6}.Release|x64.ActiveCfg = Release|x64
+		{ED0731D9-02DE-41C2-AF9D-C2B834C6BBB6}.Release|x64.Build.0 = Release|x64
+		{ED0731D9-02DE-41C2-AF9D-C2B834C6BBB6}.Release|x86.ActiveCfg = Release|Win32
+		{ED0731D9-02DE-41C2-AF9D-C2B834C6BBB6}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -153,5 +165,6 @@ Global
 		{F298E87B-19FD-47AF-9A96-51DBDFC163C2} = {AA89C0DC-E698-43FC-BFEF-20B007A48AAE}
 		{178174DA-92C0-4C95-B3F2-22CD0BF992EE} = {045EDC11-A8CB-4A13-A80B-14375C9A097F}
 		{DCE1F44A-06AC-4253-BA6A-C3ACDA8AD333} = {045EDC11-A8CB-4A13-A80B-14375C9A097F}
+		{ED0731D9-02DE-41C2-AF9D-C2B834C6BBB6} = {AA89C0DC-E698-43FC-BFEF-20B007A48AAE}
 	EndGlobalSection
 EndGlobal

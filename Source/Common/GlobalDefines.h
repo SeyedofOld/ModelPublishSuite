@@ -17,6 +17,7 @@
 #define MODEL_API_GET				"get"
 #define MODEL_API_GET_AD			"getad"
 #define MODEL_API_UPLOAD_MODEL		"upload_model"
+#define MODEL_API_UPLOAD_AD			"upload_ad"
 
 #define MODEL_CLIENT_ID_PCWIN		"pcwin"
 
@@ -33,7 +34,7 @@
 #define MODEL_FILE_EXTENSION	".3dscan"
 #define AD_FILE_EXTENSION		".png"
 #define MODEL_FILE_PATH			"Models//"
-#define MODEL_AD_PATH			"Ads//"
+#define AD_FILE_PATH			"Ads//"
 
 #define MS_ERROR_OK							0	
 #define MS_ERROR_SUBSCRIPTION_NOT_FOUND		1

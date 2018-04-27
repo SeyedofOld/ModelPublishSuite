@@ -23,7 +23,8 @@ public:
 	static void UploadCallback ( web::http::message_direction::direction direction, utility::size64_t so_far ) {} ;
 	static void UploadCallbackNull ( web::http::message_direction::direction direction, utility::size64_t so_far ) {} ;
 
-	static bool UploadModel ( wchar_t* pszUrl, char* pszCliendId, char* pszUser, char* pszPass, char* pData, int iSize, char* pszName, char* pszDesc ) ;
+	static bool UploadModel ( wchar_t* pszUrl, char* pszCliendId, char* pszUser, char* pszPass, char* pData, int iSize, char* pszName, char* pszDesc, int* piModelId ) ;
+	static bool UploadAd ( wchar_t* pszUrl, char* pszCliendId, char* pszUser, char* pszPass, char* pData, int iSize, char* pszAdUrl, int* piAdId ) ;
 
 	static HWND m_hCallbackWnd ;
 

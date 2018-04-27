@@ -929,7 +929,7 @@ bool CModelServiceWebClient::GetAd ( wchar_t* pszUrl, char* pszClientId, char** 
 	return false ;
 }
 
-bool CModelServiceWebClient::UploadModel ( wchar_t* pszUrl, char* pszClientId, char* pszUser, char* pszPass, char* pData, int iSize, char* pszName, char* pszDesc ) 
+bool CModelServiceWebClient::UploadModel ( wchar_t* pszUrl, char* pszClientId, char* pszUser, char* pszPass, char* pData, int iSize, char* pszName, char* pszDesc, int* piModelId ) 
 {
 	if ( ! pszUrl || ! pData || ! pszUser || ! pszPass || ! pszName || ! pszDesc || ! pszClientId )
 		return false ;
@@ -1036,7 +1036,115 @@ bool CModelServiceWebClient::UploadModel ( wchar_t* pszUrl, char* pszClientId, c
 			return false;
 		}
 		else {
-			wstring str1 = answer [ L"model_id" ].as_string ();
+			if ( piModelId )
+				*piModelId = answer [ L"model_id" ].as_integer() ;
+
+			return true;
+		}
+	}
+
+	return false ;
+}
+
+bool CModelServiceWebClient::UploadAd ( wchar_t* pszUrl, char* pszClientId, char* pszUser, char* pszPass, char* pData, int iSize, char* pszAdUrl, int* piAdId )
+{
+	if ( !pszUrl || !pData || !pszUser || !pszPass || !pszAdUrl || !pszClientId )
+		return false ;
+
+	wchar_t szClientID [ 1000 ] ;
+	int iLen = MultiByteToWideChar ( CP_ACP, 0, pszClientId, strlen ( pszClientId ), szClientID, 1000 ) ;
+	szClientID [ iLen ] = 0 ;
+
+	json::value send ;
+
+	{
+		int iEncSize = Base64EncodeGetRequiredLength ( iSize, 0 ) ;
+
+		char* pszAnsi = new char [ iEncSize + 1 ] ;
+
+		Base64Encode ( (BYTE*)pData, iSize, (LPSTR)pszAnsi, &iEncSize ) ;
+
+		wchar_t* pszUni = new wchar_t [ iEncSize + 1 ] ;
+		int iLen = MultiByteToWideChar ( CP_ACP, 0, pszAnsi, iEncSize, pszUni, iEncSize ) ;
+		pszUni [ iLen ] = 0 ;
+
+		send [ L"model" ] = json::value::string ( pszUni ) ;
+
+		delete ( pszAnsi ) ;
+		delete ( pszUni ) ;
+	}
+
+	{
+		wchar_t* pszUni = new wchar_t [ strlen ( pszUser ) + 1 ] ;
+		int iLen = MultiByteToWideChar ( CP_ACP, 0, pszUser, strlen ( pszUser ), pszUni, strlen ( pszUser ) ) ;
+		pszUni [ strlen ( pszUser ) ] = 0 ;
+
+		send [ L"user" ] = json::value::string ( pszUni ) ;
+		delete ( pszUni ) ;
+	}
+
+	{
+		wchar_t* pszUni = new wchar_t [ strlen ( pszPass ) + 1 ] ;
+		int iLen = MultiByteToWideChar ( CP_ACP, 0, pszPass, strlen ( pszPass ), pszUni, strlen ( pszPass ) ) ;
+		pszUni [ strlen ( pszPass ) ] = 0 ;
+
+		send [ L"pass" ] = json::value::string ( pszUni ) ;
+		delete ( pszUni ) ;
+	}
+
+	{
+		wchar_t* pszUni = new wchar_t [ strlen ( pszAdUrl ) + 1 ] ;
+		int iLen = MultiByteToWideChar ( CP_ACP, 0, pszAdUrl, strlen ( pszAdUrl ), pszUni, strlen ( pszAdUrl ) ) ;
+		pszUni [ strlen ( pszAdUrl ) ] = 0 ;
+
+		send [ L"url" ] = json::value::string ( pszUni ) ;
+		delete ( pszUni ) ;
+	}
+
+	web::uri inuri ( pszUrl ) ;
+
+	uri_builder builder ( inuri ) ;
+
+	builder.append_query ( U ( "client" ), szClientID ) ;
+
+	http_client_config config;
+	config.set_validate_certificates ( false ) ;
+
+	inuri = builder.to_uri () ;
+
+	//MessageBox ( NULL, "0", "", MB_OK ) ;
+
+	http_client client ( inuri, config ) ;
+
+	json::value answer ;
+	status_code http_result ;
+
+	if ( 1 )
+		make_request_post ( client, methods::POST, inuri, send, answer, http_result, &CModelServiceWebClient::UploadCallback ) ;
+
+	//wcout << answer << endl ;
+	wcout << L"HTTP Status Code:" << http_result << endl ;
+
+	//	rbInvalidSessionId = (http_result == status_codes::Unauthorized) ;
+
+	if ( http_result != status_codes::OK ) {
+
+		return false ;
+	}
+	else if ( answer.is_null () ) {
+		return false ;
+	}
+	else if ( !answer.has_field ( L"error_message" ) ) {
+		return false ;
+	}
+	else {
+		//json::value imessage = answer[L"message"];
+		if ( !answer.has_field ( L"ad_id" ) )
+		{
+			return false;
+		}
+		else {
+			wstring str1 = answer [ L"ad_id" ].as_string ();
 
 			return true;
 		}

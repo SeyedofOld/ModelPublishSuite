@@ -93,7 +93,7 @@ void CModelPublishServer::OnGetModel ( json::value& params, json::value& answer,
 
 		wstring strPname = params.at ( L"subsid" ).as_string () ;
 		char szModelId [ 256 ] ;
-		int iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), strPname.length (), szModelId, 256, "", NULL ) ;
+		int iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), (int)strPname.length (), szModelId, 256, "", NULL ) ;
 		szModelId [ iLen ] = 0 ;
 
 // 		char szSessionId [ 256 ] ;
@@ -254,7 +254,7 @@ void CModelPublishServer::OnGetModel ( json::value& params, json::value& answer,
 					string s = pDest ;
 
 					pszModelBase64 = new wchar_t [ iEncLen + 1 ] ;
-					int iLen = MultiByteToWideChar ( CP_ACP, 0, s.c_str (), s.length (), pszModelBase64, iEncLen ) ;
+					int iLen = MultiByteToWideChar ( CP_ACP, 0, s.c_str (), (int)s.length (), pszModelBase64, iEncLen ) ;
 					pszModelBase64 [ iLen ] = 0 ;
 
 					pFile = fopen ( strBase64FileName.c_str (), "wb" ) ;
@@ -346,7 +346,7 @@ void CModelPublishServer::OnGetAd ( json::value& params, json::value& answer, st
 
 		wstring strPname = params.at ( L"subsid" ).as_string () ;
 		char szModelId [ 256 ] ;
-		int iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), strPname.length (), szModelId, 256, "", NULL ) ;
+		int iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), (int)strPname.length (), szModelId, 256, "", NULL ) ;
 		szModelId [ iLen ] = 0 ;
 
 		// 		char szSessionId [ 256 ] ;
@@ -458,7 +458,7 @@ void CModelPublishServer::OnGetAd ( json::value& params, json::value& answer, st
 			}
 
 			wchar_t* pszUrl = new wchar_t [ strUrl.length() + 1 ] ;
-			int iLen = MultiByteToWideChar ( CP_ACP, 0, strUrl.c_str (), strUrl.length (), pszUrl, strUrl.length () + 1 ) ;
+			int iLen = MultiByteToWideChar ( CP_ACP, 0, strUrl.c_str (), (int)strUrl.length (), pszUrl, (int)strUrl.length () + 1 ) ;
 			pszUrl [ iLen ] = 0 ;
 
 			answer [ L"url" ] = json::value::string ( pszUrl ) ;
@@ -468,7 +468,7 @@ void CModelPublishServer::OnGetAd ( json::value& params, json::value& answer, st
 
 			string strFullFilePathName ;
 			strFullFilePathName = m_szServerRootFolder ;
-			strFullFilePathName += MODEL_AD_PATH ;
+			strFullFilePathName += AD_FILE_PATH ;
 			strFullFilePathName += strPathName.c_str () ;
 
 			string strBase64FileName = strFullFilePathName + ".base64" ;
@@ -505,7 +505,7 @@ void CModelPublishServer::OnGetAd ( json::value& params, json::value& answer, st
 					string s = pDest ;
 
 					pszBase64Ad = new wchar_t [ iEncLen + 1 ] ;
-					int iLen = MultiByteToWideChar ( CP_ACP, 0, s.c_str (), s.length (), pszBase64Ad, iEncLen ) ;
+					int iLen = MultiByteToWideChar ( CP_ACP, 0, s.c_str (), (int)s.length (), pszBase64Ad, iEncLen ) ;
 					pszBase64Ad [ iLen ] = 0 ;
 
 					pFile = fopen ( strBase64FileName.c_str (), "wb" ) ;
@@ -597,7 +597,7 @@ void CModelPublishServer::OnGetInfo ( json::value& params, json::value& answer, 
 
 		wstring strPname = params.at ( L"subsid" ).as_string () ;
 		char szModelId [ 256 ] ;
-		int iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), strPname.length (), szModelId, 256, "", NULL ) ;
+		int iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), (int)strPname.length (), szModelId, 256, "", NULL ) ;
 		szModelId [ iLen ] = 0 ;
 
 		// 		char szSessionId [ 256 ] ;
@@ -763,7 +763,7 @@ void CModelPublishServer::OnGetInfo ( json::value& params, json::value& answer, 
 					string s = pDest ;
 
 					pszBase64Hdr = new wchar_t [ iEncLen + 1 ] ;
-					int iLen = MultiByteToWideChar ( CP_ACP, 0, s.c_str (), s.length (), pszBase64Hdr, iEncLen ) ;
+					int iLen = MultiByteToWideChar ( CP_ACP, 0, s.c_str (), (int)s.length (), pszBase64Hdr, iEncLen ) ;
 					pszBase64Hdr [ iLen ] = 0 ;
 
 					if ( pBuf )
@@ -972,6 +972,22 @@ void CModelPublishServer::HandlePost ( http_request& request )
 
 				OnUploadModel ( jsonParams2, answer, http_result ) ;
 			}
+			else if ( strMethod == U ( MODEL_API_UPLOAD_AD ) ) {
+
+				if ( jsonBody.has_field ( L"model" ) )
+					jsonParams2 [ L"ad" ] = jsonBody [ L"ad" ] ;
+
+				if ( jsonBody.has_field ( L"user" ) )
+					jsonParams2 [ L"user" ] = jsonBody [ L"user" ] ;
+
+				if ( jsonBody.has_field ( L"pass" ) )
+					jsonParams2 [ L"pass" ] = jsonBody [ L"pass" ] ;
+
+				if ( jsonBody.has_field ( L"name" ) )
+					jsonParams2 [ L"name" ] = jsonBody [ L"name" ] ;
+
+				OnUploadAd ( jsonParams2, answer, http_result ) ;
+			}
 			else {
 				answer [ L"error_message" ] = json::value::string ( L"Bad method name!" ) ;
 				answer [ L"error_code" ] = json::value::number ( MS_ERROR_UNKNOWN_METHOD ) ;
@@ -1040,12 +1056,12 @@ void CModelPublishServer::OnUploadModel ( json::value& params, json::value& answ
 
 		wstring strPname = params.at ( L"user" ).as_string () ;
 		char szUser [ 256 ] ;
-		int iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), strPname.length (), szUser, 256, "", NULL ) ;
+		int iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), (int)strPname.length (), szUser, 256, "", NULL ) ;
 		szUser [ iLen ] = 0 ;
 
 		strPname = params.at ( L"pass" ).as_string () ;
 		char szPass [ 256 ] ;
-		iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), strPname.length (), szPass, 256, "", NULL ) ;
+		iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), (int)strPname.length (), szPass, 256, "", NULL ) ;
 		szPass [ iLen ] = 0 ;
 
 
@@ -1093,7 +1109,7 @@ void CModelPublishServer::OnUploadModel ( json::value& params, json::value& answ
 			wstring str1 = params.at ( L"model" ).as_string () ;
 
 			char* pszAnsi = new char [ str1.length () + 1 ] ;
-			int iLen = WideCharToMultiByte ( CP_ACP, 0, str1.c_str (), str1.length (), pszAnsi, str1.length (), pszAnsi, NULL );
+			int iLen = WideCharToMultiByte ( CP_ACP, 0, str1.c_str (), (int)str1.length (), pszAnsi, (int)str1.length (), pszAnsi, NULL );
 			pszAnsi [ iLen ] = 0 ;
 
 			char* pData = new char [ iLen + 1 ] ;
@@ -1172,12 +1188,12 @@ void CModelPublishServer::OnUploadModel ( json::value& params, json::value& answ
 
 		wstring strPname = params.at ( L"name" ).as_string () ;
 		char szModelName [ 256 ] ;
-		int iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), strPname.length (), szModelName, 256, "", NULL ) ;
+		int iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), (int)strPname.length (), szModelName, 256, "", NULL ) ;
 		szModelName [ iLen ] = 0 ;
 
 		strPname = params.at ( L"desc" ).as_string () ;
 		char szModelDesc [ 256 ] ;
-		iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), strPname.length (), szModelDesc, 256, "", NULL ) ;
+		iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), (int)strPname.length (), szModelDesc, 256, "", NULL ) ;
 		szModelDesc [ iLen ] = 0 ;
 
 		// Make query string
@@ -1217,6 +1233,235 @@ void CModelPublishServer::OnUploadModel ( json::value& params, json::value& answ
 					answer [ L"error_message" ] = json::value::string ( L"Success" ) ;
 					answer [ L"error_code" ] = json::value::number ( MS_ERROR_OK ) ;
 					answer [ L"model_id" ] = json::value::number ( iModelId ) ;
+					http_result = status_codes::OK ;
+				}
+			}
+
+			delete res;
+		}
+
+		delete stmt;
+	}
+
+	delete con ;
+}
+
+void CModelPublishServer::OnUploadAd ( json::value& params, json::value& answer, status_code& http_result )
+{
+	// 	sql::Driver *driver;
+	sql::Connection *con;
+
+	if ( !driver ) {
+		answer [ L"error_message" ] = json::value::string ( L"Database error!" ) ;
+		answer [ L"error_code" ] = json::value::number ( MS_ERROR_DB ) ;
+		http_result = status_codes::InternalError ;
+	}
+	// 
+	// 
+	// 	try {
+	// 		// Create a connection
+	// 		driver = get_driver_instance();
+	con = driver->connect ( MYSQL_SERVER, MYSQL_USER, MYSQL_PASS ) ;
+	// 
+	// 		// Connect to the MySQL test database
+	con->setSchema ( SERVICE_DATABASE_NAME ) ;
+	// 	}
+	// 	catch ( sql::SQLException &e ) {
+	// 		cout << e.what() << endl ;
+	// 		answer [ L"message" ] = json::value::string(L"Database connectivity error!") ;
+	// 		http_result = status_codes::InternalError ;
+	// 		return ;
+	// 	}
+	if ( !con ) {
+		answer [ L"error_message" ] = json::value::string ( L"Database connection error!" ) ;
+		answer [ L"error_code" ] = json::value::number ( MS_ERROR_DB ) ;
+		http_result = status_codes::InternalError ;
+	}
+
+	int iUserId = -1 ;
+	{ // Fetch user id from database
+		sql::Statement *stmt;
+		sql::ResultSet *res;
+
+		wstring strPname = params.at ( L"user" ).as_string () ;
+		char szUser [ 256 ] ;
+		int iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), (int)strPname.length (), szUser, 256, "", NULL ) ;
+		szUser [ iLen ] = 0 ;
+
+		strPname = params.at ( L"pass" ).as_string () ;
+		char szPass [ 256 ] ;
+		iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), (int)strPname.length (), szPass, 256, "", NULL ) ;
+		szPass [ iLen ] = 0 ;
+
+
+		// Make query string
+		char szQuery [ 5000 ] ;
+
+		sprintf_s ( szQuery, 5000, "SELECT * FROM tbl_owner_desc WHERE Username='%s' AND Password='%s'", szUser, szPass ) ;
+		cout << szQuery << endl ;
+
+		// Run query
+		stmt = con->createStatement () ;
+		res = stmt->executeQuery ( szQuery ) ;
+
+		if ( res->rowsCount () == 0 ) {
+			answer [ L"error_message" ] = json::value::string ( L"Invalid username or password!" ) ;
+			answer [ L"error_code" ] = json::value::number ( MS_ERROR_INVALID_USER_PASS ) ;
+			http_result = status_codes::Forbidden ;
+		}
+
+		while ( res->next () ) {
+			iUserId = res->getInt ( "id" ) ;
+			//		cout << "\t... MySQL replies: ";
+			// Access column data by alias or column name 
+			//cout << res->getString("_message") << endl;
+			//cout << "\t... MySQL says it again: ";
+			// Access column data by numeric offset, 1 is the first column 
+			//cout << res->getString(1) << endl;
+		}
+		delete res;
+		delete stmt;
+	}
+
+	int iFileId = -1 ;
+
+	if ( iUserId != -1 ) { // Insert model into database
+
+
+		sql::Statement *stmt;
+		sql::ResultSet *res;
+
+		string strFullFilePathName ;
+		int iDataSize = 0 ;
+
+		{
+			wstring str1 = params.at ( L"ad" ).as_string () ;
+
+			char* pszAnsi = new char [ str1.length () + 1 ] ;
+			int iLen = WideCharToMultiByte ( CP_ACP, 0, str1.c_str (), (int)str1.length (), pszAnsi, (int)str1.length (), pszAnsi, NULL );
+			pszAnsi [ iLen ] = 0 ;
+
+			char* pData = new char [ iLen + 1 ] ;
+
+			int iDecSize = iLen ;
+			Base64Decode ( pszAnsi, iLen, (BYTE*)pData, &iDecSize ) ;
+
+			iDataSize = iDecSize ;
+
+			UUID uuid ;
+			UuidCreate ( &uuid );
+			char *uuid_str;
+			UuidToStringA ( &uuid, (RPC_CSTR*)&uuid_str );
+
+			strFullFilePathName = uuid_str ;
+			strFullFilePathName += ".3dscan" ;
+
+			string strFile = m_szServerRootFolder + (string)AD_FILE_PATH + strFullFilePathName ;
+
+			RpcStringFreeA ( (RPC_CSTR*)&uuid_str );
+
+			FILE* pFile = fopen ( strFile.c_str (), "wb" ) ;
+			fwrite ( pData, iDecSize, 1, pFile ) ;
+			fclose ( pFile ) ;
+
+			cout << strFullFilePathName << endl ;
+
+			delete pData ;
+		}
+
+		// Make query string
+		char szQuery [ 5000 ] ;
+
+		string strBase64FileName = strFullFilePathName + ".base64" ;
+
+		sprintf_s ( szQuery, 5000, "INSERT INTO tbl_file_address (FilePathName, Base64FilePathName, Size) VALUES('%s','%s',%d);", strFullFilePathName.c_str (), strBase64FileName.c_str (), iDataSize ) ;
+		cout << szQuery << endl ;
+
+		// Run query
+		stmt = con->createStatement () ;
+		int iInsert = stmt->executeUpdate ( szQuery ) ;
+
+		if ( iInsert == 0 ) {
+			answer [ L"error_message" ] = json::value::string ( L"Subscription id not found!" ) ;
+			answer [ L"error_code" ] = json::value::number ( MS_ERROR_SUBSCRIPTION_NOT_FOUND ) ;
+			http_result = status_codes::NotFound ;
+		}
+
+		delete stmt;
+
+		sprintf_s ( szQuery, 5000, "SELECT LAST_INSERT_ID() AS id" ) ;
+		cout << szQuery << endl ;
+
+		stmt = con->createStatement () ;
+		res = stmt->executeQuery ( szQuery ) ;
+
+		if ( res->rowsCount () == 0 ) {
+			answer [ L"error_message" ] = json::value::string ( L"Subscription id not found!" ) ;
+			answer [ L"error_code" ] = json::value::number ( MS_ERROR_SUBSCRIPTION_NOT_FOUND ) ;
+			http_result = status_codes::NotFound ;
+		}
+
+		while ( res->next () ) {
+			iFileId = res->getInt ( "id" ) ;
+		}
+
+		delete stmt;
+		delete res;
+	}
+
+	int iAdId = -1 ;
+	if ( iFileId != -1 ) { // 
+
+		sql::Statement *stmt ;
+		sql::ResultSet *res ;
+
+		wstring strPname = params.at ( L"name" ).as_string () ;
+		char szModelName [ 256 ] ;
+		int iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), (int)strPname.length (), szModelName, 256, "", NULL ) ;
+		szModelName [ iLen ] = 0 ;
+
+		strPname = params.at ( L"desc" ).as_string () ;
+		char szModelDesc [ 256 ] ;
+		iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), (int)strPname.length (), szModelDesc, 256, "", NULL ) ;
+		szModelDesc [ iLen ] = 0 ;
+
+		// Make query string
+		char szQuery [ 5000 ] ;
+
+		sprintf_s ( szQuery, 5000, "INSERT INTO tbl_model_desc (PCFileId, MobileFileId, ModelName, ModelDesc) VALUES(%d, %d, '%s', '%s')", iFileId, iFileId, szModelName, szModelDesc ) ;
+		cout << szQuery << endl ;
+
+		// Run query
+		stmt = con->createStatement () ;
+		int iInsert = stmt->executeUpdate ( szQuery ) ;
+
+		if ( iInsert == 0 ) {
+			answer [ L"error_message" ] = json::value::string ( L"Model id not found!" ) ;
+			answer [ L"error_code" ] = json::value::number ( MS_ERROR_MODEL_NOT_FOUND ) ;
+			http_result = status_codes::NotFound ;
+		}
+		else {
+			delete stmt;
+
+			sprintf_s ( szQuery, 5000, "SELECT LAST_INSERT_ID() AS id" ) ;
+			cout << szQuery << endl ;
+
+			stmt = con->createStatement () ;
+			res = stmt->executeQuery ( szQuery ) ;
+
+			if ( res->rowsCount () == 0 ) {
+				answer [ L"error_message" ] = json::value::string ( L"Model id not found!" ) ;
+				answer [ L"error_code" ] = json::value::number ( MS_ERROR_MODEL_NOT_FOUND ) ;
+				http_result = status_codes::NotFound ;
+			}
+			else {
+				while ( res->next () ) {
+					iAdId = res->getInt ( "id" ) ;
+				}
+				if ( iAdId != -1 ) { // Success
+					answer [ L"error_message" ] = json::value::string ( L"Success" ) ;
+					answer [ L"error_code" ] = json::value::number ( MS_ERROR_OK ) ;
+					answer [ L"model_id" ] = json::value::number ( iAdId ) ;
 					http_result = status_codes::OK ;
 				}
 			}
