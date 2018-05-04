@@ -18,6 +18,7 @@
 #define MODEL_API_GET_AD			"getad"
 #define MODEL_API_UPLOAD_MODEL		"upload_model"
 #define MODEL_API_UPLOAD_AD			"upload_ad"
+#define MODEL_API_CREATE_SUBSCRIPTION	"create_subs"
 
 #define MODEL_CLIENT_ID_PCWIN		"pcwin"
 

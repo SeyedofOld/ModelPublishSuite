@@ -25,6 +25,7 @@ public:
 
 	static bool UploadModel ( wchar_t* pszUrl, char* pszCliendId, char* pszUser, char* pszPass, char* pData, int iSize, char* pszName, char* pszDesc, int* piModelId ) ;
 	static bool UploadAd ( wchar_t* pszUrl, char* pszCliendId, char* pszUser, char* pszPass, char* pData, int iSize, char* pszAdUrl, int* piAdId ) ;
+	static bool CreateSubscription ( wchar_t* pszUrl, char* pszClientId, char* pszUser, char* pszPass, char* pszOwner, int iModelId, int iAdId, char* pszSubsId ) ;
 
 	static HWND m_hCallbackWnd ;
 

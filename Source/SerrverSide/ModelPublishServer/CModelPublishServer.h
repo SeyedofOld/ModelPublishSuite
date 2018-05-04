@@ -28,6 +28,8 @@ public:
 	static void OnGetModel ( json::value& params, json::value& answer, status_code& http_result ) ;
 	static void OnGetAd ( json::value& params, json::value& answer, status_code& http_result ) ;
 	static void OnGetInfo ( json::value& params, json::value& answer, status_code& http_result ) ;
+	
+	static void OnCreateSubscription ( json::value& params, json::value& answer, status_code& http_result ) ;
 
 	static void OnUploadModel ( json::value& params, json::value& answer, status_code& http_result ) ;
 	static void OnUploadAd ( json::value& params, json::value& answer, status_code& http_result ) ;

@@ -40,4 +40,6 @@ public:
 	void GetDlgItemAsChar ( UINT id, char* pszValue ) ;
 
 	afx_msg void OnBnClickedBtnModelFile ();
+	afx_msg void OnBnClickedBtnCreateSubs ();
+	afx_msg void OnBnClickedBtnAdFile ();
 };

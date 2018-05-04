@@ -819,7 +819,6 @@ void CModelPublishServer::OnGetInfo ( json::value& params, json::value& answer, 
 	delete con ;
 }
 
-
 void CModelPublishServer::SetServerRootFolder ( char* pszRoot )
 {
 	if ( pszRoot )
@@ -974,7 +973,7 @@ void CModelPublishServer::HandlePost ( http_request& request )
 			}
 			else if ( strMethod == U ( MODEL_API_UPLOAD_AD ) ) {
 
-				if ( jsonBody.has_field ( L"model" ) )
+				if ( jsonBody.has_field ( L"ad" ) )
 					jsonParams2 [ L"ad" ] = jsonBody [ L"ad" ] ;
 
 				if ( jsonBody.has_field ( L"user" ) )
@@ -983,10 +982,29 @@ void CModelPublishServer::HandlePost ( http_request& request )
 				if ( jsonBody.has_field ( L"pass" ) )
 					jsonParams2 [ L"pass" ] = jsonBody [ L"pass" ] ;
 
-				if ( jsonBody.has_field ( L"name" ) )
-					jsonParams2 [ L"name" ] = jsonBody [ L"name" ] ;
+				if ( jsonBody.has_field ( L"url" ) )
+					jsonParams2 [ L"url" ] = jsonBody [ L"url" ] ;
 
 				OnUploadAd ( jsonParams2, answer, http_result ) ;
+			}
+			else if ( strMethod == U ( MODEL_API_CREATE_SUBSCRIPTION ) ) {
+
+				if ( jsonBody.has_field ( L"model_id" ) )
+					jsonParams2 [ L"model_id" ] = jsonBody [ L"model_id" ] ;
+
+				if ( jsonBody.has_field ( L"ad_id" ) )
+					jsonParams2 [ L"ad_id" ] = jsonBody [ L"ad_id" ] ;
+
+				if ( jsonBody.has_field ( L"owner" ) )
+					jsonParams2 [ L"owner" ] = jsonBody [ L"owner" ] ;
+
+				if ( jsonBody.has_field ( L"user" ) )
+					jsonParams2 [ L"user" ] = jsonBody [ L"user" ] ;
+
+				if ( jsonBody.has_field ( L"pass" ) )
+					jsonParams2 [ L"pass" ] = jsonBody [ L"pass" ] ;
+
+				OnCreateSubscription ( jsonParams2, answer, http_result ) ;
 			}
 			else {
 				answer [ L"error_message" ] = json::value::string ( L"Bad method name!" ) ;
@@ -1278,6 +1296,13 @@ void CModelPublishServer::OnUploadAd ( json::value& params, json::value& answer,
 		http_result = status_codes::InternalError ;
 	}
 
+	char szUrl [ 256 ] = { 0 } ;
+	{
+		wstring strPname = params.at ( L"url" ).as_string () ;
+		int iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), (int)strPname.length (), szUrl, 256, "", NULL ) ;
+		szUrl [ iLen ] = 0 ;
+	}
+
 	int iUserId = -1 ;
 	{ // Fetch user id from database
 		sql::Statement *stmt;
@@ -1323,7 +1348,7 @@ void CModelPublishServer::OnUploadAd ( json::value& params, json::value& answer,
 		delete stmt;
 	}
 
-	int iFileId = -1 ;
+//	int iFileId = -1 ;
 
 	if ( iUserId != -1 ) { // Insert model into database
 
@@ -1354,7 +1379,7 @@ void CModelPublishServer::OnUploadAd ( json::value& params, json::value& answer,
 			UuidToStringA ( &uuid, (RPC_CSTR*)&uuid_str );
 
 			strFullFilePathName = uuid_str ;
-			strFullFilePathName += ".3dscan" ;
+			strFullFilePathName += ".png" ;
 
 			string strFile = m_szServerRootFolder + (string)AD_FILE_PATH + strFullFilePathName ;
 
@@ -1374,7 +1399,7 @@ void CModelPublishServer::OnUploadAd ( json::value& params, json::value& answer,
 
 		string strBase64FileName = strFullFilePathName + ".base64" ;
 
-		sprintf_s ( szQuery, 5000, "INSERT INTO tbl_file_address (FilePathName, Base64FilePathName, Size) VALUES('%s','%s',%d);", strFullFilePathName.c_str (), strBase64FileName.c_str (), iDataSize ) ;
+		sprintf_s ( szQuery, 5000, "INSERT INTO tbl_advertisement (FilePathName, OwnerId, AdUrl) VALUES('%s',%d,'%s');", strFullFilePathName.c_str (), iUserId, szUrl ) ;
 		cout << szQuery << endl ;
 
 		// Run query
@@ -1401,34 +1426,247 @@ void CModelPublishServer::OnUploadAd ( json::value& params, json::value& answer,
 			http_result = status_codes::NotFound ;
 		}
 
+		int iAdId = -1 ;
 		while ( res->next () ) {
-			iFileId = res->getInt ( "id" ) ;
+			iAdId = res->getInt ( "id" ) ;
+		}
+		if ( iAdId != -1 ) { // Success
+			answer [ L"error_message" ] = json::value::string ( L"Success" ) ;
+			answer [ L"error_code" ] = json::value::number ( MS_ERROR_OK ) ;
+			answer [ L"ad_id" ] = json::value::number ( iAdId ) ;
+			http_result = status_codes::OK ;
 		}
 
 		delete stmt;
 		delete res;
 	}
 
-	int iAdId = -1 ;
-	if ( iFileId != -1 ) { // 
+	delete con ;
+}
 
-		sql::Statement *stmt ;
-		sql::ResultSet *res ;
+void CModelPublishServer::OnCreateSubscription ( json::value& params, json::value& answer, status_code& http_result )
+{
+	// 	sql::Driver *driver;
+	sql::Connection *con;
 
-		wstring strPname = params.at ( L"name" ).as_string () ;
-		char szModelName [ 256 ] ;
-		int iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), (int)strPname.length (), szModelName, 256, "", NULL ) ;
-		szModelName [ iLen ] = 0 ;
+	if ( !driver ) {
+		answer [ L"error_message" ] = json::value::string ( L"Database error!" ) ;
+		answer [ L"error_code" ] = json::value::number ( MS_ERROR_DB ) ;
+		http_result = status_codes::InternalError ;
+	}
+	// 
+	// 
+	// 	try {
+	// 		// Create a connection
+	// 		driver = get_driver_instance();
+	con = driver->connect ( MYSQL_SERVER, MYSQL_USER, MYSQL_PASS ) ;
+	// 
+	// 		// Connect to the MySQL test database
+	con->setSchema ( SERVICE_DATABASE_NAME ) ;
+	// 	}
+	// 	catch ( sql::SQLException &e ) {
+	// 		cout << e.what() << endl ;
+	// 		answer [ L"message" ] = json::value::string(L"Database connectivity error!") ;
+	// 		http_result = status_codes::InternalError ;
+	// 		return ;
+	// 	}
+	if ( !con ) {
+		answer [ L"error_message" ] = json::value::string ( L"Database connection error!" ) ;
+		answer [ L"error_code" ] = json::value::number ( MS_ERROR_DB ) ;
+		http_result = status_codes::InternalError ;
+	}
 
-		strPname = params.at ( L"desc" ).as_string () ;
-		char szModelDesc [ 256 ] ;
-		iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), (int)strPname.length (), szModelDesc, 256, "", NULL ) ;
-		szModelDesc [ iLen ] = 0 ;
+	int iUserId = -1 ;
+	{ // Fetch user id from database
+		sql::Statement *stmt;
+		sql::ResultSet *res;
+
+		wstring strPname = params.at ( L"user" ).as_string () ;
+		char szUser [ 256 ] ;
+		int iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), (int)strPname.length (), szUser, 256, "", NULL ) ;
+		szUser [ iLen ] = 0 ;
+
+		strPname = params.at ( L"pass" ).as_string () ;
+		char szPass [ 256 ] ;
+		iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), (int)strPname.length (), szPass, 256, "", NULL ) ;
+		szPass [ iLen ] = 0 ;
+
 
 		// Make query string
 		char szQuery [ 5000 ] ;
 
-		sprintf_s ( szQuery, 5000, "INSERT INTO tbl_model_desc (PCFileId, MobileFileId, ModelName, ModelDesc) VALUES(%d, %d, '%s', '%s')", iFileId, iFileId, szModelName, szModelDesc ) ;
+		sprintf_s ( szQuery, 5000, "SELECT * FROM tbl_owner_desc WHERE Username='%s' AND Password='%s'", szUser, szPass ) ;
+		cout << szQuery << endl ;
+
+		// Run query
+		stmt = con->createStatement () ;
+		res = stmt->executeQuery ( szQuery ) ;
+
+		if ( res->rowsCount () == 0 ) {
+			answer [ L"error_message" ] = json::value::string ( L"Invalid username or password!" ) ;
+			answer [ L"error_code" ] = json::value::number ( MS_ERROR_INVALID_USER_PASS ) ;
+			http_result = status_codes::Forbidden ;
+		}
+
+		while ( res->next () ) {
+			iUserId = res->getInt ( "id" ) ;
+			//		cout << "\t... MySQL replies: ";
+			// Access column data by alias or column name 
+			//cout << res->getString("_message") << endl;
+			//cout << "\t... MySQL says it again: ";
+			// Access column data by numeric offset, 1 is the first column 
+			//cout << res->getString(1) << endl;
+		}
+		delete res;
+		delete stmt;
+	}
+
+	int iOwnerId = -1 ;
+
+	if ( iUserId != -1 ) { // Fetch owner id from database
+		sql::Statement *stmt;
+		sql::ResultSet *res;
+
+		wstring strPname = params.at ( L"owner" ).as_string () ;
+		char szUser [ 256 ] ;
+		int iLen = WideCharToMultiByte ( CP_ACP, 0, strPname.c_str (), (int)strPname.length (), szUser, 256, "", NULL ) ;
+		szUser [ iLen ] = 0 ;
+
+		// Make query string
+		char szQuery [ 5000 ] ;
+
+		sprintf_s ( szQuery, 5000, "SELECT * FROM tbl_owner_desc WHERE Username='%s'", szUser ) ;
+		cout << szQuery << endl ;
+
+		// Run query
+		stmt = con->createStatement () ;
+		res = stmt->executeQuery ( szQuery ) ;
+
+		if ( res->rowsCount () == 0 ) {
+			answer [ L"error_message" ] = json::value::string ( L"Invalid username or password!" ) ;
+			answer [ L"error_code" ] = json::value::number ( MS_ERROR_INVALID_USER_PASS ) ;
+			http_result = status_codes::Forbidden ;
+		}
+
+		while ( res->next () ) {
+			iOwnerId = res->getInt ( "id" ) ;
+			//		cout << "\t... MySQL replies: ";
+			// Access column data by alias or column name 
+			//cout << res->getString("_message") << endl;
+			//cout << "\t... MySQL says it again: ";
+			// Access column data by numeric offset, 1 is the first column 
+			//cout << res->getString(1) << endl;
+		}
+		delete res;
+		delete stmt;
+	}
+
+	bool bModelExists = false ;
+
+	int iModelId = params.at ( L"model_id" ).as_integer () ;
+
+	if ( iOwnerId != -1 ) { // Insert model into database
+
+		sql::Statement *stmt;
+		sql::ResultSet *res;
+
+		// Make query string
+		char szQuery [ 5000 ] ;
+
+		sprintf_s ( szQuery, 5000, "SELECT * FROM tbl_model_desc WHERE id='%d'", iModelId ) ;
+		cout << szQuery << endl ;
+
+		// Run query
+		stmt = con->createStatement () ;
+		res = stmt->executeQuery ( szQuery ) ;
+
+		if ( res->rowsCount () == 0 ) {
+			answer [ L"error_message" ] = json::value::string ( L"Invalid username or password!" ) ;
+			answer [ L"error_code" ] = json::value::number ( MS_ERROR_INVALID_USER_PASS ) ;
+			http_result = status_codes::Forbidden ;
+		}
+		else {
+			bModelExists = true ;
+		}
+
+		delete res;
+		delete stmt;
+	}
+
+	bool bAdExists = false ;
+
+	int iAdId = params.at ( L"ad_id" ).as_integer () ;
+
+	if ( iOwnerId != -1 ) { // Insert model into database
+
+		sql::Statement *stmt;
+		sql::ResultSet *res;
+
+
+		// Make query string
+		char szQuery [ 5000 ] ;
+
+		sprintf_s ( szQuery, 5000, "SELECT * FROM tbl_advertisement WHERE id='%d'", iAdId ) ;
+		cout << szQuery << endl ;
+
+		// Run query
+		stmt = con->createStatement () ;
+		res = stmt->executeQuery ( szQuery ) ;
+
+		if ( res->rowsCount () == 0 ) {
+			answer [ L"error_message" ] = json::value::string ( L"Invalid username or password!" ) ;
+			answer [ L"error_code" ] = json::value::number ( MS_ERROR_INVALID_USER_PASS ) ;
+			http_result = status_codes::Forbidden ;
+			if ( iAdId == -1 )
+				bAdExists = true ;
+		}
+		else {
+			bAdExists = true ;
+		}
+
+		delete res;
+		delete stmt;
+	}
+
+	if ( bAdExists && bModelExists ) {
+
+		sql::Statement *stmt ;
+		sql::ResultSet *res ;
+
+		char szHash [ 9 ] = { 0 } ;
+		memset ( szHash, 0, 8 ) ;
+
+		srand ( GetTickCount () ) ;
+
+		while ( true ) {
+			for ( int i = 0 ; i < 8 ; i++ ) {
+				szHash [ i ] = rand () % 52 ;
+				if ( szHash [ i ] < 26 )
+					szHash [ i ] += 'A' ;
+				else
+					szHash [ i ] += 'a' - 26 ;
+			}
+
+			char szQuery [ 5000 ] ;
+			sprintf_s ( szQuery, 5000, "SELECT * FROM tbl_subscription WHERE HashId='%s'", szHash ) ;
+
+			stmt = con->createStatement () ;
+			res = stmt->executeQuery ( szQuery ) ;
+			if ( res->rowsCount () == 0 ) {
+				delete res ;
+				delete stmt ;
+
+				break ;
+			}
+			else { 
+				delete res ;
+				delete stmt ;
+			}
+		}
+
+		// Make query string
+		char szQuery [ 5000 ] ;
+		sprintf_s ( szQuery, 5000, "INSERT INTO tbl_subscription (OwnerId, ModelId, AdId, HashId) VALUES(%d, %d, '%d', '%s')", iOwnerId, iModelId, iAdId, szHash ) ;
 		cout << szQuery << endl ;
 
 		// Run query
@@ -1449,6 +1687,8 @@ void CModelPublishServer::OnUploadAd ( json::value& params, json::value& answer,
 			stmt = con->createStatement () ;
 			res = stmt->executeQuery ( szQuery ) ;
 
+			int iSubsId = -1 ;
+
 			if ( res->rowsCount () == 0 ) {
 				answer [ L"error_message" ] = json::value::string ( L"Model id not found!" ) ;
 				answer [ L"error_code" ] = json::value::number ( MS_ERROR_MODEL_NOT_FOUND ) ;
@@ -1456,12 +1696,17 @@ void CModelPublishServer::OnUploadAd ( json::value& params, json::value& answer,
 			}
 			else {
 				while ( res->next () ) {
-					iAdId = res->getInt ( "id" ) ;
+					iSubsId = res->getInt ( "id" ) ;
 				}
-				if ( iAdId != -1 ) { // Success
+				if ( iSubsId != -1 ) { // Success
 					answer [ L"error_message" ] = json::value::string ( L"Success" ) ;
 					answer [ L"error_code" ] = json::value::number ( MS_ERROR_OK ) ;
-					answer [ L"model_id" ] = json::value::number ( iAdId ) ;
+
+					wchar_t wszHash [ 256 ] ;
+					int iLen = MultiByteToWideChar ( CP_ACP, 0, szHash, strlen ( szHash ), wszHash, 256 ) ;
+					wszHash [ iLen ] = 0 ;
+
+					answer [ L"subscription_id" ] = json::value::string ( wszHash ) ;
 					http_result = status_codes::OK ;
 				}
 			}

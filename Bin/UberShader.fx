@@ -123,10 +123,10 @@ float4 ps_main ( PS_INPUT_STRUCT psIn ) : COLOR0
 		fNDotL = max ( dot ( -g_vSunLightDir.xyz, psIn.f3Normal ), 0.0f ) ;
 	}
 
-	float4 f4LightFactor = fNDotL * g_f4SunLightDiffuse ;
-	float4 f4AmbientFactor = g_f4SunLightAmbient * g_f4AmbientColor ;
+	//float4 f4LightFactor = fNDotL * g_f4SunLightDiffuse ;
+	//float4 f4AmbientFactor = g_f4SunLightAmbient * g_f4AmbientColor ;
 
-	float4 f4DiffuseLit = f4Albedo * ( f4LightFactor + f4AmbientFactor ) ;
+	float4 f4DiffuseLit = f4Albedo ;// *( f4LightFactor + f4AmbientFactor ) ;
 
 	float4 f4Result = f4DiffuseLit ;
 
