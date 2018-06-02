@@ -91,12 +91,13 @@ BOOL C3DGfx::Initialize( HWND hWnd , DWORD dwWidth , DWORD dwHeight , D3DFORMAT 
 		return FALSE ;
 	}
 
-	/*hr = D3DXCreateLine ( m_pd3dDevice , &m_pd3dxLine ) ;
+	hr = D3DXCreateLine ( m_pd3dDevice , &m_pd3dxLine ) ;
 	if ( FAILED ( hr ) ) {
 		CleanUp ( ) ;
 		return FALSE ;
 	}
 
+	/*
 	//hr = D3DXCreateFont(m_pd3dDevice, 20, 0, 0, 1, FALSE, CP_ACP, 0, 0, 0, L"Consolas", &m_pd3dxFont);
 	hr = D3DXCreateFont(m_pd3dDevice, 20, 0, 0, 1, FALSE, CP_ACP, 0, 0, 0, L"Consolas", &m_pd3dxFont);
 	if ( FAILED ( hr ) ) {

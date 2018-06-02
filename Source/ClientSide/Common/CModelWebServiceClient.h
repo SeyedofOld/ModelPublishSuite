@@ -17,7 +17,7 @@ public:
 
 	static bool GetModel ( wchar_t* pszUrl, char* pszClientId, char** ppData, int* piSize, int iInstanceId = 0 ) ;
 	static bool GetModelInfo ( wchar_t* pszUrl, char* pszClientId, char** ppData, int* piSize, int* piFileSize, int iInstanceId = 0 ) ;
-	static bool GetAd ( wchar_t* pszUrl, char* pszClientId, char** ppData, int& riSize, std::string& strUrl, int iInstanceId = 0 ) ;
+	static bool GetAd ( wchar_t* pszUrl, char* pszClientId, char** ppData, int& riSize, std::wstring& strUrl, int iInstanceId = 0 ) ;
 	static void ProgressCallback ( web::http::message_direction::direction direction, utility::size64_t so_far ) ;
 	static void ProgressCallbackNull ( web::http::message_direction::direction direction, utility::size64_t so_far ) {} ;
 	static void UploadCallback ( web::http::message_direction::direction direction, utility::size64_t so_far ) {} ;

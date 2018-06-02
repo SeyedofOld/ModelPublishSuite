@@ -165,6 +165,7 @@ technique UberTechnique
 		SrcBlend		= SrcAlpha ;
 		DestBlend		= InvSrcAlpha ;
 		CullMode		= None ;
+		//FillMode = WireFrame ;
 	}
 }
 

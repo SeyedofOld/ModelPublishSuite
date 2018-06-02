@@ -157,7 +157,7 @@ bool CModelCache::GetEntry ( int iEntry, CACHE_ENTRY& rEntry )
 	return true ;
 }
 
-bool CModelCache::AddModelToCache ( std::wstring& strSubsid, void* pModelFileData, int iModelFileSize, void* pAdFileData, int iAdFileSize, void* pThumbFileData, int iThumbFileSize )
+bool CModelCache::AddModelToCache ( std::wstring& strSubsid, void* pModelFileData, int iModelFileSize, void* pAdFileData, int iAdFileSize, std::wstring& strAdUrl, void* pThumbFileData, int iThumbFileSize )
 {
 	if ( m_hCacheFile == INVALID_HANDLE_VALUE )
 		return false ;
@@ -198,6 +198,7 @@ bool CModelCache::AddModelToCache ( std::wstring& strSubsid, void* pModelFileDat
 	wcscpy ( entry.szModelFile, szModelFile ) ;
 	wcscpy ( entry.szAdFile, szAdFile ) ;
 	wcscpy ( entry.szThumbFile, szThumbFile ) ;
+	wcscpy ( entry.szAdUrl, strAdUrl.c_str() ) ;
 	GetLocalTime ( &entry.DateTime ) ;
 
 	m_CacheTable.push_back ( entry ) ;
@@ -247,7 +248,7 @@ bool CModelCache::LoadModel ( std::wstring& strSubsid, void** ppModelFileData, i
 	return false ;
 }
 
-bool CModelCache::AddAdToCache ( std::wstring& strSubsid, void* pAdFileData, int iAdFileSize )
+bool CModelCache::AddAdToCache ( std::wstring& strSubsid, void* pAdFileData, int iAdFileSize, std::wstring& strAdUrl )
 {
 	if ( m_hCacheFile == INVALID_HANDLE_VALUE )
 		return false ;
@@ -265,6 +266,12 @@ bool CModelCache::AddAdToCache ( std::wstring& strSubsid, void* pAdFileData, int
 
 	if ( ! SaveMemToFile ( entry.szAdFile, pAdFileData, iAdFileSize ) )
 		return false ;
+
+	wcscpy ( entry.szAdUrl, strAdUrl.c_str() ) ;
+
+	DWORD dwBytesWritten ;
+	SetFilePointer ( m_hCacheFile, 0, NULL, FILE_END ) ;
+	WriteFile ( m_hCacheFile, &entry, sizeof ( CACHE_ENTRY ), &dwBytesWritten, NULL ) ;
 
 	return true ;
 }

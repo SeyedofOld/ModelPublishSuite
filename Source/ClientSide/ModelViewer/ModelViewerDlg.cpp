@@ -20,6 +20,10 @@
 #include <functional>
 #include "CustomURLProtocolApp.h"
 
+#include <gdiplus.h>
+
+using namespace Gdiplus ;
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -55,7 +59,11 @@ CModelViewerDlg::CModelViewerDlg(CWnd* pParent /*=NULL*/)
 	m_bHasFilename = false ;
 	m_pd3dModel1 = NULL ;
 	m_pModel1 = NULL ;
-	D3DXMatrixIdentity ( &m_matWorld ) ;
+	m_pd3dModel2 = NULL ;
+	m_pModel2 = NULL ;
+
+	D3DXMatrixIdentity ( &m_matWorld1 ) ;
+	D3DXMatrixIdentity ( &m_matWorld2 ) ;
 	m_fYaw = 0.0f ;
 	m_fPitch = 0.0f ;
 	m_ptPos = vector3 ( 0, 0, 0 ) ;
@@ -68,22 +76,29 @@ CModelViewerDlg::CModelViewerDlg(CWnd* pParent /*=NULL*/)
 
 	m_pAdTex = NULL ;
 
-	m_bDownloading = false ;
-
-	m_bShowRecent = false ;
 	m_pThumbTex = NULL ;
+
 
 	m_ppThumbnails = NULL ;
 	m_iTextureCount = 0 ;
 	m_pstrModelFiles = NULL ;
+	m_pstrAdFiles = NULL ;
 	m_iThumbCount = 0 ;
 
 	m_bInitialized = false ;
+	m_bShowRecentLeft = false ;
+	m_bShowRecentRight = false ;
+	m_bShowToolbar = false ;
+	m_bDualView = false ;
+	m_bDownloading = false ;
 
 	m_PointerPass [ 0 ].pData = NULL ;
 	m_PointerPass [ 1 ].pData = NULL ;
 	m_PointerPass [ 2 ].pData = NULL ;
 
+
+	m_pCheckerVB = NULL ;
+	m_pCheckerIB = NULL ;
 // 	CustomURLProtocol prot ;
 // 	prot.setProtocolName ( L"3dscan2" ) ;
 // 	prot.setAppPath ( L"ModelViewer2.exe" ) ;
@@ -112,6 +127,12 @@ BOOL CModelViewerDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 	g_pDlg = this ;
+
+	GdiplusStartupInput gdiplusStartupInput;
+	ULONG_PTR gdiplusToken;
+	GdiplusStartup ( &gdiplusToken, &gdiplusStartupInput, NULL );
+
+	//GdiplusShutdown ( gdiplusToken );
 
 	// Set the icon for this dialog.  The framework does this automatically
 	//  when the application's main window is not a dialog
@@ -142,6 +163,7 @@ BOOL CModelViewerDlg::OnInitDialog()
 		NULL ) ;
 
 	D3DXCreateTextureFromFile ( C3DGfx::GetInstance ()->GetDevice (), "thumb.png", &m_pThumbTex ) ;
+	D3DXCreateTextureFromFile ( C3DGfx::GetInstance ()->GetDevice (), "compare.png", &m_pComareTex ) ;
 
 	CGuiRenderer::Initialize ( C3DGfx::GetInstance()->GetDevice(), rc.Width(), rc.Height() ) ;
 
@@ -173,7 +195,7 @@ BOOL CModelViewerDlg::OnInitDialog()
 		vp.MaxZ = 1.0f ;
 		vp.X = 0 ;
 		vp.Y = 0 ;
-		m_pThumbView = new C3DViewContext ( L"View1",
+		m_pThumbView = new C3DViewContext ( L"ViewThumb",
 			GetSafeHwnd (),
 			vp,
 			NULL,
@@ -213,6 +235,8 @@ BOOL CModelViewerDlg::OnInitDialog()
 		//m_Cache.EnableCacheRead ( false ) ;
 		FillThumbArray() ;
 	}
+
+	//CreateChecker ( 10, 5 ) ;
 
 	m_bInitialized = true ;
 
@@ -299,6 +323,8 @@ void CModelViewerDlg::Update()
 
 void CModelViewerDlg::ShowExampleMenuFile ()
 {
+	return ;
+
 	if ( 0 )
 	if (ImGui::MenuItem("Import Obj File", "Ctrl+I")) {
 		char szFilters[] = "3D Scan Files (*.obj)|*.iobj||";
@@ -431,8 +457,8 @@ void CModelViewerDlg::ShowExampleMenuFile ()
 
 void CModelViewerDlg::Render()
 {
-	bool bDualView = false ;
-	bool bSingleView = true ;
+	//bool bDualView = false ;
+	//bool bSingleView = true ;
 
 	C3DGfx::GetInstance ()->BeginFrame ();
 
@@ -454,36 +480,7 @@ void CModelViewerDlg::Render()
 	// 														// Row4 : Reserved
 	
 
-	/*if ( bDualView ) {
-		D3DVIEWPORT9 vp = C3DGfx::GetInstance ()->GetFullscreenViewport () ;
-		vp.Width /= 2 ;
-		vp.X = 0 ;
-		pDevice->SetViewport ( &vp ) ;
-		CD3DMesh2::RenderD3DMesh ( pDevice, GetDocument ()->m_d3dMesh1 ) ;
-
-		vp = C3DGfx::GetInstance ()->GetFullscreenViewport () ;
-		vp.Width /= 2 ;
-		vp.X = vp.Width ;
-		pDevice->SetViewport ( &vp ) ;
-		CD3DMesh2::RenderD3DMesh ( pDevice, GetDocument ()->m_d3dMesh2 ) ;
-
-		pDevice->SetViewport ( &C3DGfx::GetInstance ()->GetFullscreenViewport () ) ;
-	}
-	else if ( bSingleView ) {
-		pDevice->SetViewport ( &C3DGfx::GetInstance ()->GetFullscreenViewport () ) ;
-		CD3DMesh2::RenderD3DMesh ( pDevice, GetDocument ()->m_d3dMesh1 ) ;
-	}
-	else
-		if ( m_pMesh )
-			m_pMesh->DrawSubset ( 0 );
-		*/
-	//CGuiRenderer::Update ( 0.01f ) ;
-
-	//CGuiRenderer::Render () ;
-
 	m_pShader->SetMatrix ( "g_matView", &m_Camera.GetViewMatrix () ) ;
-	m_pShader->SetMatrix ( "g_matProj", &m_Camera.GetProjectionMatrix () ) ;
-	m_pShader->SetMatrix ( "g_matWorld", &m_matWorld ) ;
 
 	vector4 vLightDir ( 0.0f, 0.0f, 1.0f, 0.0f ) ;
 	D3DXVec4Normalize ( &vLightDir, &vLightDir ) ;
@@ -493,8 +490,66 @@ void CModelViewerDlg::Render()
 	m_pShader->SetVector ( "g_f4SunLightDiffuse", (D3DXVECTOR4*)&m_clrLight ) ;
 	m_pShader->SetVector ( "g_f4SunLightAmbient", &vAmbLight ) ;
 
-	if ( m_pd3dModel1 ) {
-		CD3DModelUtils::RenderD3DModel ( pDevice, *m_pd3dModel1 ) ;
+	D3DVIEWPORT9 vp_orig = m_pView->GetViewport() ;
+
+	if ( m_bDualView ) {
+		m_Camera.SetAspect ( 0.5f * (float)vp_orig.Width / vp_orig.Height ) ;
+		m_pShader->SetMatrix ( "g_matProj", &m_Camera.GetProjectionMatrix () ) ;
+
+		D3DVIEWPORT9 vp = vp_orig ;
+		vp.Width /= 2 ;
+		vp.X = 0 ;
+		pDevice->SetViewport ( &vp ) ;
+		if ( m_pd3dModel1 ) {
+			m_pShader->SetMatrix ( "g_matWorld", &m_matWorld1 ) ;
+			CD3DModelUtils::RenderD3DModel ( pDevice, *m_pd3dModel1 ) ;
+
+			m_pShader->SetMatrix ( "g_matWorld", &m_matChecker1 ) ;
+			DrawGrid () ;
+		}
+
+
+		C3DGfx::GetInstance ()->GetD3DXLine ()->Begin () ;
+		vector2 points [ 2 ] = { { (float)vp.Width - 1.0f, 0.0f }, { (float)vp.Width - 1.0f, (float)vp.Height} } ;
+		C3DGfx::GetInstance ()->GetD3DXLine ()->Draw ( points, 2, 0xffffffff ) ;
+		C3DGfx::GetInstance ()->GetD3DXLine ()->End () ;
+
+ 		vp = vp_orig ;
+ 		vp.Width /= 2 ;
+ 		vp.X = vp.Width ;
+ 		pDevice->SetViewport ( &vp ) ;
+
+
+		if ( m_pd3dModel2 ) {
+			m_pShader->SetMatrix ( "g_matWorld", &m_matWorld2 ) ;
+			CD3DModelUtils::RenderD3DModel ( pDevice, *m_pd3dModel2 ) ;
+
+			m_pShader->SetMatrix ( "g_matWorld", &m_matChecker2 ) ;
+			DrawGrid () ;
+		}
+		C3DGfx::GetInstance ()->GetD3DXLine ()->Begin () ;
+		vector2 points2 [ 2 ] = { { 0.0f, 0.0f }, { 0.0f, (float)vp.Height} } ;
+		C3DGfx::GetInstance ()->GetD3DXLine ()->Draw ( points2, 2, 0xffffffff ) ;
+		C3DGfx::GetInstance ()->GetD3DXLine ()->End () ;
+
+		pDevice->SetViewport ( &vp_orig ) ;
+		m_Camera.SetAspect ( 1.0f * (float)vp_orig.Width / vp_orig.Height ) ;
+		m_pShader->SetMatrix ( "g_matProj", &m_Camera.GetProjectionMatrix () ) ;
+	}
+	else {
+		m_Camera.SetAspect ( 1.0f * (float)vp_orig.Width / vp_orig.Height ) ;
+		m_pShader->SetMatrix ( "g_matProj", &m_Camera.GetProjectionMatrix () ) ;
+
+		pDevice->SetViewport ( &vp_orig ) ;
+
+		if ( m_pd3dModel1 ) {
+			m_pShader->SetMatrix ( "g_matWorld", &m_matWorld1 ) ;
+			CD3DModelUtils::RenderD3DModel ( pDevice, *m_pd3dModel1 ) ;
+
+			m_pShader->SetMatrix ( "g_matWorld", &m_matChecker1 ) ;
+			DrawGrid () ;
+		}
+
 	}
 
 	if ( m_pAdTex ) {
@@ -503,8 +558,16 @@ void CModelViewerDlg::Render()
 		D3DSURFACE_DESC desc ;
 		m_pAdTex->GetLevelDesc ( 0, &desc ) ;
 
+		matrix matScale ;
+		D3DXMatrixScaling ( &matScale, (float)m_iAdWidth1 / desc.Width, (float)m_iAdHeight1 / desc.Height, 1.0f ) ;
+		matrix matTrans ;
+		D3DXMatrixTranslation ( &matTrans, 0.0f, (float)rc.Height() - m_iAdHeight1, 0.0f ) ;
+
+		matrix matResult = matScale * matTrans ;
+		C3DGfx::GetInstance ()->GetD3DXSprite ()->SetTransform ( &matResult ) ;
+
 		C3DGfx::GetInstance ()->GetD3DXSprite ()->Begin ( D3DXSPRITE_ALPHABLEND ) ;
-		C3DGfx::GetInstance ()->GetD3DXSprite ()->Draw ( m_pAdTex, NULL, NULL, &D3DXVECTOR3 (0, (float)rc.Height() - desc.Height, 0), 0xffffffff ) ;
+		C3DGfx::GetInstance ()->GetD3DXSprite ()->Draw ( m_pAdTex, NULL, NULL, /*&D3DXVECTOR3 (0, (float)rc.Height() - desc.Height, 0)*/NULL, 0xffffffff ) ;
 		C3DGfx::GetInstance ()->GetD3DXSprite ()->End () ;
 	}
 
@@ -596,7 +659,7 @@ LRESULT CModelViewerDlg::WindowProc ( UINT message, WPARAM wParam, LPARAM lParam
 					int iThumbSize = 0 ;
 					GenerateThumnail ( &pThumbData, &iThumbSize ) ;
 
-					if ( m_Cache.AddModelToCache ( m_strSubsid, m_PointerPass [ 1 ].pData, m_PointerPass [ 1 ].iSize, NULL, 0, pThumbData, iThumbSize ) ) {
+					if ( m_Cache.AddModelToCache ( m_strSubsid, m_PointerPass [ 1 ].pData, m_PointerPass [ 1 ].iSize, NULL, 0, m_strAdUrl, pThumbData, iThumbSize ) ) {
 					}
 					FillThumbArray () ;
 				}
@@ -624,8 +687,18 @@ LRESULT CModelViewerDlg::WindowProc ( UINT message, WPARAM wParam, LPARAM lParam
 			NULL,
 			&m_pAdTex ) ;
 
+		IStream *pStream = SHCreateMemStream ( (BYTE*)m_PointerPass[2].pData, m_PointerPass[2].iSize ) ;
+		// Do what you want
+		Gdiplus::Image* img = Gdiplus::Image::FromStream ( pStream, false );
+		if ( img ) {
+			m_iAdWidth1		= img->GetWidth () ;
+			m_iAdHeight1	= img->GetHeight () ;
+			delete img ;
+		}
+		pStream->Release ();
+
 		if ( lParam == 0 ) {
-			m_Cache.AddAdToCache ( m_strSubsid, m_PointerPass [ 2 ].pData, m_PointerPass [ 2 ].iSize ) ;
+			m_Cache.AddAdToCache ( m_strSubsid, m_PointerPass [ 2 ].pData, m_PointerPass [ 2 ].iSize, m_strAdUrl ) ;
 		}
 
 		SAFE_DELETE ( m_PointerPass [ 2 ].pData ) ;
@@ -651,8 +724,11 @@ LRESULT CModelViewerDlg::WindowProc ( UINT message, WPARAM wParam, LPARAM lParam
 			float fDeltaY = imd.ptCursor.y - s_ptStart.y ;
 
 			if ( imd.ButtonStatus.bLButton ) {
-				m_fYaw -= fDeltaX ;
 				m_fPitch -= fDeltaY ;
+				if ( IsNegativePitch() )
+					m_fYaw += fDeltaX ;
+				else
+					m_fYaw -= fDeltaX ;
 
 				UpdateWorldMatrix () ;
 			}
@@ -679,29 +755,42 @@ LRESULT CModelViewerDlg::WindowProc ( UINT message, WPARAM wParam, LPARAM lParam
 
 		}
 		else if ( imd.eEvent == MOUSE_LBDOWN ) {
-			if ( ! ImGui::IsAnyWindowHovered () )
-			if ( m_pModel1 ) {
-				CPoint ptScreen = RenderPortToScreenPixel ( imd.ptCursor ) ;
-				D3DXVECTOR3 vDir, ptPos ;
+			if ( !ImGui::IsAnyWindowHovered () ) {
+				if ( m_pModel1 ) {
+					CPoint ptScreen = RenderPortToScreenPixel ( imd.ptCursor ) ;
+					D3DXVECTOR3 vDir, ptPos ;
 
-				CRect rc ;
-				GetClientRect ( rc ) ;
+					CRect rc ;
+					GetClientRect ( rc ) ;
 
-				m_Camera.GetRayFromScreen ( ptScreen, &vDir, (float)rc.Width (), (float)rc.Height () ) ;
+					m_Camera.GetRayFromScreen ( ptScreen, &vDir, (float)rc.Width (), (float)rc.Height () ) ;
 
-				D3DXMATRIX matInvWorld ;
-				D3DXMatrixInverse ( &matInvWorld, NULL, &m_matWorld ) ;
+					D3DXMATRIX matInvWorld ;
+					D3DXMatrixInverse ( &matInvWorld, NULL, &m_matWorld1 ) ;
 
-				D3DXVec3TransformNormal ( &vDir, &vDir, &matInvWorld ) ;
+					D3DXVec3TransformNormal ( &vDir, &vDir, &matInvWorld ) ;
 
-				ptPos = m_Camera.GetPosition () ;
-				D3DXVec3TransformCoord ( &ptPos, &ptPos, &matInvWorld ) ;
+					ptPos = m_Camera.GetPosition () ;
+					D3DXVec3TransformCoord ( &ptPos, &ptPos, &matInvWorld ) ;
 
-				float3 ptHit ;
-				D3DMODEL_SUBSET* pSubset = NULL ;
-				if ( CD3DModelUtils::IntersectRay ( float3{ ptPos.x, ptPos.y, ptPos.z }, float3{ vDir.x, vDir.y, vDir.z }, *m_pd3dModel1, &ptHit, &pSubset ) ) {
-					//pSubset->bSelected = ! pSubset->bSelected ;
+					float3 ptHit ;
+					D3DMODEL_SUBSET* pSubset = NULL ;
+					if ( CD3DModelUtils::IntersectRay ( float3{ ptPos.x, ptPos.y, ptPos.z }, float3{ vDir.x, vDir.y, vDir.z }, *m_pd3dModel1, &ptHit, &pSubset ) ) {
+						//pSubset->bSelected = ! pSubset->bSelected ;
+					}
 				}
+
+				if ( m_pAdTex ) {
+					CRect rc ;
+					GetClientRect ( rc ) ;
+
+					CPoint ptScreen = RenderPortToScreenPixel ( imd.ptCursor ) ;
+
+					if ( ptScreen.x >= 0 && ptScreen.x < m_iAdWidth1 && ptScreen.y >= rc.Height () - m_iAdHeight1 && ptScreen.y < rc.Height () ) {
+						HINSTANCE h = ShellExecuteW ( NULL, L"open", m_strAdUrl.c_str(), NULL, NULL, SW_SHOWNORMAL ) ;
+					}
+				}
+
 			}
 		}
 
@@ -738,6 +827,7 @@ void CModelViewerDlg::UpdateGui ()
 	CRect rc ;
 	GetClientRect ( rc ) ;
 
+	if ( 0 )
 	if ( ImGui::BeginMainMenuBar () ) {
 		if ( ImGui::BeginMenu ( "File" ) ) {
 			ShowExampleMenuFile ();
@@ -884,49 +974,309 @@ void CModelViewerDlg::UpdateGui ()
 	//flags |= ImGuiWindowFlags_NoCollapse;
 	//flags |= ImGuiWindowFlags_NoInputs;
 	flags |= ImGuiWindowFlags_NoTitleBar;
-	if ( m_bShowRecent )
-	if ( ImGui::Begin ( "Recent", NULL, ImVec2 ( 200.0f, (float)rc.Height () ), -1, flags ) ) {
-		ImGui::SetWindowPos ( ImVec2 ( 0, 0 ) ) ;
-		ImGui::SetWindowSize ( ImVec2 ( 280.0f, (float)rc.Height () ) ) ;
-		if ( ImGui::GetIO().MousePos.x > 280 )
-			m_bShowRecent = false ;
+	if ( m_bShowRecentLeft ) {
+		if ( ImGui::Begin ( "RecentLeft", NULL, ImVec2 ( 200.0f, (float)rc.Height () ), -1, flags ) ) {
+			ImGui::SetWindowPos ( ImVec2 ( 0, 0 ) ) ;
+			ImGui::SetWindowSize ( ImVec2 ( 280.0f, (float)rc.Height () ) ) ;
+			if ( ImGui::GetIO ().MousePos.x > 280 )
+				m_bShowRecentLeft = false ;
 
 
-		static int pressed_count = 0;
-		for ( int i = 0 ; i < m_iThumbCount ; i++ ) {
+			static int pressed_count = 0;
+			for ( int i = 0 ; i < m_iThumbCount ; i++ ) {
 
-			ImTextureID my_tex_id = m_ppThumbnails [ i ] ;
-			if ( my_tex_id == NULL ) 
-				my_tex_id = m_pThumbTex ;
+				ImTextureID my_tex_id = m_ppThumbnails [ i ] ;
+				if ( my_tex_id == NULL )
+					my_tex_id = m_pThumbTex ;
 
-			D3DSURFACE_DESC desc ;
-			((IDirect3DTexture9*)my_tex_id)->GetLevelDesc ( 0, &desc ) ;
-			float my_tex_w = (float)desc.Width ;
-			float my_tex_h = (float)desc.Height ;
+				D3DSURFACE_DESC desc ;
+				( (IDirect3DTexture9*)my_tex_id )->GetLevelDesc ( 0, &desc ) ;
+				float my_tex_w = (float)desc.Width ;
+				float my_tex_h = (float)desc.Height ;
 
-			if ( ImGui::ImageButton ( my_tex_id, ImVec2 ( 256, 256 ), ImVec2 ( 0, 0 ), ImVec2 ( 256.0f / my_tex_w, 256.0f / my_tex_h ), 2, ImColor ( 0, 0, 0, 255 ) ) ) {
-				Load3DScanFile ( m_pstrModelFiles [ i ] ) ;
-			}
+				if ( ImGui::ImageButton ( my_tex_id, ImVec2 ( 256, 256 ), ImVec2 ( 0, 0 ), ImVec2 ( 256.0f / my_tex_w, 256.0f / my_tex_h ), 2, ImColor ( 0, 0, 0, 255 ) ) ) {
+					Load3DScanFile ( m_pstrModelFiles [ i ] ) ;
+					D3DXCreateTextureFromFileW ( C3DGfx::GetInstance ()->GetDevice (), m_pstrAdFiles [ i ].c_str(), &m_pAdTex ) ;
+					CModelCache::CACHE_ENTRY e ;
+					m_Cache.GetEntry ( i, e ) ;
+					m_strAdUrl = e.szAdUrl ;
+
+					Gdiplus::Image* img = Gdiplus::Image::FromFile ( m_pstrAdFiles [ i ].c_str(), false );
+					if ( img ) {
+						m_iAdWidth1 = img->GetWidth () ;
+						m_iAdHeight1 = img->GetHeight () ;
+						delete img ;
+					}
+
+				}
 				pressed_count += 1;
-		}
+			}
 
-		ImGui::End () ;
+			ImGui::End () ;
+		}
+	}
+
+	if ( m_bShowRecentRight ) {
+		if ( ImGui::Begin ( "RecentRight", NULL, ImVec2 ( 200.0f, (float)rc.Height () ), -1, flags ) ) {
+			ImGui::SetWindowPos ( ImVec2 ( (float)rc.Width () - 280.0f, 0.0f ) ) ;
+			ImGui::SetWindowSize ( ImVec2 ( 280.0f, (float)rc.Height () ) ) ;
+			if ( ImGui::GetIO ().MousePos.x < rc.Width() - 280 )
+				m_bShowRecentRight = false ;
+
+			static int pressed_count = 0;
+			for ( int i = 0 ; i < m_iThumbCount ; i++ ) {
+
+				ImTextureID my_tex_id = m_ppThumbnails [ i ] ;
+				if ( my_tex_id == NULL )
+					my_tex_id = m_pThumbTex ;
+
+				D3DSURFACE_DESC desc ;
+				( (IDirect3DTexture9*)my_tex_id )->GetLevelDesc ( 0, &desc ) ;
+				float my_tex_w = (float)desc.Width ;
+				float my_tex_h = (float)desc.Height ;
+
+				if ( ImGui::ImageButton ( my_tex_id, ImVec2 ( 256, 256 ), ImVec2 ( 0, 0 ), ImVec2 ( 256.0f / my_tex_w, 256.0f / my_tex_h ), 2, ImColor ( 0, 0, 0, 255 ) ) ) {
+					Load3DScanFile2 ( m_pstrModelFiles [ i ] ) ;
+					m_bDualView = true ;
+
+					Gdiplus::Image* img = Gdiplus::Image::FromFile ( m_pstrAdFiles [ i ].c_str (), false );
+					if ( img ) {
+// 						m_iAdWidth2 = img->GetWidth () ;
+// 						m_iAdHeight2 = img->GetHeight () ;
+						delete img ;
+					}
+				}
+				pressed_count += 1;
+			}
+
+			ImGui::End () ;
+		}
+	}
+
+	if ( m_bShowToolbar ) {
+		if ( ImGui::Begin ( "Toolbar", NULL, ImVec2 ( (float)rc.Width(), 100.0f ), -1, flags ) ) {
+			ImGui::SetWindowPos ( ImVec2 ( 0, 0 ) ) ;
+			ImGui::SetWindowSize ( ImVec2 ( (float)rc.Width(), 100.0f ) ) ;
+			if ( ImGui::GetIO().MousePos.y > 100 )
+				m_bShowToolbar = false ;
+
+			static int pressed_count = 0;
+			for ( int i = 0 ; i < 1 ; i++ ) {
+
+				ImTextureID my_tex_id = m_pComareTex ;
+				D3DSURFACE_DESC desc ;
+				( (IDirect3DTexture9*)my_tex_id )->GetLevelDesc ( 0, &desc ) ;
+				float my_tex_w = (float)desc.Width ;
+				float my_tex_h = (float)desc.Height ;
+
+				ImGui::SameLine () ;
+				if ( ImGui::ImageButton ( my_tex_id, ImVec2 ( 64, 64 ), ImVec2 ( 0, 0 ), ImVec2 ( 128.0f / my_tex_w, 128.0f / my_tex_h ), 2, ImColor ( 0, 0, 0, 255 ) ) ) {
+					m_bDualView = ! m_bDualView ;
+				}
+				pressed_count += 1;
+			}
+
+			ImGui::End () ;
+		}
+	}
+
+	if ( m_bDualView ) {
+		flags = 0 ;
+		flags |= ImGuiWindowFlags_NoMove;
+		flags |= ImGuiWindowFlags_NoResize;
+		flags |= ImGuiWindowFlags_NoCollapse;
+		//flags |= ImGuiWindowFlags_NoInputs;
+		flags |= ImGuiWindowFlags_NoTitleBar;
+		ImGui::PushStyleColor ( ImGuiCol_WindowBg, ImVec4 ( 0, 0, 0, 0 ) ) ;
+		ImGui::SetNextWindowPos ( ImVec2 ( rc.Width () / 2.0f, 10.0f ) ) ;
+		if ( ImGui::Begin ( "Btn", NULL, ImVec2 ( 0.0f, 0.0f ), -1, flags ) ) {
+			if ( ImGui::Button ( "X", ImVec2 ( 32.0f, 32.0f ) ) ) {
+				m_bDualView = false ;
+			}
+			ImGui::End () ;
+ 		}
+		ImGui::PopStyleColor () ;
+
 	}
 
 	ImGui::EndFrame () ;
 }
 
+void CModelViewerDlg::CreateChecker ( float w, float h )
+{
+	SAFE_DELETE ( m_pCheckerVB ) ;
+	SAFE_DELETE ( m_pCheckerIB ) ;
+
+	int iw = (int)(floorf ( w + 0.5f )) ;
+	int ih = (int)(floorf ( h + 0.5f )) ;
+
+	m_pCheckerVB = new vector3 [ (iw+1) * (ih+1) ] ;
+
+	int iIndex = 0 ;
+	for ( float j = 0.0f ; j <= ih ; j++ ) {
+		for ( float i = 0.0f ; i <= iw ; i++ ) {
+
+			m_pCheckerVB [ iIndex ] = vector3 ( i, 0.0f, j ) ;
+
+			iIndex++ ;
+		}
+	}
+
+	m_iCheckerVertCount = (iw+1) * (ih+1) ;
+
+	m_pCheckerIB = new int [ ( iw - 0 ) * ( ih - 0 ) * 6 ] ;
+
+	iIndex = 0 ;
+	for ( int j = 0 ; j < ih ; j++ ) {
+		for ( int i = 0 ; i < iw ; i++ ) {
+
+ 			if ( (i + j) % 2 == 0 )
+ 				continue ; 
+
+			m_pCheckerIB [ iIndex++ ] = i + j * (iw+1) ;
+			m_pCheckerIB [ iIndex++ ] = i + 1 + j * (iw+1) ;
+			m_pCheckerIB [ iIndex++ ] = i + 1 + (j+1) * (iw+1) ;
+
+			m_pCheckerIB [ iIndex++ ] = i + j * (iw+1) ;
+			m_pCheckerIB [ iIndex++ ] = i + 1 + ( j + 1 ) * (iw+1) ;
+			m_pCheckerIB [ iIndex++ ] = i + (j+1) * (iw+1) ;
+		}
+	}
+
+	for ( int j = 0 ; j < ih ; j++ ) {
+		for ( int i = 0 ; i < iw ; i++ ) {
+
+			if ( (i + j) % 2 != 0 )
+				continue ; 
+
+			m_pCheckerIB [ iIndex++ ] = i + j * (iw+1) ;
+			m_pCheckerIB [ iIndex++ ] = i + 1 + j * (iw+1) ;
+			m_pCheckerIB [ iIndex++ ] = i + 1 + ( j + 1 ) * (iw+1) ;
+
+			m_pCheckerIB [ iIndex++ ] = i + j * (iw+1) ;
+			m_pCheckerIB [ iIndex++ ] = i + 1 + ( j + 1 ) * (iw+1) ;
+			m_pCheckerIB [ iIndex++ ] = i + ( j + 1 ) * (iw+1) ;
+		}
+	}
+
+	m_iCheckerIndexCount = ( iw ) * ( ih ) * 6 ;
+}
+
 void CModelViewerDlg::UpdateWorldMatrix ()
 {
-	D3DXMATRIX matYaw ;
-	D3DXMatrixRotationY ( &matYaw, m_fYaw ) ;
-	D3DXMATRIX matPitch ;
-	D3DXMatrixRotationX ( &matPitch, m_fPitch ) ;
+	if ( ! m_bDualView || ( m_bDualView && m_pd3dModel2 == NULL ) ) { // If single view
+		vector3 ptOfs ;
+		vector3 vBounding1 ;
+		vector3 ptCenter1 ;
+		if ( m_pd3dModel1 ) {
+			vBounding1 = { m_pd3dModel1->ptMax.x - m_pd3dModel1->ptMin.x,
+				m_pd3dModel1->ptMax.y - m_pd3dModel1->ptMin.y,
+				m_pd3dModel1->ptMax.z - m_pd3dModel1->ptMin.z } ;
 
-	D3DXMATRIX matTrans ;
-	D3DXMatrixTranslation ( &matTrans, m_ptPos.x, m_ptPos.y, m_ptPos.z ) ;
+			ptOfs.x = -( m_pd3dModel1->ptMax.x + m_pd3dModel1->ptMin.x ) / 2.0f ;
+			ptOfs.z = -( m_pd3dModel1->ptMax.z + m_pd3dModel1->ptMin.z ) / 2.0f ;
+			ptOfs.y = -( m_pd3dModel1->ptMin.y ) ;
 
-	m_matWorld = matYaw * matPitch * matTrans ;
+			ptCenter1.x = ( m_pd3dModel1->ptMax.x + m_pd3dModel1->ptMin.x ) / 2.0f ;
+			ptCenter1.z = ( m_pd3dModel1->ptMax.z + m_pd3dModel1->ptMin.z ) / 2.0f ;
+			ptCenter1.y = ( m_pd3dModel1->ptMax.y + m_pd3dModel1->ptMin.y ) / 2.0f ;
+		}
+
+		D3DXMATRIX matYaw ;
+		D3DXMatrixRotationY ( &matYaw, m_fYaw ) ;
+		D3DXMATRIX matPitch ;
+		D3DXMatrixRotationX ( &matPitch, m_fPitch ) ;
+
+		D3DXMATRIX matTrans ;
+		//D3DXMatrixTranslation ( &matTrans, m_ptPos.x, m_ptPos.y, m_ptPos.z ) ;
+		D3DXMatrixTranslation ( &matTrans, ptOfs.x, ptOfs.y, ptOfs.z ) ;
+
+		//m_matWorld = matYaw * matPitch * matTrans ;
+		m_matWorld1 = matTrans * matYaw * matPitch ;
+
+		//m_matChecker1 = matYaw * matPitch ;
+
+		vector3 ptTarget ( 0.0f, vBounding1.y / 2.0f, 0.0f ) ;
+		ptCenter1.y += ptOfs.y ;
+		//m_Camera.SetTarget ( ptTarget ) ;
+	}
+	else {
+		vector3 ptOfs1 ;
+		//vector3 vBounding1 ;
+		vector3 ptCenter1 ;
+
+		vector3 vBounding1 = { m_pd3dModel1->ptMax.x - m_pd3dModel1->ptMin.x,
+			m_pd3dModel1->ptMax.y - m_pd3dModel1->ptMin.y,
+			m_pd3dModel1->ptMax.z - m_pd3dModel1->ptMin.z } ;
+
+		ptOfs1.x = -( m_pd3dModel1->ptMax.x + m_pd3dModel1->ptMin.x ) / 2.0f ;
+		ptOfs1.z = -( m_pd3dModel1->ptMax.z + m_pd3dModel1->ptMin.z ) / 2.0f ;
+		ptOfs1.y = -( m_pd3dModel1->ptMin.y ) ;
+
+		ptCenter1.x = ( m_pd3dModel1->ptMax.x + m_pd3dModel1->ptMin.x ) / 2.0f ;
+		ptCenter1.z = ( m_pd3dModel1->ptMax.z + m_pd3dModel1->ptMin.z ) / 2.0f ;
+		ptCenter1.y = ( m_pd3dModel1->ptMax.y + m_pd3dModel1->ptMin.y ) / 2.0f ;
+
+		vector3 ptOfs2 ;
+		//vector3 vBounding1 ;
+		vector3 ptCenter2 ;
+
+		ptOfs2.x = -( m_pd3dModel2->ptMax.x + m_pd3dModel2->ptMin.x ) / 2.0f ;
+		ptOfs2.z = -( m_pd3dModel2->ptMax.z + m_pd3dModel2->ptMin.z ) / 2.0f ;
+		ptOfs2.y = -( m_pd3dModel2->ptMin.y ) ;
+
+		ptCenter2.x = ( m_pd3dModel2->ptMax.x + m_pd3dModel2->ptMin.x ) / 2.0f ;
+		ptCenter2.z = ( m_pd3dModel2->ptMax.z + m_pd3dModel2->ptMin.z ) / 2.0f ;
+		ptCenter2.y = ( m_pd3dModel2->ptMax.y + m_pd3dModel2->ptMin.y ) / 2.0f ;
+
+		D3DXMATRIX matYaw ;
+		D3DXMatrixRotationY ( &matYaw, m_fYaw ) ;
+		D3DXMATRIX matPitch ;
+		D3DXMatrixRotationX ( &matPitch, m_fPitch ) ;
+
+		D3DXMATRIX matTrans ;
+		//D3DXMatrixTranslation ( &matTrans, m_ptPos.x, m_ptPos.y, m_ptPos.z ) ;
+		D3DXMatrixTranslation ( &matTrans, ptOfs1.x, ptOfs1.y, ptOfs1.z ) ;
+
+		//m_matWorld = matYaw * matPitch * matTrans ;
+		m_matWorld1 = matTrans * matYaw * matPitch ;
+
+		D3DXMATRIX matTrans2 ;
+		//D3DXMatrixTranslation ( &matTrans, m_ptPos.x, m_ptPos.y, m_ptPos.z ) ;
+		//D3DXMatrixTranslation ( &matTrans2, ptOfs2.x + m_pd3dModel1->ptMax.x + m_pd3dModel2->ptMax.x, ptOfs2.y, ptOfs2.z ) ;
+		D3DXMatrixTranslation ( &matTrans2, ptOfs2.x, ptOfs2.y, ptOfs2.z ) ;
+
+		m_matWorld2 = matTrans2 * matYaw * matPitch ;
+
+// 		m_matChecker1 = matYaw * matPitch ;
+// 		m_matChecker2 = matYaw * matPitch ;
+
+		vector3 ptCenterAll ;
+		ptCenterAll.x = ( ptCenter1.x + ptCenter2.x ) / 2.0f ;
+		ptCenterAll.y = ( ptCenter1.y + ptCenter2.y ) / 2.0f ;
+		ptCenterAll.z = ( ptCenter1.z + ptCenter2.z ) / 2.0f ;
+
+		vector3 ptTarget ( 0.0f, vBounding1.y / 2.0f, 0.0f ) ;
+// 		ptCenter1.y += ptOfs.y ;
+// 		ptCenter1.y += ptOfs1.y ;
+		//m_Camera.SetTarget ( ptTarget ) ;
+		//ptCenterAll.y += ptOfs1.y ;
+		//m_Camera.SetTarget ( ptCenterAll ) ;
+	}
+
+	if ( m_pd3dModel1 || m_pd3dModel2 ) {
+		D3DXMATRIX matTrans ;
+		D3DXMatrixTranslation ( &matTrans, m_ptCheckerPos.x, 0.0f, m_ptCheckerPos.z ) ;
+
+		D3DXMATRIX matYaw ;
+		D3DXMatrixRotationY ( &matYaw, m_fYaw ) ;
+		D3DXMATRIX matPitch ;
+		D3DXMatrixRotationX ( &matPitch, m_fPitch ) ;
+
+		m_matChecker1 = matTrans * matYaw * matPitch ;
+		m_matChecker2 = matTrans * matYaw * matPitch ;
+	}
+
 }
 
 void CModelViewerDlg::FillTextureList ()
@@ -1040,6 +1390,40 @@ bool CModelViewerDlg::Load3DScanFile ( CString& strPathName )
 	return true ;
 }
 
+bool CModelViewerDlg::Load3DScanFile2 ( CString& strPathName )
+{
+	TD_SCAN_MODEL* pModel = C3DScanFile::Load3DScanModelFromFile ( strPathName.GetBuffer () ) ;
+	if ( pModel ) {
+		D3D_MODEL* pd3dModel = new D3D_MODEL ;
+		if ( !CD3DModelUtils::CreateFromTDModel ( C3DGfx::GetInstance ()->GetDevice (), C3DGfx::GetInstance ()->GetEffectPool (), *pModel, *pd3dModel ) ) {
+			SAFE_DELETE ( pd3dModel ) ;
+			C3DModelUtils::FreeModel ( *pModel ) ;
+			SAFE_DELETE ( pModel ) ;
+		}
+		else {
+			if ( m_pd3dModel2 ) {
+				CD3DModelUtils::FreeD3DModel ( *m_pd3dModel2 ) ;
+				SAFE_DELETE ( m_pd3dModel2 ) ;
+			}
+			if ( m_pd3dModel2 ) {
+				C3DModelUtils::FreeModel ( *m_pModel2 ) ;
+				SAFE_DELETE ( m_pModel2 ) ;
+			}
+
+			m_pd3dModel2 = pd3dModel ;
+			m_pModel2 = pModel ;
+
+			ResetView () ;
+
+			FillTextureList () ;
+			//m_strFilename = strPathName ;
+			m_bFileOpened = true ;
+			//m_bHasFilename = true ;
+		}
+	}
+
+	return true ;
+}
 
 bool CModelViewerDlg::Load3DScanFile ( std::wstring& strPathName )
 {
@@ -1048,6 +1432,15 @@ bool CModelViewerDlg::Load3DScanFile ( std::wstring& strPathName )
 	szFile [ iLen ] = 0 ;
 	
 	return Load3DScanFile ( (CString)szFile ) ;
+}
+
+bool CModelViewerDlg::Load3DScanFile2 ( std::wstring& strPathName )
+{
+	char szFile [ MAX_PATH ] ;
+	int iLen = WideCharToMultiByte ( CP_ACP, 0, strPathName.c_str (), strPathName.length (), szFile, MAX_PATH, "", NULL ) ;
+	szFile [ iLen ] = 0 ;
+
+	return Load3DScanFile2 ( (CString)szFile ) ;
 }
 
 bool CModelViewerDlg::Load3DScanFromUrl ( CString& strUrl )
@@ -1151,6 +1544,8 @@ static bool IsAnyMouseButtonDown ()
 
 LRESULT ImGui_ImplWin32_WndProcHandler ( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
+	CRect rc ;
+
 	ImGuiIO& io = ImGui::GetIO ();
 	switch ( msg )
 	{
@@ -1184,11 +1579,25 @@ LRESULT ImGui_ImplWin32_WndProcHandler ( HWND hwnd, UINT msg, WPARAM wParam, LPA
 		io.MouseWheel += GET_WHEEL_DELTA_WPARAM ( wParam ) > 0 ? +1.0f : -1.0f;
 		return 0;
 	case WM_MOUSEMOVE:
+		g_pDlg->GetClientRect ( rc ) ;
 		io.MousePos.x = (signed short)( lParam );
 		io.MousePos.y = (signed short)( lParam >> 16 );
-		if ( io.MousePos.x < 50 && io.MousePos.y > 50 && ! io.MouseDown [ 0 ] ) {
-			if ( ! g_pDlg->m_bShowRecent ) {
-				g_pDlg->m_bShowRecent = true ;
+		if ( io.MousePos.x < 50 && io.MousePos.y > 50 && ! io.MouseDown [ 0 ] && ! g_pDlg->m_bShowToolbar ) {
+			if ( ! g_pDlg->m_bShowRecentLeft ) {
+				g_pDlg->m_bShowRecentLeft = true ;
+
+			}
+		}
+		if ( io.MousePos.x > rc.Width() - 50 && io.MousePos.y > 50 && !io.MouseDown [ 0 ] && !g_pDlg->m_bShowToolbar /*&& g_pDlg->m_bDualView */) {
+			if ( !g_pDlg->m_bShowRecentRight ) {
+				g_pDlg->m_bShowRecentRight = true ;
+
+			}
+		}
+		if ( 0 )
+		if ( io.MousePos.y < 30 && !io.MouseDown [ 0 ] && ! g_pDlg->m_bShowRecentLeft ) {
+			if ( !g_pDlg->m_bShowToolbar ) {
+				g_pDlg->m_bShowToolbar = true ;
 
 			}
 		}
@@ -1212,9 +1621,29 @@ LRESULT ImGui_ImplWin32_WndProcHandler ( HWND hwnd, UINT msg, WPARAM wParam, LPA
 	return 0;
 }
 
-void CModelViewerDlg::ResetView ()
+void CModelViewerDlg::ResetView()
 {
 	if ( m_pd3dModel1 ) {
+
+		// Create checker
+		vector3 vBounding1 ;
+
+		vBounding1 = { m_pd3dModel1->ptMax.x - m_pd3dModel1->ptMin.x,
+			m_pd3dModel1->ptMax.y - m_pd3dModel1->ptMin.y,
+			m_pd3dModel1->ptMax.z - m_pd3dModel1->ptMin.z } ;
+
+		vBounding1.x = roundf ( vBounding1.x ) * 2.0f ;
+		vBounding1.z = roundf ( vBounding1.z ) * 2.0f ;
+
+		CreateChecker ( vBounding1.x, vBounding1.z ) ;
+
+		m_ptCheckerPos.x = -vBounding1.x / 2.0f ;
+		m_ptCheckerPos.z = -vBounding1.z / 2.0f ;
+
+		vector3 ptTarget ( 0.0f, vBounding1.y / 2.0f, 0.0f ) ;
+		m_Camera.SetTarget ( ptTarget ) ;
+
+		// Set optimal distance
 		float dy = 1.0f / tanf ( m_Camera.GetFovY () / 2.0f ) ;
 		float zy = dy * ( m_pModel1->ptMax.y - m_pModel1->ptMin.y ) * 1.25f / 2.0f ;
 
@@ -1230,8 +1659,8 @@ void CModelViewerDlg::ResetView ()
 		m_fYaw = 0.0f ;
 		m_fPitch = 0.0f ;
 		m_ptPos = vector3 ( 0.0f, 0.0f, 0.0f ) ;
-		
-		UpdateWorldMatrix() ;
+
+		UpdateWorldMatrix () ;
 	}
 }
 
@@ -1251,7 +1680,7 @@ void MyModelCallback ( int iResult, char* pData, int iSize )
 	g_pDlg->PostMessage ( WM_USER_MODEL_DOWNLOADED, 1, 0 ) ;
 }
 
-void MyAdCallback ( int iResult, char* pData, int iSize, std::string& strAdUrl )
+void MyAdCallback ( int iResult, char* pData, int iSize, std::wstring& strAdUrl )
 {
 	g_pDlg->m_PointerPass [ 2 ].pData = pData ;
 	g_pDlg->m_PointerPass [ 2 ].iSize = iSize ;
@@ -1324,12 +1753,12 @@ void CModelViewerDlg::DownloadAd ( wstring& strUrl )
 	wchar_t* szUrl = new wchar_t [ strUrl.length () + 1 ] ;
 	wcscpy ( szUrl, strUrl.c_str () ) ;
 
-	std::function<void ( int iResult, char* pData, int iSize, std::string& strAdUrl )> myCallback = MyAdCallback ;
+	std::function<void ( int iResult, char* pData, int iSize, std::wstring& strAdUrl )> myCallback = MyAdCallback ;
 	AdThread = std::thread ( [ = ]( wchar_t* pUrl, char* pClientId ) {
 		CModelServiceWebClient client ;
 		char* pData = NULL ;
 		int iSize = 0 ;
-		std::string strAdUrl ;
+		std::wstring strAdUrl ;
 		int iRes = client.GetAd ( pUrl, pClientId, &pData, iSize, strAdUrl ) ;
 		if ( myCallback )
 			myCallback ( iRes, pData, iSize, strAdUrl ) ;
@@ -1415,8 +1844,12 @@ void CModelViewerDlg::FillThumbArray ()
 	}
 
 	if ( m_pstrModelFiles )
-		delete []m_pstrModelFiles ;
+		delete[]m_pstrModelFiles ;
 	m_pstrModelFiles = NULL ;
+
+	if ( m_pstrAdFiles )
+		delete []m_pstrAdFiles ;
+	m_pstrAdFiles = NULL ;
 
 	m_iThumbCount = m_Cache.GetEntryCount () ;
 
@@ -1425,6 +1858,7 @@ void CModelViewerDlg::FillThumbArray ()
 		ZeroMemory ( m_ppThumbnails, m_iThumbCount * sizeof ( void* ) ) ;
 
 		m_pstrModelFiles = new std::wstring [ m_iThumbCount ] ;
+		m_pstrAdFiles = new std::wstring [ m_iThumbCount ] ;
 
 		for ( int i = 0 ; i < m_iThumbCount ; i++ ) {
 			CModelCache::CACHE_ENTRY entry ;
@@ -1432,7 +1866,103 @@ void CModelViewerDlg::FillThumbArray ()
 
 			D3DXCreateTextureFromFileW ( C3DGfx::GetInstance ()->GetDevice (), entry.szThumbFile, &m_ppThumbnails [ i ] ) ;
 			m_pstrModelFiles [ i ] = entry.szModelFile ;
+			m_pstrAdFiles [ i ] = entry.szAdFile ;
 		}
 	}
+}
+
+bool CModelViewerDlg::IsNegativePitch ()
+{
+	vector3 v ( 0.0f, 0.0f , 1.0f ) ;
+	matrix matRot ;
+	D3DXMatrixRotationX ( &matRot, m_fPitch ) ;
+	D3DXVec3TransformNormal ( &v, &v, &matRot ) ;
+
+	return v.z < 0.0f ;
+}
+
+void CModelViewerDlg::DrawGrid ()
+{
+	if ( ! m_pCheckerVB )
+		return ;
+
+// 	matrix matI ;
+// 	D3DXMatrixIdentity ( &matI ) ;
+// 	m_pShader->SetMatrix ( "g_matWorld", &matI ) ;
+
+	IDirect3DDevice9* pDevice = C3DGfx::GetInstance ()->GetDevice () ;
+
+	pDevice->SetFVF ( D3DFVF_XYZ ) ;
+
+	m_pShader->SetFloatArray ( "g_f4AmbientColor", (float*)&float4_rgba { 0, 0, 0, 0 }, 4 ) ;
+	m_pShader->SetFloatArray ( "g_f4DiffuseColor", (float*)&float4_rgba { 1, 1, 1, 0 }, 4 ) ;
+	m_pShader->SetFloat ( "g_fTransparency", 0.1f ) ;
+	m_pShader->SetFloat ( "g_fGlossiness", 0.0f ) ;
+	m_pShader->SetFloat ( "g_fSpecularIntensity", 0.0f ) ;
+
+	m_pShader->SetBool ( "g_bHasNormal", FALSE ) ;
+	m_pShader->SetBool ( "g_bHasUv", FALSE ) ;
+	m_pShader->SetBool ( "g_bHasDiffTex", false ) ;
+	m_pShader->SetBool ( "g_bHasAlphaTex", false ) ;
+	m_pShader->SetBool ( "g_bHasNormTex", false ) ;
+	m_pShader->SetBool ( "g_bHasSpecTex", false ) ;
+	m_pShader->SetBool ( "g_bHasReflTex", false ) ;
+
+	m_pShader->SetFloatArray ( "g_f4DiffuseColor", (float*)&float4_rgba { 1, 1, 1, 0 }, 4 ) ;
+
+	//pDevice->SetRenderState ( D3DRS_ZWRITEENABLE, FALSE ) ;
+
+	UINT uiPassCount = 0 ;
+	m_pShader->Begin ( &uiPassCount, 0 ) ;
+	for ( UINT iPass = 0 ; iPass < uiPassCount ; iPass++ ) {
+		m_pShader->BeginPass ( iPass ) ;
+
+		// 				pDevice->DrawPrimitiveUP ( D3DPT_TRIANGLELIST,
+		// 					subset.pBase->uiTriCount,
+		// 					subset.pBase->pVB,
+		// 					C3DScanFileUtils::GetVertexSize (subset.pBase->uiVertexFmt) ) ;
+
+		pDevice->DrawIndexedPrimitiveUP ( D3DPT_TRIANGLELIST,
+			0,
+			m_iCheckerVertCount,
+			m_iCheckerIndexCount/3/2,
+			m_pCheckerIB,
+			D3DFMT_INDEX32,
+			m_pCheckerVB,
+			sizeof(vector3) ) ;
+
+		m_pShader->EndPass () ;
+	}
+	m_pShader->End () ;
+
+	m_pShader->SetFloatArray ( "g_f4DiffuseColor", (float*)&float4_rgba { 0, 0, 0, 0 }, 4 ) ;
+
+	//return ;
+
+	uiPassCount = 0 ;
+	m_pShader->Begin ( &uiPassCount, 0 ) ;
+	for ( UINT iPass = 0 ; iPass < uiPassCount ; iPass++ ) {
+		m_pShader->BeginPass ( iPass ) ;
+
+		// 				pDevice->DrawPrimitiveUP ( D3DPT_TRIANGLELIST,
+		// 					subset.pBase->uiTriCount,
+		// 					subset.pBase->pVB,
+		// 					C3DScanFileUtils::GetVertexSize (subset.pBase->uiVertexFmt) ) ;
+
+		pDevice->DrawIndexedPrimitiveUP ( D3DPT_TRIANGLELIST,
+			0,
+			m_iCheckerVertCount,
+			m_iCheckerIndexCount / 3 / 2 ,
+			(int*)m_pCheckerIB+m_iCheckerIndexCount/2,
+			D3DFMT_INDEX32,
+			m_pCheckerVB,
+			sizeof ( vector3 ) ) ;
+
+		m_pShader->EndPass () ;
+	}
+	m_pShader->End () ;
+
+	//pDevice->SetRenderState ( D3DRS_ZWRITEENABLE, TRUE ) ;
+
 }
 

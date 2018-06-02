@@ -14,6 +14,7 @@ public:
 		wchar_t		szModelFile [ MAX_PATH ] ;
 		wchar_t		szAdFile [ MAX_PATH ] ;
 		wchar_t		szThumbFile [ MAX_PATH ] ;
+		wchar_t		szAdUrl [ MAX_PATH ] ;
 	} ;
 #include <poppack.h>
 
@@ -25,8 +26,8 @@ public:
 
 	bool Initialize() ;
 
-	bool AddModelToCache ( std::wstring& strSubsid, void* pModelFileData, int iModelFileSize, void* pAdFileData, int iAdFileSize, void* pThumbFileData, int iThumbFileSize ) ;
-	bool AddAdToCache ( std::wstring& strSubsid, void* pAdFileData, int iAdFileSize ) ;
+	bool AddModelToCache ( std::wstring& strSubsid, void* pModelFileData, int iModelFileSize, void* pAdFileData, int iAdFileSize, std::wstring& strAdUrl, void* pThumbFileData, int iThumbFileSize ) ;
+	bool AddAdToCache ( std::wstring& strSubsid, void* pAdFileData, int iAdFileSize, std::wstring& strAdUrl ) ;
 	bool LoadModel ( std::wstring& strSubsid, void** ppModelFileData, int* piModelFileSize, void** ppAdFileData, int* piAdFileSize, void** ppThumbFileData, int* piThumFileSize ) ;
 
 	void EnableCache ( bool bEnable ) ;

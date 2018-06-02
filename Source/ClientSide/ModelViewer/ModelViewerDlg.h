@@ -59,7 +59,16 @@ public:
 
 	D3D_MODEL*		m_pd3dModel1 ;
 	TD_SCAN_MODEL*	m_pModel1 ;
-	D3DXMATRIX		m_matWorld ;
+	D3DXMATRIX		m_matWorld1 ;
+	D3DXMATRIX		m_matWorld2 ;
+	D3DXMATRIX		m_matChecker1 ;
+	D3DXMATRIX		m_matChecker2 ;
+	vector3			m_ptCheckerPos ;
+
+
+	D3D_MODEL*		m_pd3dModel2 ;
+	TD_SCAN_MODEL*	m_pModel2 ;
+
 
 	vector3			m_ptPos ;
 	float			m_fYaw ;
@@ -69,7 +78,9 @@ public:
 	float4_rgba		m_clrLight ; 
 
 	IDirect3DTexture9*	m_pAdTex ;
-	std::string			m_strAdUrl ;
+	std::wstring		m_strAdUrl ;
+	int					m_iAdWidth1 ;
+	int					m_iAdHeight1 ;
 
 	bool			m_bDownloading ;
 	float			m_fDownloadProgress ;
@@ -87,7 +98,9 @@ public:
 	void ResetView ();
 
 	bool Load3DScanFile ( CString& strPathName ) ;
+	bool Load3DScanFile2 ( CString& strPathName ) ;
 	bool Load3DScanFile ( std::wstring& strPathName ) ;
+	bool Load3DScanFile2 ( std::wstring& strPathName ) ;
 	bool Load3DScanFromUrl ( CString& strUrl ) ;
 
 	void DownloadInfo ( wstring& strUrl ) ;
@@ -96,6 +109,10 @@ public:
 
 	void GenerateThumnail ( void** ppData, int* piSize ) ;
 	void FillThumbArray() ;
+
+	bool IsNegativePitch() ;
+
+	void DrawGrid () ;
 
 	char**			m_ppszTextureNames ;
 	int				m_iTextureCount ;
@@ -106,10 +123,15 @@ public:
 	std::wstring	m_strModel ;
 	std::wstring	m_strAd ;
 
-	bool			m_bShowRecent ;
+	bool			m_bShowRecentLeft ;
+	bool			m_bShowRecentRight ;
 	IDirect3DTexture9* m_pThumbTex ;
 
 	bool			m_bInitialized ;
+	bool			m_bShowToolbar ;
+	bool			m_bDualView ;
+
+	IDirect3DTexture9*	m_pComareTex ;
 
 	afx_msg void OnSize ( UINT nType, int cx, int cy );
 	virtual LRESULT WindowProc ( UINT message, WPARAM wParam, LPARAM lParam );
@@ -119,4 +141,12 @@ public:
 	IDirect3DTexture9**	m_ppThumbnails ;
 	int					m_iThumbCount ;
 	std::wstring*		m_pstrModelFiles ;
+	std::wstring*		m_pstrAdFiles ;
+
+	void CreateChecker ( float w, float h ) ;
+
+	vector3*			m_pCheckerVB ;
+	int*				m_pCheckerIB ;
+	int					m_iCheckerVertCount ;
+	int					m_iCheckerIndexCount ;
 } ;

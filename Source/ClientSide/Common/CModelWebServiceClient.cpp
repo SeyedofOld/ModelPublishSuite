@@ -832,7 +832,7 @@ bool CModelServiceWebClient::GetModelInfo ( wchar_t* pszUrl, char* pszClientId, 
 	return false ;
 }
 
-bool CModelServiceWebClient::GetAd ( wchar_t* pszUrl, char* pszClientId, char** ppData, int& riSize, std::string& strUrl, int iInstanceId )
+bool CModelServiceWebClient::GetAd ( wchar_t* pszUrl, char* pszClientId, char** ppData, int& riSize, std::wstring& strUrl, int iInstanceId )
 {
 	if ( !pszUrl || !ppData )
 		return false ;
@@ -912,14 +912,14 @@ bool CModelServiceWebClient::GetAd ( wchar_t* pszUrl, char* pszClientId, char** 
 			{
 				wstring sUrl = answer [ L"url" ].as_string ();
 
-				char* pszUrl = new char [ sUrl.length () + 1 ] ;
-				int iLen = WideCharToMultiByte ( CP_ACP, 0, sUrl.c_str (), sUrl.length (), pszUrl, sUrl.length (), "", NULL );
-				pszUrl [ iLen ] = 0 ;
+// 				char* pszUrl = new char [ sUrl.length () + 1 ] ;
+// 				int iLen = WideCharToMultiByte ( CP_ACP, 0, sUrl.c_str (), sUrl.length (), pszUrl, sUrl.length (), "", NULL );
+// 				pszUrl [ iLen ] = 0 ;
+				strUrl = sUrl ;
 
-				if ( pszUrl ) {
-					strUrl = pszUrl ;
-					delete pszUrl ;
-				}
+// 				if ( pszUrl ) {
+// 					delete pszUrl ;
+// 				}
 			}
 
 			return true;
