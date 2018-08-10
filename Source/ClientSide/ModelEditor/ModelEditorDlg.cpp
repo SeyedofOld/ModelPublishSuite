@@ -804,7 +804,7 @@ void CModelViewerDlg::UploadModel ( CString& strFilename, CString& strUser, CStr
 		*piSize = iSize ;
 
 		CModelServiceWebClient client ;
-		bool bRes = client.UploadModel ( pUrl, pClientId, pszUser, pszPass, pData, *piSize, pszName, pszDesc ) ;
+		//bool bRes = client.UploadModel ( pUrl, pClientId, pszUser, pszPass, pData, *piSize, pszName, pszDesc ) ;
 //  		if ( myCallback )
 //  			myCallback ( 10, *piSize, *piSize ) ;
 		SAFE_DELETE ( pUrl ) ;

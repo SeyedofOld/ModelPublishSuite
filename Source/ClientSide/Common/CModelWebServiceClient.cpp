@@ -91,6 +91,8 @@ pplx::task<http_response> make_task_request_post ( http_client& client, method m
 	request.set_request_uri ( uri ) ;
 	request.set_body ( send_val.serialize() ) ;
 
+	wstring ss = send_val.serialize () ;
+
 	///////////////////////////////////////
 	request.set_progress_handler ( progress ) ;
 	// 			[ & ]( message_direction::direction direction, utility::size64_t so_far )
@@ -1011,8 +1013,11 @@ bool CModelServiceWebClient::UploadModel ( wchar_t* pszUrl, char* pszClientId, c
 	json::value answer ;
 	status_code http_result ;
 
+	//string_t sss = send.to_string ().c_str() ;
+
 	if ( 1 )
 		make_request_post ( client, methods::POST, inuri, send, answer, http_result, &CModelServiceWebClient::UploadCallback ) ;
+
 
 	//wcout << answer << endl ;
 	wcout << L"HTTP Status Code:" << http_result << endl ;

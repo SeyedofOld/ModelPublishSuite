@@ -4,7 +4,8 @@
 
 CModelCache::CModelCache()
 {
-	m_szCacheRoot [ 0 ] = 0 ;
+	m_szCacheFolder [ 0 ] = 0 ;
+	m_szCacheFullPath [ 0 ] = 0 ;
 	m_CacheTable.clear() ;
 
 	m_hCacheFile = INVALID_HANDLE_VALUE ;
@@ -20,7 +21,8 @@ CModelCache::~CModelCache()
 
 void CModelCache::CleanUp()
 {
-	m_szCacheRoot [ 0 ] = 0 ;
+	m_szCacheFolder [ 0 ] = 0 ;
+	m_szCacheFullPath [ 0 ] = 0 ;
 	m_CacheTable.clear() ;
 
 	CloseHandle ( m_hCacheFile ) ;
@@ -35,12 +37,22 @@ bool CModelCache::Initialize ()
 	if ( m_hCacheFile != INVALID_HANDLE_VALUE )
 		return false ;
 
+	wchar_t* pszAppData = NULL ;
+	SHGetKnownFolderPath ( FOLDERID_LocalAppData, KF_FLAG_DEFAULT, NULL, &pszAppData ) ;
+
+	if ( ! pszAppData )
+		return false ;
+
 	wchar_t szFile [ MAX_PATH ] ;
-	wcscpy ( szFile, m_szCacheRoot ) ;
+	wcscpy ( szFile, pszAppData ) ;
+	wcscat ( szFile, L"\\" ) ;
+	wcscat ( szFile, m_szCacheFolder ) ;
+	wcscpy ( m_szCacheFullPath, szFile ) ; // Store
 	wcscat ( szFile, L"cache.dat" ) ;
 	m_hCacheFile = CreateFileW ( szFile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL ) ;
 	if ( m_hCacheFile == INVALID_HANDLE_VALUE ) {
-		CreateDirectoryW ( L"Cache", NULL ) ;
+		SetCurrentDirectoryW ( pszAppData ) ;
+		BOOL bRes = CreateDirectoryW ( m_szCacheFolder, NULL ) ;
 		char a = 0 ;
 		if ( ! SaveMemToFile ( szFile, &a, 0 ) )
 			return false ;
@@ -123,6 +135,7 @@ bool CModelCache::SaveMemToFile ( wchar_t* pszFilename, void* pData, int iSize )
 	}
 
 	CloseHandle ( hFile ) ;
+	return true ;
 }
 
 void CModelCache::EnableCache( bool bEnable )
@@ -141,10 +154,10 @@ void CModelCache::EnableCacheStore( bool bEnable )
 	m_bEnableCacheStore = bEnable ;
 }
 
-void CModelCache::SetCacheRoot ( wchar_t* pszRoot )
+void CModelCache::SetCacheFolder ( wchar_t* pszFolder )
 {
-	if ( pszRoot )
-		wcscpy ( m_szCacheRoot, pszRoot ) ;
+	if ( pszFolder )
+		wcscpy ( m_szCacheFolder, pszFolder ) ;
 }
 
 bool CModelCache::GetEntry ( int iEntry, CACHE_ENTRY& rEntry ) 
@@ -172,13 +185,13 @@ bool CModelCache::AddModelToCache ( std::wstring& strSubsid, void* pModelFileDat
 		return false ;
 
 	wchar_t szModelFile [ MAX_PATH ] ;
-	if ( 0 == GetTempFileNameW ( m_szCacheRoot, L"", 0, szModelFile ) )
+	if ( 0 == GetTempFileNameW ( m_szCacheFullPath, L"", 0, szModelFile ) )
 		return false ;
 	wchar_t szAdFile [ MAX_PATH ] ;
-	if ( 0 == GetTempFileNameW ( m_szCacheRoot, L"", 0, szAdFile ) )
+	if ( 0 == GetTempFileNameW ( m_szCacheFullPath, L"", 0, szAdFile ) )
 		return false ;
 	wchar_t szThumbFile [ MAX_PATH ] ;
-	if ( 0 == GetTempFileNameW ( m_szCacheRoot, L"", 0, szThumbFile ) )
+	if ( 0 == GetTempFileNameW ( m_szCacheFullPath, L"", 0, szThumbFile ) )
 		return false ;
 
 	if ( ! SaveMemToFile ( szModelFile, pModelFileData, iModelFileSize ) )
@@ -269,9 +282,9 @@ bool CModelCache::AddAdToCache ( std::wstring& strSubsid, void* pAdFileData, int
 
 	wcscpy ( entry.szAdUrl, strAdUrl.c_str() ) ;
 
-	DWORD dwBytesWritten ;
-	SetFilePointer ( m_hCacheFile, 0, NULL, FILE_END ) ;
-	WriteFile ( m_hCacheFile, &entry, sizeof ( CACHE_ENTRY ), &dwBytesWritten, NULL ) ;
+// 	DWORD dwBytesWritten ;
+// 	SetFilePointer ( m_hCacheFile, 0, NULL, FILE_END ) ;
+// 	WriteFile ( m_hCacheFile, &entry, sizeof ( CACHE_ENTRY ), &dwBytesWritten, NULL ) ;
 
 	return true ;
 }

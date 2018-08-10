@@ -33,7 +33,7 @@ public:
 	void EnableCache ( bool bEnable ) ;
 	void EnableCacheRead ( bool bEnable ) ;
 	void EnableCacheStore ( bool bEnable ) ;
-	void SetCacheRoot ( wchar_t* pszRoot ) ;
+	void SetCacheFolder ( wchar_t* pszFolder ) ;
 	int GetEntryCount() { return (int)m_CacheTable.size() ; }
 	bool GetEntry ( int iEntry, CACHE_ENTRY& rEntry ) ;
 
@@ -43,7 +43,8 @@ private:
 	bool SaveMemToFile ( wchar_t* pszFilename, void* pData, int iSize ) ;
 
 private:
-	wchar_t m_szCacheRoot [ MAX_PATH ] ;
+	wchar_t m_szCacheFolder [ MAX_PATH ] ;
+	wchar_t m_szCacheFullPath [ MAX_PATH ] ;
 	HANDLE m_hCacheFile ;
 
 	bool m_bEnableCacheStore ;

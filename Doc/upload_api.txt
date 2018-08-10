@@ -1,0 +1,98 @@
+Upload request format
+
+Uploading Model File:
+
+	Sample url:
+		http://132.148.155.206/3dscan/upload_model?magic=tfzfepg&client=pcwin
+		
+		upload_model: 	Is the function name
+		magic:			Is a constant string to filter requests from unknown clients
+		client:			Identifies the client platform
+
+	Method is POST
+	
+	Body contains a json string like this:
+		
+		{
+			"desc":"My model description",
+			"model":"",
+			"name":"My model name",
+			"pass":"1234",
+			"user":"ali"
+		}
+		
+		user: Username who owns the model
+		pass: User's password 
+		name: Name of the model
+		desc: A description for the model
+		model: A big string which contains model file in BASE64 encoded form
+		
+		HTTP Result: 200 on success, otherwise failure
+					 On success a json is returned in response which contains a field called model_id,
+					 this model_id specified the id of model in database and is used in subsequent calls
+					 to other api's
+					 
+
+Uploading Ad (Watermark) Image File:
+
+	Sample url:
+		http://132.148.155.206/3dscan/upload_ad?magic=tfzfepg&client=pcwin
+		
+		upload_ad: 		Is the function name
+		magic:			Is a constant string to filter requests from unknown clients
+		client:			Identifies the client platform
+
+	Method is POST
+	
+	Body contains a json string like this:
+		
+		{
+			"user":"ali"
+			"pass":"1234",
+			"url":"www.mywebsite.com",
+		}
+		
+		user: Username who owns the model
+		pass: User's password 
+		ad:   A big string which contains ad image file in BASE64 encoded form
+		url:  A url specifying the target website when we click o
+		
+		
+		HTTP Result: 200 on success, otherwise failure
+					 On success a json is returned in response which contains a field called ad_id,
+					 this ad_id specified the id of advertisement(watermark) in database and is used in subsequent calls
+					 to other api's
+					 
+
+					 					 
+Creating Subscription:
+
+	Sample url:
+		http://132.148.155.206/3dscan/create_subs?magic=tfzfepg&client=pcwin
+		
+		create_subs: 	Is the function name
+		magic:			Is a constant string to filter requests from unknown clients
+		client:			Identifies the client platform
+
+	Method is POST
+	
+	Body contains a json string like this:
+		
+		{
+			"user":"ali"
+			"pass":"1234",
+			"owner":"ali",
+			"model_id":23,
+			"ad_id":19
+		}
+		
+		user: 		Username who owns the model
+		pass: 		User's password 
+		owner: 		Username who owns this subscription
+		model_id:   Model id got from the upload_model call (specifies the model id in db)
+		ad_id:   	Ad id got from the upload_ad call (specifies the ad id in db)
+		
+		
+		HTTP Result: 200 on success, otherwise failure
+					 On success a json is returned in response which contains a field called subsid,
+					 this subsid is a string which will be used as a hash to fetch models using viewer apps

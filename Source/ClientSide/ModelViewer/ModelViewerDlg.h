@@ -11,6 +11,7 @@
 #include "CRenderDialog.h"
 #include "CModelCache.h"
 
+#define MAX_UI_ELEMENTS	100
 
 // CModelViewerDlg dialog
 class CModelViewerDlg : public CRenderDialog
@@ -70,7 +71,7 @@ public:
 	TD_SCAN_MODEL*	m_pModel2 ;
 
 
-	vector3			m_ptPos ;
+	//vector3			m_ptPos ;
 	float			m_fYaw ;
 	float			m_fPitch ;
 
@@ -92,7 +93,8 @@ public:
 	void Update() ;
 	void ShowExampleMenuFile();
 	void Render();
-	void UpdateWorldMatrix() ;
+	void UpdateWorldMatrix () ;
+	//void UpdateWorldMatrix2() ;
 	void FillTextureList() ;
 	void CalcTextureAverages() ;
 	void ResetView ();
@@ -113,6 +115,11 @@ public:
 	bool IsNegativePitch() ;
 
 	void DrawGrid () ;
+
+	void OnModelLoaded1 () ;
+	void OnModelLoaded2 () ;
+
+	void DrawBounding ( D3D_MODEL* pModel, matrix& matWorld ) ;
 
 	char**			m_ppszTextureNames ;
 	int				m_iTextureCount ;
@@ -149,4 +156,26 @@ public:
 	int*				m_pCheckerIB ;
 	int					m_iCheckerVertCount ;
 	int					m_iCheckerIndexCount ;
+
+	int					m_iCurPart1 ;
+	int					m_iCurPart2 ;
+
+	vector3				m_vModelSize1 ;
+	vector3				m_vModelSize2 ;
+	vector3				m_ptModelCenter1 ;
+	vector3				m_ptModelCenter2 ;
+
+	matrix				m_matCenter1 ;
+	matrix				m_matCenter2 ;
+	matrix				m_matRot ;
+	vector3				m_ptPos1 ;
+	matrix				m_matMove ;
+
+	bool				m_bShowSize ;
+
+
+	IDirect3DTexture9*	m_ptexUiElements [ MAX_UI_ELEMENTS ] ;
+
+	vector3				m_avCube [ 8 ] ;
+
 } ;

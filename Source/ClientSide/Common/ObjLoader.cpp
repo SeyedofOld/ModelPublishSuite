@@ -290,7 +290,7 @@ INT LoadObj2 ( LPCTSTR sFileName, MY_OBJ* pObj )
 
 			cur_subset->Faces.push_back ( face ) ;
 		}
-		else if ( 0 == strncmp ( "o ", buffer, 2 ) || 0 == strncmp ( "g ", buffer, 2 ) ) {
+		else if ( 0 == strncmp ( "o ", buffer, 2 ) /*|| 0 == strncmp ( "g ", buffer, 2 )*/ ) {
 			bPrevWasVerts = false ;
 			MY_OBJ_PART new_part ;
 			MY_DRAW_BATCH new_subset ;
@@ -307,8 +307,37 @@ INT LoadObj2 ( LPCTSTR sFileName, MY_OBJ* pObj )
 			//cur_subset = &cur_part->subSets [ 0 ] ;
 			cur_subset = &cur_part->subSets [ cur_part->subSets.size()-1 ] ;
 		}
+		else if ( 0 == strncmp ( "g ", buffer, 2 ) ) {
+			bPrevWasVerts = false ;
+			MY_DRAW_BATCH new_subset ;
+
+			new_subset.sMatName = sCurMtl ;
+			char szPartName [ MAX_PATH ] ;
+			sscanf ( buffer + 2, "%s", szPartName );
+
+			cur_part = &obj.subParts.at ( obj.subParts.size () - 1 ) ;
+			cur_part->subSets.push_back ( new_subset ) ;
+
+			cur_subset = &cur_part->subSets [ cur_part->subSets.size () - 1 ] ;
+		}
 		else if ( 0 == _strnicmp ( "usemtl ", buffer, 7 ) ) {
 			
+			MY_DRAW_BATCH new_subset ;
+
+			char szMtlName [ MAX_PATH ] ;
+			sscanf ( buffer + 7, "%s", szMtlName );
+			sCurMtl = szMtlName ;
+
+			new_subset.sMatName = sCurMtl ;
+// 			char szPartName [ MAX_PATH ] ;
+// 			sscanf ( buffer + 2, "%s", szPartName );
+
+			cur_part = &obj.subParts.at ( obj.subParts.size () - 1 ) ;
+			cur_part->subSets.push_back ( new_subset ) ;
+
+			cur_subset = &cur_part->subSets [ cur_part->subSets.size () - 1 ] ;
+
+			if ( 0 )
 			if ( bFirstMtl ) {
 				char szMtlName [ MAX_PATH ] ;
 				sscanf ( buffer + 7, "%s", szMtlName );
@@ -355,6 +384,8 @@ INT LoadObj2 ( LPCTSTR sFileName, MY_OBJ* pObj )
 		if ( obj.Vertices [ i ].z > obj.ptMax.z )
 			obj.ptMax.z = obj.Vertices [ i ].z ;
 	}
+
+
 
 	// Now load mtl file.
 	if ( obj.sMtrlFilename == "" )
